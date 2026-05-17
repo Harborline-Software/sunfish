@@ -102,11 +102,19 @@ public sealed class SystemRequirementsRegressionBannerA11yTests
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         for (int depth = 0; depth < MaxDepth && current is not null; depth++)
         {
-            var candidate = Path.Combine(
-                current.FullName,
-                "accelerators", "anchor", "Components",
-                "SystemRequirementsRegressionBanner.razor");
-            if (File.Exists(candidate)) return candidate;
+            // Post-migration (2026-05-17): repo is `sunfish/` with components at
+            // `src/Components/`. Pre-migration used `accelerators/anchor/Components/`.
+            string[] relativeCandidates =
+            {
+                Path.Combine("src", "Components", "SystemRequirementsRegressionBanner.razor"),
+                Path.Combine("Components", "SystemRequirementsRegressionBanner.razor"),
+                Path.Combine("accelerators", "anchor", "Components", "SystemRequirementsRegressionBanner.razor"),
+            };
+            foreach (var rel in relativeCandidates)
+            {
+                var candidate = Path.Combine(current.FullName, rel);
+                if (File.Exists(candidate)) return candidate;
+            }
             visited.Add(current.FullName);
             current = current.Parent;
         }
