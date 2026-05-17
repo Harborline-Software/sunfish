@@ -294,18 +294,27 @@ public sealed class AtlasIntegrationConfigA11yTests
     private static string ReadSource(string fileName)
     {
         const int MaxDepth = 12;
+        // Post-migration (2026-05-17): repo is `sunfish/` with components at
+        // `src/Components/Pages/Settings/Integrations/`. Pre-migration used
+        // `accelerators/anchor/Components/Pages/Settings/Integrations/`.
+        string[] relativeBases =
+        {
+            Path.Combine("src", "Components", "Pages", "Settings", "Integrations"),
+            Path.Combine("Components", "Pages", "Settings", "Integrations"),
+            Path.Combine("accelerators", "anchor", "Components", "Pages", "Settings", "Integrations"),
+        };
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         for (int depth = 0; depth < MaxDepth && current is not null; depth++)
         {
-            var candidate = Path.Combine(
-                current.FullName,
-                "accelerators", "anchor", "Components", "Pages", "Settings", "Integrations",
-                fileName);
-            if (File.Exists(candidate)) return File.ReadAllText(candidate);
+            foreach (var rel in relativeBases)
+            {
+                var candidate = Path.Combine(current.FullName, rel, fileName);
+                if (File.Exists(candidate)) return File.ReadAllText(candidate);
+            }
             current = current.Parent;
         }
         throw new InvalidOperationException(
             $"Could not locate {fileName} — walked {MaxDepth} levels from {AppContext.BaseDirectory}. " +
-            $"Expected path: accelerators/anchor/Components/Pages/Settings/Integrations/{fileName}");
+            $"Tried bases: {string.Join(", ", relativeBases)}");
     }
 }
