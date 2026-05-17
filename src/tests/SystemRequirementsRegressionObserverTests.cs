@@ -211,18 +211,26 @@ public sealed class SystemRequirementsRegressionObserverTests
 
     private static string LocateBannerSourceOrFail()
     {
+        // Post-migration (2026-05-17): components at src/Components/. Pre-migration: accelerators/anchor/Components/.
+        string[] relativeBases =
+        {
+            Path.Combine("src", "Components"),
+            "Components",
+            Path.Combine("accelerators", "anchor", "Components"),
+        };
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         while (current is not null)
         {
-            var candidate = Path.Combine(
-                current.FullName,
-                "accelerators", "anchor", "Components",
-                "SystemRequirementsRegressionBanner.razor");
-            if (File.Exists(candidate)) return candidate;
+            foreach (var rel in relativeBases)
+            {
+                var candidate = Path.Combine(current.FullName, rel, "SystemRequirementsRegressionBanner.razor");
+                if (File.Exists(candidate)) return candidate;
+            }
             current = current.Parent;
         }
         throw new InvalidOperationException(
-            $"Could not locate SystemRequirementsRegressionBanner.razor walking up from '{AppContext.BaseDirectory}'.");
+            $"Could not locate SystemRequirementsRegressionBanner.razor walking up from '{AppContext.BaseDirectory}'. " +
+            $"Tried bases: {string.Join(", ", relativeBases)}");
     }
 
     private sealed class FakeSurface : IAnchorSystemRequirementsSurface

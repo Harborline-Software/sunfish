@@ -112,8 +112,13 @@ public sealed class SystemRequirementsRendererDispatchTests
         DirectoryInfo? anchorBin = null;
         while (current is not null && anchorBin is null)
         {
-            var candidate = Path.Combine(current.FullName, "accelerators", "anchor", "bin");
-            if (Directory.Exists(candidate)) { anchorBin = new DirectoryInfo(candidate); break; }
+            // Post-migration (2026-05-17): bin is at src/bin/. Pre-migration: accelerators/anchor/bin/.
+            foreach (var rel in new[] { Path.Combine("src", "bin"), "bin", Path.Combine("accelerators", "anchor", "bin") })
+            {
+                var candidate = Path.Combine(current.FullName, rel);
+                if (Directory.Exists(candidate)) { anchorBin = new DirectoryInfo(candidate); break; }
+            }
+            if (anchorBin is not null) break;
             current = current.Parent;
         }
 

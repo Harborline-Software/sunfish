@@ -50,12 +50,13 @@ public sealed class CrewChatPageTests
         DirectoryInfo? anchorBin = null;
         while (current is not null && anchorBin is null)
         {
-            var candidate = Path.Combine(current.FullName, "accelerators", "anchor", "bin");
-            if (Directory.Exists(candidate))
+            // Post-migration (2026-05-17): bin is at src/bin/. Pre-migration: accelerators/anchor/bin/.
+            foreach (var rel in new[] { Path.Combine("src", "bin"), "bin", Path.Combine("accelerators", "anchor", "bin") })
             {
-                anchorBin = new DirectoryInfo(candidate);
-                break;
+                var candidate = Path.Combine(current.FullName, rel);
+                if (Directory.Exists(candidate)) { anchorBin = new DirectoryInfo(candidate); break; }
             }
+            if (anchorBin is not null) break;
             current = current.Parent;
         }
 
@@ -71,7 +72,7 @@ public sealed class CrewChatPageTests
         if (dlls.Count == 0)
         {
             throw new InvalidOperationException(
-                $"Sunfish.Anchor.dll not found under {anchorBin.FullName}. Build accelerators/anchor before running this test.");
+                $"Sunfish.Anchor.dll not found under {anchorBin.FullName}. Build src/ before running this test.");
         }
 
         var assembly = Assembly.LoadFrom(dlls[0].FullName);
