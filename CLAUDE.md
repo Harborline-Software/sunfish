@@ -1,6 +1,6 @@
 # Claude Instructions for sunfish
 
-Sunfish — local-first property ERP application. Consumes drydock packages via relative ProjectReference + pnpm workspace.
+Sunfish — local-first property ERP application. Consumes shipyard packages via relative ProjectReference + pnpm workspace.
 
 ## Fleet context
 
@@ -18,7 +18,7 @@ For repo-specific architecture, conventions, and testing — see folders within 
 
 ## Cross-repo dependencies
 
-If this repo depends on drydock packages (.NET ProjectReference OR pnpm workspace), see `README.md` for sibling-folder layout requirement: `drydock/` must be cloned at sibling level for builds to resolve.
+If this repo depends on shipyard packages (.NET ProjectReference OR pnpm workspace), see `README.md` for sibling-folder layout requirement: `shipyard/` must be cloned at sibling level for builds to resolve.
 
 ## Migration history
 

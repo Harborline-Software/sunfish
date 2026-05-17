@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="src/Sunfish.Anchor.csproj" />
+  <Project Path="src/tests/tests.csproj" />
+</Solution>

@@ -87,30 +87,30 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\packages\foundation-identity-atlas\Sunfish.Foundation.IdentityAtlas.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\foundation-identity-atlas\Sunfish.Foundation.IdentityAtlas.csproj" />
     <!-- W#47 Phase 1 — needed for DimensionChangeKind + DimensionEvaluation in SystemRequirementsTests. -->
-    <ProjectReference Include="..\..\..\packages\foundation-mission-space\Sunfish.Foundation.MissionSpace.csproj" />
-    <ProjectReference Include="..\..\..\packages\foundation-localfirst\Sunfish.Foundation.LocalFirst.csproj" />
-    <ProjectReference Include="..\..\..\packages\foundation-recovery\Sunfish.Foundation.Recovery.csproj" />
-    <ProjectReference Include="..\..\..\packages\kernel-crdt\Sunfish.Kernel.Crdt.csproj" />
-    <ProjectReference Include="..\..\..\packages\kernel-runtime\Sunfish.Kernel.Runtime.csproj" />
-    <ProjectReference Include="..\..\..\packages\kernel-security\Sunfish.Kernel.Security.csproj" />
-    <ProjectReference Include="..\..\..\packages\kernel-sync\Sunfish.Kernel.Sync.csproj" />
-    <ProjectReference Include="..\..\..\packages\ui-adapters-blazor\Sunfish.UIAdapters.Blazor.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\foundation-mission-space\Sunfish.Foundation.MissionSpace.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\foundation-localfirst\Sunfish.Foundation.LocalFirst.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\foundation-recovery\Sunfish.Foundation.Recovery.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\kernel-crdt\Sunfish.Kernel.Crdt.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\kernel-runtime\Sunfish.Kernel.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\kernel-security\Sunfish.Kernel.Security.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\kernel-sync\Sunfish.Kernel.Sync.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\ui-adapters-blazor\Sunfish.UIAdapters.Blazor.csproj" />
     <!-- W#59 Phase 1 — exercise the AddSunfishTransport + AddSunfishCrewComms
          DI ordering that MauiProgram.cs depends on. -->
-    <ProjectReference Include="..\..\..\packages\foundation-channels\Sunfish.Foundation.Channels.csproj" />
-    <ProjectReference Include="..\..\..\packages\foundation-transport\Sunfish.Foundation.Transport.csproj" />
-    <ProjectReference Include="..\..\..\packages\blocks-crew-comms\Sunfish.Blocks.CrewComms.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\foundation-channels\Sunfish.Foundation.Channels.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\foundation-transport\Sunfish.Foundation.Transport.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\blocks-crew-comms\Sunfish.Blocks.CrewComms.csproj" />
     <!-- W#47 Phase 4 — a11y harness for WCAG 2.2 AA structural assertions per ADR 0034. -->
-    <ProjectReference Include="..\..\..\packages\ui-adapters-blazor-a11y\Sunfish.UIAdapters.Blazor.A11y.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\ui-adapters-blazor-a11y\Sunfish.UIAdapters.Blazor.A11y.csproj" />
     <!-- W#55 Phase 4 — DI resolution tests for Ship's Office block. -->
-    <ProjectReference Include="..\..\..\packages\foundation-ships-office\Sunfish.Foundation.ShipsOffice.csproj" />
-    <ProjectReference Include="..\..\..\packages\blocks-ships-office\Sunfish.Blocks.ShipsOffice.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\foundation-ships-office\Sunfish.Foundation.ShipsOffice.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\blocks-ships-office\Sunfish.Blocks.ShipsOffice.csproj" />
     <!-- W#54 Phase 4 — DI resolution tests for Sick Bay block. -->
-    <ProjectReference Include="..\..\..\packages\blocks-sick-bay\Sunfish.Blocks.SickBay.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\blocks-sick-bay\Sunfish.Blocks.SickBay.csproj" />
     <!-- W#54 Phase 4 — SickBayCommandService + MedevacServiceImpl stubs need IAuditTrail. -->
-    <ProjectReference Include="..\..\..\packages\kernel-audit\Sunfish.Kernel.Audit.csproj" />
+    <ProjectReference Include="..\..\..\shipyard\packages\kernel-audit\Sunfish.Kernel.Audit.csproj" />
   </ItemGroup>
 
 </Project>

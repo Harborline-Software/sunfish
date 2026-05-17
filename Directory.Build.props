@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Per-repo build properties. Declares sibling-shipyard path requirement.
+
+  This repo's ProjectReferences resolve to ../shipyard/packages/... and require
+  shipyard cloned at sibling level:
+
+    /some/path/
+    ├── shipyard/    ← required
+    ├── sunfish/    ← this repo
+    └── signal-bridge/
+
+  If shipyard is missing at sibling level, dotnet build will fail with
+  unresolved ProjectReference. Document this in the repo's README.md.
+-->
+<Project>
+  <PropertyGroup>
+    <SiblingShipyardPath>$(MSBuildThisFileDirectory)../shipyard</SiblingShipyardPath>
+    <ShipyardExists Condition="Exists('$(SiblingShipyardPath)/packages')">true</ShipyardExists>
+  </PropertyGroup>
+
+  <!-- Universal defaults inherited by every project in this repo unless overridden.
+       Mirrors the legacy SunfishSoftware/Sunfish/Directory.Build.props defaults
+       so projects that don't declare TargetFramework still build.
+       TreatWarningsAsErrors and analyzer auto-wiring intentionally deferred to
+       Phase 3 (namespace rename) — the shipyard-side props already carry those
+       for the packages projects that need them. -->
+  <PropertyGroup>
+    <TargetFramework Condition="'$(TargetFramework)' == '' AND '$(TargetFrameworks)' == ''">net11.0</TargetFramework>
+    <Nullable Condition="'$(Nullable)' == ''">enable</Nullable>
+    <ImplicitUsings Condition="'$(ImplicitUsings)' == ''">enable</ImplicitUsings>
+    <LangVersion Condition="'$(LangVersion)' == ''">latest</LangVersion>
+    <IsPackable Condition="'$(IsPackable)' == ''">false</IsPackable>
+  </PropertyGroup>
+
+  <Target Name="VerifyShipyardSibling" BeforeTargets="Build" Condition="'$(ShipyardExists)' != 'true'">
+    <Error Text="Sibling shipyard/ not found at $(SiblingShipyardPath). Clone Harborline-Software/shipyard alongside this repo." />
+  </Target>
+</Project>
