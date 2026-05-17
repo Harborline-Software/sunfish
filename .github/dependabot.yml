@@ -3,6 +3,8 @@ updates:
   # .NET Anchor app (MAUI)
   - package-ecosystem: nuget
     directory: /
+    assignees:
+      - "ctwoodwa"
     schedule:
       interval: weekly
       day: monday
@@ -29,6 +31,8 @@ updates:
   # Web (React) app
   - package-ecosystem: npm
     directory: /apps/web
+    assignees:
+      - "ctwoodwa"
     schedule:
       interval: weekly
       day: monday
@@ -53,6 +57,8 @@ updates:
   # Desktop (Tauri) shell — npm
   - package-ecosystem: npm
     directory: /apps/desktop
+    assignees:
+      - "ctwoodwa"
     schedule:
       interval: weekly
       day: monday
@@ -67,6 +73,8 @@ updates:
   # Desktop (Tauri) shell — Rust
   - package-ecosystem: cargo
     directory: /apps/desktop/src-tauri
+    assignees:
+      - "ctwoodwa"
     schedule:
       interval: weekly
       day: monday
@@ -76,6 +84,8 @@ updates:
 
   - package-ecosystem: github-actions
     directory: /
+    assignees:
+      - "ctwoodwa"
     schedule:
       interval: weekly
       day: monday
