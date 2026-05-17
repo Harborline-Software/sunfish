@@ -1,0 +1,77 @@
+name: RFC / Design Proposal
+description: Propose an architectural change or significant design decision for sunfish
+title: "RFC: <short title>"
+labels: ["rfc", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template for design-level proposals — anything that would normally become an ADR or a cross-cutting change. For bugs use the Bug Report template; for specific feature requests use Feature Request. For open-ended questions, start a [Discussion](https://github.com/Harborline-Software/sunfish/discussions) first.
+
+        Please follow the **Universal Planning Framework (UPF)** shape where applicable: surface the problem, list alternatives, name success and failure criteria. Cross-fleet design conventions live in `Harborline-Software/shipyard/_shared/engineering/`.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem statement
+      description: What problem does this RFC address? Two to four sentences. Cite constraints and who is affected.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-solution
+    attributes:
+      label: Proposed solution
+      description: What's your proposed approach? High-level shape, not implementation detail.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider, and why did you reject them? At least two alternatives.
+    validations:
+      required: true
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success criteria (measurable)
+    validations:
+      required: true
+  - type: textarea
+    id: failed-conditions
+    attributes:
+      label: FAILED conditions (kill criteria)
+      description: When would we conclude this RFC should be rolled back or abandoned?
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Scope
+      description: Which surface(s) does this touch?
+      multiple: true
+      options:
+        - src/ (Anchor MAUI)
+        - apps/web/ (React)
+        - apps/desktop/ (Tauri shell)
+        - Cross-repo (touches shipyard/ packages)
+        - Cross-repo (touches signal-bridge/ endpoints)
+        - Repo infrastructure / process / docs
+        - Other
+    validations:
+      required: true
+  - type: dropdown
+    id: adr-needed
+    attributes:
+      label: Does this need an ADR?
+      description: Significant architectural decisions become ADRs in shipyard/docs/adrs once the RFC converges.
+      options:
+        - "Yes — cross-cutting or long-lived decision"
+        - "No — reversible change within a single package"
+        - "Unsure"
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Links to related ADRs, docs, issues, external standards, or prior art.
