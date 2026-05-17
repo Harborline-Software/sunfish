@@ -22,4 +22,4 @@ If this repo depends on shipyard packages (.NET ProjectReference OR pnpm workspa
 
 ## Migration history
 
-Migrated 2026-05-17 from `SunfishSoftware/` legacy layout. See parent `MIGRATION.md` for details.
+Migrated 2026-05-17 from `Harborline-Software/` legacy layout. See parent `MIGRATION.md` for details.

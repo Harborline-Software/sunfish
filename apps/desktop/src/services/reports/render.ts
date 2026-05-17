@@ -9,24 +9,26 @@
  * Tauri-side prerequisite: `renderReportToFile` requires
  * `tauri-plugin-fs` to be added to `src-tauri/Cargo.toml` +
  * registered in `src-tauri/src/lib.rs` + a write capability in
- * `src-tauri/capabilities/default.json`. dev-win owns src-tauri/
+ * `src-tauri/capabilities/default.json`. po-win owns src-tauri/
  * changes per W#60 P4 routing — this scaffold ships the React API
  * shape with a clear pre-flight error so the caller can branch.
  */
 
-import { pdf, type DocumentProps } from '@react-pdf/renderer'
-import type { ReactElement } from 'react'
+import { pdf, type DocumentProps } from "@react-pdf/renderer";
+import type { ReactElement } from "react";
 
 /** A React element that renders a React-PDF `<Document>`. */
-export type PdfDocumentElement = ReactElement<DocumentProps>
+export type PdfDocumentElement = ReactElement<DocumentProps>;
 
 /** Render a React-PDF document to a Blob (browser + Tauri webview). */
-export async function renderReportToPdf(template: PdfDocumentElement): Promise<Blob> {
-  return pdf(template).toBlob()
+export async function renderReportToPdf(
+  template: PdfDocumentElement,
+): Promise<Blob> {
+  return pdf(template).toBlob();
 }
 
 function inTauri(): boolean {
-  return typeof window !== 'undefined' && '__TAURI_INTERNALS__' in window
+  return typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 }
 
 /**
@@ -36,7 +38,7 @@ function inTauri(): boolean {
  * Throws when:
  *   - not running inside the Tauri webview (use `renderReportToPdf`
  *     + a manual browser download instead);
- *   - the `@tauri-apps/plugin-fs` module isn't installed (dev-win
+ *   - the `@tauri-apps/plugin-fs` module isn't installed (po-win
  *     adds it when `tauri-plugin-fs` lands in src-tauri/).
  */
 export async function renderReportToFile(
@@ -45,18 +47,18 @@ export async function renderReportToFile(
 ): Promise<string> {
   if (!inTauri()) {
     throw new Error(
-      'renderReportToFile requires the Tauri runtime; ' +
-        'use renderReportToPdf + a browser download instead.',
-    )
+      "renderReportToFile requires the Tauri runtime; " +
+        "use renderReportToPdf + a browser download instead.",
+    );
   }
   // The JS binding is installed as a regular npm dep, but the Rust
   // plugin (tauri-plugin-fs) must also be registered in src-tauri/ +
   // a write capability granted in capabilities/default.json before
-  // writeFile actually succeeds. Until dev-win lands that, the call
+  // writeFile actually succeeds. Until po-win lands that, the call
   // will throw a Tauri-runtime error at the IPC boundary.
-  const { writeFile } = await import('@tauri-apps/plugin-fs')
-  const blob = await renderReportToPdf(template)
-  const bytes = new Uint8Array(await blob.arrayBuffer())
-  await writeFile(path, bytes)
-  return path
+  const { writeFile } = await import("@tauri-apps/plugin-fs");
+  const blob = await renderReportToPdf(template);
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  await writeFile(path, bytes);
+  return path;
 }

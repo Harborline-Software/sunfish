@@ -20,7 +20,7 @@
   </PropertyGroup>
 
   <!-- Universal defaults inherited by every project in this repo unless overridden.
-       Mirrors the legacy SunfishSoftware/Sunfish/Directory.Build.props defaults
+       Mirrors the legacy Harborline-Software/Sunfish/Directory.Build.props defaults
        so projects that don't declare TargetFramework still build.
        TreatWarningsAsErrors and analyzer auto-wiring intentionally deferred to
        Phase 3 (namespace rename) — the shipyard-side props already carry those

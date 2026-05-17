@@ -79,7 +79,7 @@
  * Light-mode values for the semantic-palette extensions (warning,
  * success, financial, status, priority) were added by #893; this block
  * defines the dark-mode counterparts that #893's PR description deferred
- * to "the rest of the dark theme once dev-win pushes their W#60 P4
+ * to "the rest of the dark theme once po-win pushes their W#60 P4
  * sweep". */
 @media (prefers-color-scheme: dark) {
   :root {
