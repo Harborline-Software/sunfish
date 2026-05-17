@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom'
 import { useLeases } from '@/hooks/useLeases'
 import { Badge } from '@/components/ui/badge'
-import type { Lease } from '@/api/erpnext'
+import type { LeaseSummary } from '@/api/leases'   // rebound from @/api/erpnext — W#74 PR 2
 
 function daysUntilExpiry(endDate: string): number {
   return Math.ceil((new Date(endDate).getTime() - Date.now()) / 86_400_000)
 }
 
-function LeaseStatusBadge({ status }: { status: Lease['status'] }) {
+function LeaseStatusBadge({ status }: { status: LeaseSummary['status'] }) {
   const variant = status === 'Active' ? ('success' as const) : status === 'Expired' ? ('outline' as const) : ('secondary' as const)
   return <Badge variant={variant}>{status}</Badge>
 }
@@ -37,14 +37,14 @@ export function LeasesPage() {
   if (!leases?.length) {
     return (
       <div className="flex items-center justify-center h-48 text-gray-500">
-        No leases found. Create a Lease record in ERPNext.
+        No leases found. Add a lease in the cockpit to get started.
       </div>
     )
   }
 
   const now = Date.now()
   const expiringLeases = leases.filter(
-    (l) => l.status === 'Active' && new Date(l.end_date).getTime() - now < 60 * 86_400_000,
+    (l) => l.status === 'Active' && new Date(l.endDate).getTime() - now < 60 * 86_400_000,
   )
 
   return (
@@ -61,8 +61,8 @@ export function LeasesPage() {
           </p>
           <ul className="mt-1 list-disc pl-5 text-sm text-amber-700">
             {expiringLeases.map((l) => (
-              <li key={l.name}>
-                {l.tenant} — {l.property} ({daysUntilExpiry(l.end_date)} days)
+              <li key={l.leaseId}>
+                {l.tenantDisplayName} — {l.propertyDisplayName ?? l.propertyId ?? '—'} ({daysUntilExpiry(l.endDate)} days)
               </li>
             ))}
           </ul>
@@ -84,18 +84,18 @@ export function LeasesPage() {
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
             {leases.map((l) => {
-              const days = daysUntilExpiry(l.end_date)
+              const days = daysUntilExpiry(l.endDate)
               const expiringSoon = l.status === 'Active' && days < 60
               return (
-                <tr key={l.name} className={expiringSoon ? 'bg-amber-50' : undefined}>
-                  <td className="px-4 py-3 font-medium text-gray-900">{l.tenant}</td>
+                <tr key={l.leaseId} className={expiringSoon ? 'bg-amber-50' : undefined}>
+                  <td className="px-4 py-3 font-medium text-gray-900">{l.tenantDisplayName}</td>
                   <td className="px-4 py-3 text-gray-600">
-                    {l.property}
-                    {l.unit ? ` · ${l.unit}` : ''}
+                    {l.propertyDisplayName ?? l.propertyId ?? '—'}
+                    {l.unitId ? ` · ${l.unitId}` : ''}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{l.start_date}</td>
+                  <td className="px-4 py-3 text-gray-600">{l.startDate}</td>
                   <td className="px-4 py-3 text-gray-600">
-                    {l.end_date}
+                    {l.endDate}
                     {expiringSoon && (
                       <Badge variant="warning" className="ml-2 text-xs">
                         {days}d
@@ -103,14 +103,14 @@ export function LeasesPage() {
                     )}
                   </td>
                   <td className="px-4 py-3 text-right text-gray-900">
-                    ${l.monthly_rent.toLocaleString()}
+                    ${l.monthlyRent.toLocaleString()}
                   </td>
                   <td className="px-4 py-3">
                     <LeaseStatusBadge status={l.status} />
                   </td>
                   <td className="px-4 py-3 text-right">
                     <Link
-                      to={`/leases/${l.name}`}
+                      to={`/leases/${l.leaseId}`}
                       className="text-blue-600 hover:text-blue-800 text-xs"
                     >
                       Detail →

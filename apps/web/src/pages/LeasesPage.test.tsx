@@ -4,7 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { LeasesPage } from './LeasesPage'
 import * as useLeaseHook from '@/hooks/useLeases'
-import type { Lease } from '@/api/erpnext'
+import type { LeaseSummary } from '@/api/leases'  // rebound from @/api/erpnext — W#74 PR 2
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -19,28 +19,28 @@ function wrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-const MOCK_LEASES: Lease[] = [
+const MOCK_LEASES: LeaseSummary[] = [
   {
-    name: 'LEASE-0001',
-    tenant: 'Jane Smith',
-    property: '150 Lexington Ct',
-    unit: 'Unit 1',
-    start_date: '2025-01-01',
-    end_date: '2025-12-31',
-    monthly_rent: 1500,
+    leaseId: 'lease-ulid-0001',
+    tenantDisplayName: 'Jane Smith',
+    propertyId: 'prop-001',
+    propertyDisplayName: '150 Lexington Ct',
+    unitId: 'unit-1',
+    startDate: '2025-01-01',
+    endDate: '2025-12-31',
+    monthlyRent: 1500,
     status: 'Active',
-    company: 'Royal Key Management LLC',
   },
   {
-    name: 'LEASE-0002',
-    tenant: 'Bob Jones',
-    property: '200 Oak Ave',
-    unit: '',
-    start_date: '2024-06-01',
-    end_date: '2024-12-31',
-    monthly_rent: 2000,
+    leaseId: 'lease-ulid-0002',
+    tenantDisplayName: 'Bob Jones',
+    propertyId: 'prop-002',
+    propertyDisplayName: '200 Oak Ave',
+    unitId: null,
+    startDate: '2024-06-01',
+    endDate: '2024-12-31',
+    monthlyRent: 2000,
     status: 'Expired',
-    company: 'Royal Key Management LLC',
   },
 ]
 
@@ -62,7 +62,7 @@ describe('LeasesPage', () => {
     expect(screen.getByText(/loading leases/i)).toBeInTheDocument()
   })
 
-  it('renders lease rows for each lease', () => {
+  it('renders lease rows with new DTO field names', () => {
     vi.spyOn(useLeaseHook, 'useLeases').mockReturnValue({
       data: MOCK_LEASES,
       isPending: false,
@@ -76,6 +76,27 @@ describe('LeasesPage', () => {
     expect(screen.getByText('Bob Jones')).toBeInTheDocument()
     expect(screen.getByText('$1,500')).toBeInTheDocument()
     expect(screen.getByText('$2,000')).toBeInTheDocument()
+    // propertyDisplayName renders instead of legacy property field
+    expect(screen.getByText('150 Lexington Ct')).toBeInTheDocument()
+  })
+
+  it('renders property fallback when propertyDisplayName is null', () => {
+    const noName: LeaseSummary = {
+      ...MOCK_LEASES[0],
+      leaseId: 'L-X',
+      propertyDisplayName: null,
+      propertyId: 'prop-fallback',
+    }
+    vi.spyOn(useLeaseHook, 'useLeases').mockReturnValue({
+      data: [noName],
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useLeaseHook.useLeases>)
+
+    render(<LeasesPage />, { wrapper })
+    expect(screen.getByText('prop-fallback')).toBeInTheDocument()
   })
 
   it('shows error state when fetch fails', () => {
@@ -92,7 +113,7 @@ describe('LeasesPage', () => {
     expect(screen.getByText('Network error')).toBeInTheDocument()
   })
 
-  it('shows empty state when no leases', () => {
+  it('shows updated empty-state copy (no ERPNext reference)', () => {
     vi.spyOn(useLeaseHook, 'useLeases').mockReturnValue({
       data: [],
       isPending: false,
@@ -103,5 +124,8 @@ describe('LeasesPage', () => {
 
     render(<LeasesPage />, { wrapper })
     expect(screen.getByText(/no leases found/i)).toBeInTheDocument()
+    expect(screen.getByText(/add a lease in the cockpit/i)).toBeInTheDocument()
+    // The old ERPNext copy must not appear
+    expect(screen.queryByText(/ERPNext/i)).not.toBeInTheDocument()
   })
 })
