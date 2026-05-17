@@ -20,7 +20,7 @@
   "dependencies": {
     "@microsoft/signalr": "^8.0.0",
     "@react-pdf/renderer": "^4.5.1",
-    "@sunfish/ui-react": "file:../../packages/ui-react",
+    "@sunfish/ui-react": "file:../../../shipyard/packages/ui-react",
     "@tanstack/react-query": "^5.0.0",
     "@tauri-apps/api": "^2.0.0",
     "@tauri-apps/plugin-fs": "^2.5.1",

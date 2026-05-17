@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@microsoft/signalr": "^8.0.0",
-    "@sunfish/ui-react": "file:../../packages/ui-react",
+    "@sunfish/ui-react": "file:../../../shipyard/packages/ui-react",
     "@tanstack/react-query": "^5.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
@@ -47,5 +47,5 @@
     "vite": "^7.3.2",
     "vitest": "^4.1.6"
   },
-  "description": "RETIRED in W#60 Phase 3 — use apps/anchor-tauri instead"
+  "description": "RETIRED in W#60 Phase 3 \u2014 use apps/anchor-tauri instead"
 }
