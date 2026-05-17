@@ -33,7 +33,7 @@ url = "2"
 #   - `apple-native`          → macOS / iOS Keychain
 #   - `sync-secret-service`   → Linux Secret Service (libsecret), sync API
 keyring = { version = "3", features = ["windows-native", "apple-native", "sync-secret-service"] }
-rand = "0.8"
+rand = "0.9"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros"] }
