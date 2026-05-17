@@ -10,10 +10,6 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      // ui-react lives in sibling shipyard repo (not inside sunfish). Keep
-      // in sync with package.json's `file:../../../shipyard/packages/ui-react`
-      // and tauri-build.yml's sibling-shipyard checkout (path: shipyard).
-      '@sunfish/ui-react': fileURLToPath(new URL('../../../shipyard/packages/ui-react/src', import.meta.url)),
     },
   },
   clearScreen: false,
