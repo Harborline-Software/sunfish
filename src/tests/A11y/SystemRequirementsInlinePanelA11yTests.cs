@@ -96,18 +96,26 @@ public sealed class SystemRequirementsInlinePanelA11yTests
     private static string LocateRazorSourceOrFail(string fileName)
     {
         const int MaxDepth = 12;
-        var visited = new System.Collections.Generic.List<string>();
+        // Post-migration (2026-05-17): repo is `sunfish/` with components at
+        // `src/Components/`. Pre-migration used `accelerators/anchor/Components/`.
+        string[] relativeBases =
+        {
+            Path.Combine("src", "Components"),
+            "Components",
+            Path.Combine("accelerators", "anchor", "Components"),
+        };
         var current = new DirectoryInfo(AppContext.BaseDirectory);
         for (int depth = 0; depth < MaxDepth && current is not null; depth++)
         {
-            var candidate = Path.Combine(
-                current.FullName, "accelerators", "anchor", "Components", fileName);
-            if (File.Exists(candidate)) return candidate;
-            visited.Add(current.FullName);
+            foreach (var rel in relativeBases)
+            {
+                var candidate = Path.Combine(current.FullName, rel, fileName);
+                if (File.Exists(candidate)) return candidate;
+            }
             current = current.Parent;
         }
         throw new InvalidOperationException(
             $"Could not locate {fileName} after walking {MaxDepth} levels up from " +
-            $"'{AppContext.BaseDirectory}'. Visited: {string.Join(", ", visited)}");
+            $"'{AppContext.BaseDirectory}'. Tried bases: {string.Join(", ", relativeBases)}");
     }
 }
