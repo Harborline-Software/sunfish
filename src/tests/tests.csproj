@@ -1,0 +1,116 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <AssemblyName>Sunfish.Anchor.Tests</AssemblyName>
+    <RootNamespace>Sunfish.Anchor.Tests</RootNamespace>
+    <!--
+      The Anchor csproj multi-targets net11.0-windows10.0.19041.0; we only need
+      the pure-.NET services for unit tests (AnchorSessionService, QrOnboardingService).
+      Compile the source files directly against net11.0 to sidestep the MAUI
+      workload requirement on CI.
+    -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="NSubstitute" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="System.Formats.Cbor" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Compile only the MAUI-free Anchor services directly. We deliberately
+         do NOT ProjectReference the Anchor csproj because it targets
+         net11.0-windows* / net11.0-maccatalyst and requires the MAUI workload.
+         AnchorBootstrapHostedService is excluded because it references
+         Microsoft.Maui.Storage (Preferences, FileSystem) which is only
+         available in the MAUI-workload targets. Wave 6.7.A replaced the
+         AnchorRootSeedReader stub with the keystore-backed
+         IRootSeedProvider in Sunfish.Kernel.Security; MauiProgram now
+         resolves the seed from DI at composition time.
+         AnchorV1MigrationService is MAUI-free (takes dataDirectory in ctor)
+         so it compiles here for Wave 6.7 migration tests.
+         Phase 1 G1 — AnchorSyncHostedService is MAUI-free (takes IGossipDaemon
+         + IPeerDiscovery + ILogger via constructor) so it compiles here for
+         the gossip-daemon hosted-service tests. -->
+    <Compile Include="..\Services\AnchorSessionService.cs" Link="Anchor\AnchorSessionService.cs" />
+    <Compile Include="..\Services\QrOnboardingService.cs" Link="Anchor\QrOnboardingService.cs" />
+    <Compile Include="..\Services\MauiHostedServiceLifetime.cs" Link="Anchor\MauiHostedServiceLifetime.cs" />
+    <Compile Include="..\Services\AnchorV1MigrationService.cs" Link="Anchor\AnchorV1MigrationService.cs" />
+    <Compile Include="..\Services\AnchorSyncHostedService.cs" Link="Anchor\AnchorSyncHostedService.cs" />
+    <Compile Include="..\Services\AnchorCrdtDeltaBridge.cs" Link="Anchor\AnchorCrdtDeltaBridge.cs" />
+    <Compile Include="..\Services\AnchorBackupService.cs" Link="Anchor\AnchorBackupService.cs" />
+    <Compile Include="..\Services\BackupManifest.cs" Link="Anchor\BackupManifest.cs" />
+    <!-- W#23 Phase 0 — MAUI-free pairing surface; compiles directly here. -->
+    <Compile Include="..\Services\Pairing\PairingToken.cs" Link="Anchor\Pairing\PairingToken.cs" />
+    <Compile Include="..\Services\Pairing\IPairingService.cs" Link="Anchor\Pairing\IPairingService.cs" />
+    <Compile Include="..\Services\Pairing\HmacPairingService.cs" Link="Anchor\Pairing\HmacPairingService.cs" />
+    <!-- W#59 Phase 2 — TeamMembershipCrewRoster is MAUI-free (depends only
+         on IPeerDiscovery + IActiveTeamAccessor + ICrewRoster). -->
+    <Compile Include="..\Services\TeamMembershipCrewRoster.cs" Link="Anchor\TeamMembershipCrewRoster.cs" />
+    <!-- W#59 Phase 3 — listener hosted service + invitation bus are
+         MAUI-free (depend only on foundation-channels + kernel-runtime). -->
+    <Compile Include="..\Services\CrewCommsInvitationBus.cs" Link="Anchor\CrewCommsInvitationBus.cs" />
+    <Compile Include="..\Services\CrewCommsListenerHostedService.cs" Link="Anchor\CrewCommsListenerHostedService.cs" />
+    <!-- W#58 Phase 1a — Identity Atlas surface is MAUI-free. -->
+    <Compile Include="..\Services\AnchorIdentityAtlasSurface.cs" Link="Anchor\AnchorIdentityAtlasSurface.cs" />
+    <!-- W#47 Phase 1 — platform-key + dimension-loc-key helpers are MAUI-free. -->
+    <Compile Include="..\Services\SystemRequirementsViewHelpers.cs" Link="Anchor\SystemRequirementsViewHelpers.cs" />
+    <!-- W#47 Phase 2 — renderer + surface interface are MAUI-free; surface concrete class is not. -->
+    <Compile Include="..\Services\IAnchorSystemRequirementsSurface.cs" Link="Anchor\IAnchorSystemRequirementsSurface.cs" />
+    <Compile Include="..\Services\AnchorMauiSystemRequirementsRenderer.cs" Link="Anchor\AnchorMauiSystemRequirementsRenderer.cs" />
+    <!-- W#47 Phase 3 — regression observer is MAUI-free (depends only on
+         IMissionEnvelopeProvider + IMinimumSpecResolver from foundation-mission-space). -->
+    <Compile Include="..\Services\SystemRequirementsRegressionObserver.cs" Link="Anchor\SystemRequirementsRegressionObserver.cs" />
+    <!-- W#63 Phase 2 — recovery-host pipeline is MAUI-free (depends only on
+         foundation-recovery + Microsoft.Extensions.Hosting/Logging/Options). -->
+    <Compile Include="..\Services\IRecoveryCompletionHandler.cs" Link="Anchor\IRecoveryCompletionHandler.cs" />
+    <Compile Include="..\Services\AnchorRecoveryCompletionHandler.cs" Link="Anchor\AnchorRecoveryCompletionHandler.cs" />
+    <Compile Include="..\Services\RecoveryHostOptions.cs" Link="Anchor\RecoveryHostOptions.cs" />
+    <Compile Include="..\Services\RecoveryGracePollingService.cs" Link="Anchor\RecoveryGracePollingService.cs" />
+    <!-- W#67 PR 4 — IEphemeralRecoveryKeyStore + in-memory impl are MAUI-free;
+         the MAUI SecureStorage-backed implementation lives in the Anchor csproj
+         and is registered in MauiProgram (production binding). -->
+    <Compile Include="..\Services\IEphemeralRecoveryKeyStore.cs" Link="Anchor\IEphemeralRecoveryKeyStore.cs" />
+    <Compile Include="..\Services\InMemoryEphemeralRecoveryKeyStore.cs" Link="Anchor\InMemoryEphemeralRecoveryKeyStore.cs" />
+    <!-- W#66 — RecoveryAttestationSubmitter composes W#65 ISessionSignerAccessor
+         with IRecoveryCoordinator; MAUI-free (no Razor / no MAUI deps). -->
+    <Compile Include="..\Services\RecoveryAttestationSubmitter.cs" Link="Anchor\RecoveryAttestationSubmitter.cs" />
+    <!-- W#67 PR 5 — TrusteeSetupService composes IRecoveryCoordinator +
+         IRootSeedProvider + IX25519KeyAgreement; MAUI-free. -->
+    <Compile Include="..\Services\TrusteeSetupService.cs" Link="Anchor\TrusteeSetupService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\packages\foundation-identity-atlas\Sunfish.Foundation.IdentityAtlas.csproj" />
+    <!-- W#47 Phase 1 — needed for DimensionChangeKind + DimensionEvaluation in SystemRequirementsTests. -->
+    <ProjectReference Include="..\..\..\packages\foundation-mission-space\Sunfish.Foundation.MissionSpace.csproj" />
+    <ProjectReference Include="..\..\..\packages\foundation-localfirst\Sunfish.Foundation.LocalFirst.csproj" />
+    <ProjectReference Include="..\..\..\packages\foundation-recovery\Sunfish.Foundation.Recovery.csproj" />
+    <ProjectReference Include="..\..\..\packages\kernel-crdt\Sunfish.Kernel.Crdt.csproj" />
+    <ProjectReference Include="..\..\..\packages\kernel-runtime\Sunfish.Kernel.Runtime.csproj" />
+    <ProjectReference Include="..\..\..\packages\kernel-security\Sunfish.Kernel.Security.csproj" />
+    <ProjectReference Include="..\..\..\packages\kernel-sync\Sunfish.Kernel.Sync.csproj" />
+    <ProjectReference Include="..\..\..\packages\ui-adapters-blazor\Sunfish.UIAdapters.Blazor.csproj" />
+    <!-- W#59 Phase 1 — exercise the AddSunfishTransport + AddSunfishCrewComms
+         DI ordering that MauiProgram.cs depends on. -->
+    <ProjectReference Include="..\..\..\packages\foundation-channels\Sunfish.Foundation.Channels.csproj" />
+    <ProjectReference Include="..\..\..\packages\foundation-transport\Sunfish.Foundation.Transport.csproj" />
+    <ProjectReference Include="..\..\..\packages\blocks-crew-comms\Sunfish.Blocks.CrewComms.csproj" />
+    <!-- W#47 Phase 4 — a11y harness for WCAG 2.2 AA structural assertions per ADR 0034. -->
+    <ProjectReference Include="..\..\..\packages\ui-adapters-blazor-a11y\Sunfish.UIAdapters.Blazor.A11y.csproj" />
+    <!-- W#55 Phase 4 — DI resolution tests for Ship's Office block. -->
+    <ProjectReference Include="..\..\..\packages\foundation-ships-office\Sunfish.Foundation.ShipsOffice.csproj" />
+    <ProjectReference Include="..\..\..\packages\blocks-ships-office\Sunfish.Blocks.ShipsOffice.csproj" />
+    <!-- W#54 Phase 4 — DI resolution tests for Sick Bay block. -->
+    <ProjectReference Include="..\..\..\packages\blocks-sick-bay\Sunfish.Blocks.SickBay.csproj" />
+    <!-- W#54 Phase 4 — SickBayCommandService + MedevacServiceImpl stubs need IAuditTrail. -->
+    <ProjectReference Include="..\..\..\packages\kernel-audit\Sunfish.Kernel.Audit.csproj" />
+  </ItemGroup>
+
+</Project>
