@@ -113,7 +113,9 @@ public sealed class SystemRequirementsRendererDispatchTests
         while (current is not null && anchorBin is null)
         {
             // Post-migration (2026-05-17): bin is at src/bin/. Pre-migration: accelerators/anchor/bin/.
-            foreach (var rel in new[] { Path.Combine("src", "bin"), "bin", Path.Combine("accelerators", "anchor", "bin") })
+            // Note: bare "bin" is intentionally omitted — it would falsely match the test project's
+            // own bin directory (src/tests/bin) before reaching the Anchor project's src/bin.
+            foreach (var rel in new[] { Path.Combine("src", "bin"), Path.Combine("accelerators", "anchor", "bin") })
             {
                 var candidate = Path.Combine(current.FullName, rel);
                 if (Directory.Exists(candidate)) { anchorBin = new DirectoryInfo(candidate); break; }
