@@ -1,0 +1,62 @@
+name: SBOM
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    name: Generate CycloneDX SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+
+      - name: Checkout sibling shipyard
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: sunfish/global.json
+
+      - name: Generate SBOM (reuse shipyard tooling)
+        working-directory: sunfish
+        run: |
+          if [ -x ../shipyard/tooling/sbom/generate-sbom.sh ]; then
+            bash ../shipyard/tooling/sbom/generate-sbom.sh
+          else
+            echo "shipyard tooling/sbom/generate-sbom.sh not found; falling back to dotnet CycloneDX."
+            dotnet tool install --global CycloneDX 2>/dev/null || true
+            mkdir -p sbom
+            dotnet CycloneDX Sunfish.slnx -o sbom/ -fn sunfish.cdx.json || true
+          fi
+
+      - name: Upload SBOM as workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: sunfish-sbom
+          path: |
+            sunfish/sbom/*.cdx.json
+            sunfish/sbom/*.cdx.sha256
+
+      - name: Attach SBOM to release
+        if: github.event_name == 'release'
+        working-directory: sunfish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            sbom/*.cdx.json \
+            sbom/*.cdx.sha256 \
+            --clobber || true

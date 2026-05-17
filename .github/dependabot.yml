@@ -1,0 +1,84 @@
+version: 2
+updates:
+  # .NET Anchor app (MAUI)
+  - package-ecosystem: nuget
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      maui:
+        patterns:
+          - "Microsoft.Maui.*"
+          - "Microsoft.AspNetCore.Components.WebView.Maui"
+      aspnetcore:
+        patterns:
+          - "Microsoft.AspNetCore.*"
+      testing:
+        patterns:
+          - "xunit*"
+          - "bunit*"
+          - "NSubstitute*"
+          - "Microsoft.NET.Test.Sdk"
+          - "coverlet.*"
+
+  # Web (React) app
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "@types/react*"
+      vite:
+        patterns:
+          - "vite"
+          - "@vitejs/*"
+      tailwind:
+        patterns:
+          - "tailwindcss"
+          - "@tailwindcss/*"
+
+  # Desktop (Tauri) shell — npm
+  - package-ecosystem: npm
+    directory: /apps/desktop
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    groups:
+      tauri:
+        patterns:
+          - "@tauri-apps/*"
+
+  # Desktop (Tauri) shell — Rust
+  - package-ecosystem: cargo
+    directory: /apps/desktop/src-tauri
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"

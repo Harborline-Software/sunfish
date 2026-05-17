@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - '**/*.md'
+      - '.wolf/**'
+      - 'docs/**'
+      - '.github/CODEOWNERS'
+      - '.gitignore'
+      - 'LICENSE*'
+      - 'NOTICE*'
+  push:
+    branches: [main]
+
+# sunfish/src/Sunfish.Anchor.csproj is a MAUI Blazor Hybrid project whose
+# csproj conditionally targets net11.0-windows on Windows and net11.0-maccatalyst
+# elsewhere. The maccatalyst workload pack is not installable on Linux runners
+# (NETSDK1178), so CI for the MAUI surface must run on Windows.
+#
+# sunfish's csproj ProjectReferences resolve to ../shipyard/packages/...
+# CI checks out the sibling shipyard repo so paths resolve cleanly.
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+
+      - name: Checkout sibling shipyard
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: sunfish/global.json
+
+      - name: Restore .NET workloads
+        working-directory: sunfish
+        run: dotnet workload restore Sunfish.slnx
+
+      - name: Restore sunfish
+        working-directory: sunfish
+        run: dotnet restore Sunfish.slnx
+
+      - name: Build sunfish
+        working-directory: sunfish
+        run: dotnet build Sunfish.slnx --no-restore
+
+      - name: Test sunfish (unit-tier)
+        working-directory: sunfish
+        run: |
+          dotnet test Sunfish.slnx --no-build `
+            --filter "FullyQualifiedName!~Postgres.Tests&FullyQualifiedName!~A11y.Tests&FullyQualifiedName!~Tests.Integration" `
+            --logger "trx" `
+            --results-directory TestResults
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-results
+          path: sunfish/TestResults/

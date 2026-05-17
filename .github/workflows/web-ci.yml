@@ -1,0 +1,74 @@
+name: web CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/web-ci.yml'
+
+# sunfish/apps/web/ depends on shipyard/packages/ui-react (renamed from
+# packages/ui-react in legacy SunfishSoftware/Sunfish/). CI builds the sibling
+# ui-react first, then sunfish/apps/web installs + lints + tests + builds.
+
+permissions:
+  contents: read
+
+jobs:
+  lint-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+
+      - name: Checkout sibling shipyard
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: sunfish/apps/web/package-lock.json
+
+      - name: Build @sunfish/ui-react (sibling shipyard)
+        working-directory: shipyard/packages/ui-react
+        run: |
+          if [ -f package.json ]; then
+            npm install
+            npm run build
+          else
+            echo "shipyard/packages/ui-react/package.json not found; skipping ui-react prebuild."
+          fi
+
+      - name: npm ci (sunfish/apps/web)
+        working-directory: sunfish/apps/web
+        run: npm ci
+
+      - name: Lint
+        working-directory: sunfish/apps/web
+        run: npm run lint
+
+      - name: Typecheck
+        working-directory: sunfish/apps/web
+        run: npm run typecheck
+
+      - name: Test
+        working-directory: sunfish/apps/web
+        run: npm test -- --run
+
+      - name: Build
+        working-directory: sunfish/apps/web
+        run: npm run build

@@ -1,0 +1,70 @@
+name: CodeQL
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '30 4 * * 1'
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ${{ matrix.runner }}
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: csharp
+            runner: windows-latest
+          - language: javascript-typescript
+            runner: ubuntu-latest
+
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+
+      - name: Checkout sibling shipyard
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+
+      - name: Setup .NET
+        if: matrix.language == 'csharp'
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: sunfish/global.json
+
+      - uses: actions/setup-node@v6
+        if: matrix.language == 'javascript-typescript'
+        with:
+          node-version: '22'
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+
+      - name: Build (csharp)
+        if: matrix.language == 'csharp'
+        working-directory: sunfish
+        shell: bash
+        run: |
+          dotnet workload restore Sunfish.slnx
+          dotnet restore Sunfish.slnx
+          dotnet build Sunfish.slnx --no-restore
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:${{ matrix.language }}

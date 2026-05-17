@@ -1,0 +1,21 @@
+# CODEOWNERS — sunfish (local-first property ERP)
+
+*                               @ctwoodwa
+
+# Repo infrastructure
+/.github/                       @ctwoodwa
+/CLAUDE.md                      @ctwoodwa
+/README.md                      @ctwoodwa
+/Directory.Build.props          @ctwoodwa
+/Directory.Packages.props       @ctwoodwa
+/global.json                    @ctwoodwa
+/Sunfish.slnx                   @ctwoodwa
+
+# Anchor MAUI app
+/src/                           @ctwoodwa
+
+# Web (React) — was apps/anchor-react in legacy SunfishSoftware
+/apps/web/                      @ctwoodwa
+
+# Desktop (Tauri shell) — was apps/anchor-tauri
+/apps/desktop/                  @ctwoodwa
