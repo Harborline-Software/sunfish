@@ -4,7 +4,7 @@ pub mod sync;
 
 use std::sync::Arc;
 
-use rand::RngCore;
+use rand::TryRngCore;
 use tauri::Manager;
 
 /// Service name used for the OS-keychain entry that backs Stronghold's master key.
@@ -58,8 +58,18 @@ fn derive_stronghold_master_key() -> Result<Vec<u8>, String> {
         }
         Err(_) => {
             // No entry yet (first launch) — generate + persist.
+            //
+            // rand 0.10: `OsRng` no longer impls the infallible `RngCore`;
+            // it impls only `TryRngCore`. Use `try_fill_bytes` and propagate
+            // the error via the function's existing `Result<_, String>` shape.
+            // A CSPRNG initialization failure here is unrecoverable for the
+            // session — `keychain_status` surfaces it to the JS AuthGate so
+            // the user sees a precise banner instead of an opaque Stronghold
+            // decryption error (council A1.4).
             let mut key = vec![0u8; STRONGHOLD_KEY_LEN];
-            rand::rngs::OsRng.fill_bytes(&mut key);
+            rand::rngs::OsRng
+                .try_fill_bytes(&mut key)
+                .map_err(|e| format!("OS CSPRNG fill failed: {e}"))?;
             entry
                 .set_secret(&key)
                 .map_err(|e| format!("keyring set_secret: {e}"))?;
