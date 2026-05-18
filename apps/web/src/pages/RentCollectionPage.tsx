@@ -39,14 +39,14 @@ export function RentCollectionPage() {
   }
 
   if (confirmation) {
-    const lease = leases?.find((l) => l.name === selectedLease)
+    const lease = leases?.find((l) => l.leaseId === selectedLease)
     return (
       <div className="max-w-md">
         <div className="rounded-lg border border-green-200 bg-green-50 p-6">
           <h2 className="text-lg font-semibold text-green-800">Payment recorded</h2>
           <p className="mt-1 text-sm text-gray-700">
             <strong>${parseFloat(amount).toLocaleString()}</strong> recorded for{' '}
-            {lease?.tenant ?? selectedLease} (ref: {confirmation}).
+            {lease?.tenantDisplayName ?? selectedLease} (ref: {confirmation}).
           </p>
           <p className="mt-1 text-sm text-gray-500">
             Verify in ERPNext admin that the ledger entry is correct.
@@ -101,9 +101,9 @@ export function RentCollectionPage() {
                 {leases
                   ?.filter((l) => l.status === 'Active')
                   .map((l) => (
-                    <option key={l.name} value={l.name}>
-                      {l.tenant} — {l.property}
-                      {l.unit ? ` · ${l.unit}` : ''} (${l.monthly_rent.toLocaleString()}/mo)
+                    <option key={l.leaseId} value={l.leaseId}>
+                      {l.tenantDisplayName} — {l.propertyDisplayName ?? l.propertyId}
+                      {l.unitId ? ` · ${l.unitId}` : ''} (${l.monthlyRent.toLocaleString()}/mo)
                     </option>
                   ))}
               </select>
@@ -127,7 +127,7 @@ export function RentCollectionPage() {
               {selectedLease && leases && (
                 <p className="mt-1 text-xs text-gray-500">
                   Monthly rent: $
-                  {leases.find((l) => l.name === selectedLease)?.monthly_rent.toLocaleString() ?? '—'}
+                  {leases.find((l) => l.leaseId === selectedLease)?.monthlyRent.toLocaleString() ?? '—'}
                 </p>
               )}
             </div>
