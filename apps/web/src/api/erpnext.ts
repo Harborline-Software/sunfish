@@ -26,7 +26,18 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return resp.json() as Promise<T>
 }
 
+/**
+ * @deprecated W#74 Cohort 1 rebound this surface to /api/v1/properties.
+ * Use `import { getProperties } from '@/api/properties'` instead.
+ * Will be removed in Cohort 4 (RB-12). ERPNext remains the migration
+ * source but is no longer the runtime data plane.
+ */
 export async function getProperties(): Promise<Property[]> {
+  if (import.meta.env.DEV) {
+    console.warn(
+      '[erpnext] getProperties() is deprecated. Use getProperties from @/api/properties. Removed in Cohort 4.',
+    )
+  }
   const result = await apiFetch<ERPNextListResponse<Property>>('/api/v1/erpnext/properties')
   return result.data
 }
@@ -61,12 +72,32 @@ export interface RecordPaymentInput {
   PaymentMethod: string
 }
 
+/**
+ * @deprecated W#74 Cohort 1 rebound this surface to /api/v1/leases.
+ * Use `import { getLeases } from '@/api/leases'` instead.
+ * Will be removed in Cohort 4 (RB-12).
+ */
 export async function getLeases(): Promise<Lease[]> {
+  if (import.meta.env.DEV) {
+    console.warn(
+      '[erpnext] getLeases() is deprecated. Use getLeases from @/api/leases. Removed in Cohort 4.',
+    )
+  }
   const result = await apiFetch<ERPNextListResponse<Lease>>('/api/v1/erpnext/leases')
   return result.data
 }
 
+/**
+ * @deprecated W#74 Cohort 1 rebound this surface to /api/v1/leases/{id}.
+ * Use `import { getLease } from '@/api/leases'` instead.
+ * Will be removed in Cohort 4 (RB-12).
+ */
 export async function getLease(name: string): Promise<Lease> {
+  if (import.meta.env.DEV) {
+    console.warn(
+      '[erpnext] getLease() is deprecated. Use getLease from @/api/leases. Removed in Cohort 4.',
+    )
+  }
   const result = await apiFetch<{ data: Lease }>(`/api/v1/erpnext/leases/${encodeURIComponent(name)}`)
   return result.data
 }
@@ -142,12 +173,32 @@ export interface UpdateMaintenanceInput {
   Resolution?: string
 }
 
+/**
+ * @deprecated W#74 Cohort 1 rebound this surface to /api/v1/cockpit/work-orders.
+ * Use `import { getWorkOrders } from '@/api/maintenance'` instead.
+ * Will be removed in Cohort 4 (RB-12).
+ */
 export async function getMaintenanceTickets(): Promise<MaintenanceTicket[]> {
+  if (import.meta.env.DEV) {
+    console.warn(
+      '[erpnext] getMaintenanceTickets() is deprecated. Use getWorkOrders from @/api/maintenance. Removed in Cohort 4.',
+    )
+  }
   const result = await apiFetch<{ data: MaintenanceTicket[] }>('/api/v1/erpnext/maintenance')
   return result.data
 }
 
+/**
+ * @deprecated W#74 Cohort 1 rebound this surface to POST /api/v1/cockpit/work-orders.
+ * Use `import { createWorkOrder } from '@/api/maintenance'` instead.
+ * Will be removed in Cohort 4 (RB-12).
+ */
 export async function createMaintenanceTicket(payload: CreateMaintenanceInput): Promise<{ data: MaintenanceTicket }> {
+  if (import.meta.env.DEV) {
+    console.warn(
+      '[erpnext] createMaintenanceTicket() is deprecated. Use createWorkOrder from @/api/maintenance. Removed in Cohort 4.',
+    )
+  }
   return apiFetch<{ data: MaintenanceTicket }>('/api/v1/erpnext/maintenance', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -155,7 +206,16 @@ export async function createMaintenanceTicket(payload: CreateMaintenanceInput): 
   })
 }
 
+/**
+ * @deprecated W#74 Cohort 1 rebound the read + create surface; status-update is
+ * deferred to a follow-up PR. Will be removed in Cohort 4 (RB-12).
+ */
 export async function updateMaintenanceTicket(name: string, payload: UpdateMaintenanceInput): Promise<{ data: MaintenanceTicket }> {
+  if (import.meta.env.DEV) {
+    console.warn(
+      '[erpnext] updateMaintenanceTicket() is deprecated. Status-update rebind is a follow-up. Removed in Cohort 4.',
+    )
+  }
   return apiFetch<{ data: MaintenanceTicket }>(`/api/v1/erpnext/maintenance/${encodeURIComponent(name)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
