@@ -14,7 +14,7 @@ This restores the `husky` (0.9.1) and `docfx` dotnet tools from `.config/dotnet-
 
 ## Structure
 
-```
+```text
 sunfish/
   src/                 Sunfish.Anchor MAUI project + tests
   apps/                Desktop + web app surfaces
@@ -26,7 +26,7 @@ sunfish/
 
 This repo depends on packages from `shipyard/`. Clone both repos at sibling level:
 
-```
+```text
 Projects/
   Harborline-Software/
     shipyard/

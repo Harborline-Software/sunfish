@@ -60,8 +60,16 @@ fi
 FAIL=0
 for csproj in $CSPROJS; do
     echo "[husky]   building $csproj"
-    BUILD_OUTPUT=$(dotnet build "$csproj" --nologo --verbosity quiet 2>&1 || true)
+    BUILD_OUTPUT=$(dotnet build "$csproj" --nologo --verbosity quiet 2>&1)
+    BUILD_EXIT=$?
     HITS=$(echo "$BUILD_OUTPUT" | grep -E 'SUNFISH_I18N_001' || true)
+    if [ $BUILD_EXIT -ne 0 ] && [ -z "$HITS" ]; then
+        echo ""
+        echo "[husky] ERROR — dotnet build failed for $csproj (exit $BUILD_EXIT):"
+        echo "$BUILD_OUTPUT" | sed 's/^/    /'
+        echo ""
+        exit $BUILD_EXIT
+    fi
     if [ -n "$HITS" ]; then
         echo ""
         echo "[husky] BLOCKED — SUNFISH_I18N_001 violations in $csproj:"
