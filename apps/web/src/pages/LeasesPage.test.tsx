@@ -27,7 +27,8 @@ const MOCK_LEASES: LeaseSummary[] = [
     propertyDisplayName: '150 Lexington Ct',
     unitId: 'unit-1',
     startDate: '2025-01-01',
-    endDate: '2025-12-31',
+    // Far future so the "expiring within 60 days" banner doesn't duplicate matches.
+    endDate: '2099-12-31',
     monthlyRent: 1500,
     status: 'Active',
   },
@@ -77,7 +78,8 @@ describe('LeasesPage', () => {
     expect(screen.getByText('$1,500')).toBeInTheDocument()
     expect(screen.getByText('$2,000')).toBeInTheDocument()
     // propertyDisplayName renders instead of legacy property field
-    expect(screen.getByText('150 Lexington Ct')).toBeInTheDocument()
+    // Cell combines propertyDisplayName + " · " + unitId in one text node, so use partial match.
+    expect(screen.getByText(/150 Lexington Ct/)).toBeInTheDocument()
   })
 
   it('renders property fallback when propertyDisplayName is null', () => {
@@ -96,7 +98,7 @@ describe('LeasesPage', () => {
     } as unknown as ReturnType<typeof useLeaseHook.useLeases>)
 
     render(<LeasesPage />, { wrapper })
-    expect(screen.getByText('prop-fallback')).toBeInTheDocument()
+    expect(screen.getByText(/prop-fallback/)).toBeInTheDocument()
   })
 
   it('shows error state when fetch fails', () => {
