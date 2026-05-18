@@ -2,6 +2,13 @@
 <Project>
   <PropertyGroup>
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <!-- NU1510: NuGet 6.12+ pruning advisory for PackageReferences that are
+         already provided transitively. The global Directory.Build.props NoWarn
+         suppresses this during MSBuild but NuGet restore-phase warnings need
+         suppression at the CPM (Central Package Management) props level too.
+         Several packages carry direct references that are also transitively
+         available; cleanup tracked separately. -->
+    <NoWarn>$(NoWarn);NU1510</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageVersion Include="Microsoft.AspNetCore.Components.Web" Version="11.0.0-preview.4.26230.115"/>
@@ -12,7 +19,9 @@
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.5.1"/>
     <PackageVersion Include="Markdig" Version="1.1.3"/>
     <PackageVersion Include="coverlet.collector" Version="10.0.0"/>
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="11.0.0-preview.4.26230.115"/>
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="11.0.0-preview.4.26230.115"/>
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="11.0.0-preview.4.26230.115"/>
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="11.0.0-preview.4.26230.115"/>
     <PackageVersion Include="Microsoft.Extensions.Hosting.Abstractions" Version="11.0.0-preview.4.26230.115"/>
     <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="11.0.0-preview.4.26230.115"/>
@@ -23,9 +32,9 @@
     <PackageVersion Include="JsonSchema.Net" Version="9.2.0"/>
     <PackageVersion Include="MessagePack" Version="3.1.4"/>
     <PackageVersion Include="System.Formats.Cbor" Version="11.0.0-preview.4.26230.115"/>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-preview.3.26207.106"/>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-preview.3.26207.106"/>
-    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-preview.3"/>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore" Version="11.0.0-preview.4.26230.115"/>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="11.0.0-preview.4.26230.115"/>
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="11.0.0-preview.4"/>
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.11.0"/>
     <PackageVersion Include="ClosedXML" Version="0.105.0"/>
     <PackageVersion Include="Microsoft.Playwright" Version="1.59.0"/>
@@ -61,8 +70,8 @@
     <PackageVersion Include="Aspire.StackExchange.Redis.OutputCaching" Version="13.2.4"/>
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="11.0.0-preview.4.26230.115"/>
     <PackageVersion Include="Microsoft.AspNetCore.SignalR.StackExchangeRedis" Version="11.0.0-preview.4.26230.115"/>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-preview.2.26159.112"/>
-    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0-preview.3.26207.106"/>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.InMemory" Version="11.0.0-preview.4.26230.115"/>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Relational" Version="11.0.0-preview.4.26230.115"/>
     <PackageVersion Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0"/>
     <PackageVersion Include="Microsoft.Extensions.ServiceDiscovery" Version="10.5.0"/>
     <PackageVersion Include="Microsoft.FeatureManagement.AspNetCore" Version="4.5.0"/>
