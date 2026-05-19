@@ -21,7 +21,7 @@ export function LeasesPage() {
 
   if (isError) {
     return (
-      <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-6">
+      <div className="rounded-lg border border-destructive/20 bg-destructive/10 p-6" role="alert">
         <p className="font-semibold text-destructive">Failed to load leases</p>
         <p className="mt-1 text-sm text-gray-600">{error.message}</p>
         <button
@@ -70,7 +70,7 @@ export function LeasesPage() {
       )}
 
       <div className="overflow-x-auto rounded-lg border border-gray-200">
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
+        <table className="min-w-full divide-y divide-gray-200 text-sm" aria-label="Leases">
           <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left font-medium text-gray-500">Tenant</th>

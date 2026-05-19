@@ -1,8 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from 'react-error-boundary'
 import { lazy, Suspense, useEffect } from 'react'
 import { invoke } from '@tauri-apps/api/core'
+import { getCurrentWindow } from '@tauri-apps/api/window'
 import { PropertiesPage } from '@/pages/PropertiesPage'
 import { LeasesPage } from '@/pages/LeasesPage'
 import { LeaseDetailPage } from '@/pages/LeaseDetailPage'
@@ -73,13 +74,32 @@ function AppErrorFallback({ error, resetErrorBoundary }: { error: Error; resetEr
   )
 }
 
+function routeToTitle(pathname: string): string {
+  if (pathname.startsWith('/leases/')) return 'Lease Detail'
+  if (pathname === '/leases') return 'Leases'
+  if (pathname === '/properties') return 'Properties'
+  if (pathname === '/rent') return 'Rent Collection'
+  if (pathname === '/accounting') return 'Accounting'
+  if (pathname === '/comms') return 'Comms'
+  if (pathname === '/maintenance') return 'Maintenance'
+  if (pathname === '/settings/bridge') return 'Connect to Bridge'
+  return 'Anchor'
+}
+
 function AppLayout() {
+  const location = useLocation()
   const setActiveCompany = useCompanyStore((s) => s.setActiveCompany)
   const setAvailableCompanies = useCompanyStore((s) => s.setAvailableCompanies)
   const setAuth = useAuthStore((s) => s.setAuth)
   const token = useAuthStore((s) => s.token)
   const setToken = useAuthStore((s) => s.setToken)
   const syncState = useSyncStore((s) => s.syncState)
+
+  useEffect(() => {
+    const page = routeToTitle(location.pathname)
+    const title = page === 'Anchor' ? 'Anchor' : `Anchor — ${page}`
+    getCurrentWindow().setTitle(title).catch(() => {})
+  }, [location.pathname])
 
   async function onDisconnect() {
     try {

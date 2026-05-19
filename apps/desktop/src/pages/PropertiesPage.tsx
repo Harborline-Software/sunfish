@@ -25,7 +25,7 @@ export function PropertiesPage() {
 
   if (isError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6" role="alert">
         <p className="font-semibold text-red-700">Failed to load properties</p>
         <p className="mt-1 text-sm text-gray-600">{error.message}</p>
         <button

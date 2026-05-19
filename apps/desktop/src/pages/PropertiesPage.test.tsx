@@ -99,6 +99,7 @@ describe('PropertiesPage', () => {
 
     render(<PropertiesPage />, { wrapper })
 
+    expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText(/failed to load properties/i)).toBeInTheDocument()
     expect(screen.getByText('Bridge unavailable')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()

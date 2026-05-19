@@ -59,6 +59,7 @@ describe('MaintenancePage', () => {
 
     render(<MaintenancePage />, { wrapper })
 
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
     expect(await screen.findByText(/Error: Bridge down/i)).toBeInTheDocument()
   })
 

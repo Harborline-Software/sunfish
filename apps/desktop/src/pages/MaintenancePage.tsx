@@ -114,12 +114,13 @@ function CreateTicketForm({ onSuccess }: { onSuccess: () => void }) {
       <button
         type="submit"
         disabled={mutation.isPending}
+        aria-busy={mutation.isPending}
         className="rounded bg-primary px-4 py-1.5 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
       >
         {mutation.isPending ? 'Submitting…' : 'Submit'}
       </button>
       {mutation.isError && (
-        <p className="text-xs text-destructive">{(mutation.error as Error).message}</p>
+        <p role="alert" className="text-xs text-destructive">{(mutation.error as Error).message}</p>
       )}
     </form>
   )
@@ -160,7 +161,7 @@ export function MaintenancePage() {
 
       {isLoading && <p className="text-sm text-muted-foreground">Loading maintenance tickets…</p>}
       {isError && (
-        <p className="text-sm text-destructive">Error: {(error as Error).message}</p>
+        <p role="alert" className="text-sm text-destructive">Error: {(error as Error).message}</p>
       )}
 
       {!isLoading && !isError && tickets.length === 0 && (

@@ -166,7 +166,7 @@ export function RentCollectionPage() {
             </div>
 
             {mutation.isError && (
-              <div className="rounded border border-destructive/20 bg-destructive/10 p-3">
+              <div role="alert" className="rounded border border-destructive/20 bg-destructive/10 p-3">
                 <p className="text-sm text-destructive">{(mutation.error as Error).message}</p>
               </div>
             )}
@@ -181,6 +181,7 @@ export function RentCollectionPage() {
               <button
                 type="submit"
                 disabled={mutation.isPending || isOffline}
+                aria-busy={mutation.isPending}
                 className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
                 {mutation.isPending ? 'Recording…' : isOffline ? 'Network required for payments' : 'Record payment'}
