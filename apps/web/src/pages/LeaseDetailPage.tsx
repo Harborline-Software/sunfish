@@ -19,7 +19,7 @@ export function LeaseDetailPage() {
 
   if (leaseError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-6" role="alert">
         <p className="font-semibold text-red-700">Failed to load lease</p>
         <p className="mt-1 text-sm text-gray-600">{leaseErr.message}</p>
         <Link to="/leases" className="mt-3 inline-block text-sm text-blue-600 hover:underline">
@@ -91,8 +91,8 @@ export function LeaseDetailPage() {
               </div>
             </div>
           ) : paymentsError ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="font-semibold text-red-700">⚠ Couldn't load payment history</p>
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+              <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Couldn't load payment history</p>
               <p className="mt-1 text-sm text-gray-600">
                 We couldn't fetch this lease's payment history. Try again in a moment.
               </p>
@@ -115,7 +115,7 @@ export function LeaseDetailPage() {
             </div>
           ) : (
             <>
-              <table className="min-w-full text-sm">
+              <table className="min-w-full text-sm" aria-label="Payment history">
                 <thead>
                   <tr className="border-b text-left text-gray-500">
                     <th scope="col" className="pb-2 pr-4 font-medium">ID</th>
