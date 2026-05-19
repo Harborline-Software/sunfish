@@ -98,7 +98,7 @@ export function LeaseDetailPage() {
               </p>
               <button
                 onClick={() => refetchPayments()}
-                className="mt-3 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 Retry
               </button>
@@ -108,7 +108,7 @@ export function LeaseDetailPage() {
               <p className="text-sm text-gray-500">No payments recorded yet for this lease.</p>
               <Link
                 to={recordPaymentHref}
-                className="mt-3 inline-block rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                className="mt-3 inline-block rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
               >
                 Record the first payment
               </Link>
@@ -138,7 +138,7 @@ export function LeaseDetailPage() {
               <div className="mt-4">
                 <Link
                   to={recordPaymentHref}
-                  className="inline-block rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+                  className="inline-block rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
                 >
                   + Record a new payment
                 </Link>
