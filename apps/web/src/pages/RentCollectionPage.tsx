@@ -98,7 +98,7 @@ export function RentCollectionPage() {
           </p>
           <button
             type="submit"
-            className="mt-3 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
             Try again
           </button>
@@ -117,7 +117,7 @@ export function RentCollectionPage() {
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="mt-3 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
             Reload page
           </button>
@@ -138,7 +138,7 @@ export function RentCollectionPage() {
               mutation.reset()
               leaseSelectRef.current?.focus()
             }}
-            className="mt-3 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
             Choose another lease
           </button>
@@ -156,7 +156,7 @@ export function RentCollectionPage() {
         </p>
         <button
           type="submit"
-          className="mt-3 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+          className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
         >
           Try again
         </button>
