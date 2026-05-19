@@ -8,6 +8,10 @@
  * This file returns typed mock fixtures while Engineer ships the substrate
  * tenant-keying retrofit (W#76 PR 0a-d) and the Bridge financial endpoint family.
  *
+ * MOCK_CONTRACT_VERSION: ONR hand-off §3.20 (anchor-react-rebind-cohort-2-stage06-handoff.md)
+ * When Engineer files engineer-status-pr-0c-contract-frozen.md, diff PaymentSummary
+ * against the frozen IPaymentRepository contract shape before swapping mock → real fetch.
+ *
  * BLOCKED_ON:
  *   - Engineer PR 0a (blocks-financial-ar IInvoiceRepository tenant-keying)
  *   - Engineer PR 0c (blocks-financial-payments IPaymentRepository tenant-keying)
