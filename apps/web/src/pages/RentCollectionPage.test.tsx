@@ -95,6 +95,7 @@ describe('RentCollectionPage', () => {
     fireEvent.submit(screen.getByRole('button', { name: /record payment/i }).closest('form')!)
 
     await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
       expect(screen.getByText(/couldn't reach the payment service/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
     })
@@ -115,6 +116,7 @@ describe('RentCollectionPage', () => {
     fireEvent.submit(screen.getByRole('button', { name: /record payment/i }).closest('form')!)
 
     await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
       expect(screen.getByText(/session expired/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument()
     })
@@ -135,6 +137,7 @@ describe('RentCollectionPage', () => {
     fireEvent.submit(screen.getByRole('button', { name: /record payment/i }).closest('form')!)
 
     await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
       expect(screen.getByText(/we couldn't find that lease/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /choose another lease/i })).toBeInTheDocument()
       // Verify diagnostic-non-leak: message must NOT reveal cross-tenant existence
@@ -158,6 +161,7 @@ describe('RentCollectionPage', () => {
     fireEvent.submit(screen.getByRole('button', { name: /record payment/i }).closest('form')!)
 
     await waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument()
       expect(screen.getByText(/something went wrong/i)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: /try again/i })).toBeInTheDocument()
     })
