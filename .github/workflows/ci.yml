@@ -3,14 +3,12 @@ name: CI
 on:
   pull_request:
     branches: [main]
-    paths-ignore:
-      - '**/*.md'
-      - '.wolf/**'
-      - 'docs/**'
-      - '.github/CODEOWNERS'
-      - '.gitignore'
-      - 'LICENSE*'
-      - 'NOTICE*'
+    # Build & Test runs on EVERY pull_request — the prior paths-ignore filter
+    # caused required-check stalls on docs-only PRs (workflow never triggered,
+    # required check never reported, PR stuck BLOCKED). Per Admiral directive
+    # 2026-05-19T06-50Z + CIC ruling on this stall pattern: remove the filter.
+    # Docs-only PRs pay ~5-10 min of MAUI workload install + dotnet build on
+    # Windows (acceptable trade vs. the stall trap).
   push:
     branches: [main]
 
