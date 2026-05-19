@@ -30,8 +30,8 @@ export function AccountingPage() {
     return (
       <div className="space-y-6">
         {header}
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="font-semibold text-red-700">⚠ Couldn't load accounting data</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+          <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Couldn't load accounting data</p>
           <p className="mt-1 text-sm text-gray-600">
             We couldn't fetch your accounting data. Try again in a moment.
           </p>
@@ -143,7 +143,7 @@ export function AccountingPage() {
         ) : invoices.length === 0 ? (
           <p className="text-sm text-gray-500">No outstanding invoices.</p>
         ) : (
-          <table className="min-w-full text-sm">
+          <table className="min-w-full text-sm" aria-label="Outstanding invoices">
             <thead>
               <tr className="border-b text-left text-gray-500">
                 <th scope="col" className="pb-2 pr-4 font-medium">Invoice</th>
