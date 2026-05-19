@@ -117,7 +117,8 @@ describe('RentCollectionPage', () => {
 
     await waitFor(() => {
       expect(screen.getByRole('alert')).toBeInTheDocument()
-      expect(screen.getByText(/session expired/i)).toBeInTheDocument()
+      // "session expired" appears in both heading and description — use getAllByText
+      expect(screen.getAllByText(/session expired/i).length).toBeGreaterThanOrEqual(2)
       expect(screen.getByRole('button', { name: /reload page/i })).toBeInTheDocument()
     })
   })
