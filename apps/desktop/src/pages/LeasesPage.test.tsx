@@ -88,6 +88,7 @@ describe('LeasesPage', () => {
     } as unknown as ReturnType<typeof useLeaseHook.useLeases>)
 
     render(<LeasesPage />, { wrapper })
+    expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText(/failed to load leases/i)).toBeInTheDocument()
     expect(screen.getByText('Network error')).toBeInTheDocument()
   })
