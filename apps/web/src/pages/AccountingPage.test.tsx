@@ -85,6 +85,7 @@ describe('AccountingPage', () => {
     } as unknown as ReturnType<typeof useAccountingHook.useAccountingOutstanding>)
 
     render(<AccountingPage />, { wrapper })
+    expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText(/couldn't load accounting data/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
   })
