@@ -47,7 +47,7 @@ export function RentCollectionPage() {
     return (
       <div className="max-w-md">
         <div className="rounded-lg border border-green-200 bg-green-50 p-6" role="status">
-          <h2 className="text-lg font-semibold text-green-800">✓ Payment recorded</h2>
+          <h2 className="text-lg font-semibold text-green-800"><span aria-hidden="true">✓</span> Payment recorded</h2>
           <p className="mt-1 text-sm text-gray-700">
             <strong>
               {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
@@ -90,8 +90,8 @@ export function RentCollectionPage() {
 
     if (err instanceof PaymentError && err.code === 'token-fetch-error') {
       return (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="font-semibold text-red-700">⚠ Couldn't reach the payment service</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+          <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Couldn't reach the payment service</p>
           <p className="mt-1 text-sm text-gray-600">
             The connection to the payment service failed before we could record your payment.
             Your form is still saved — try again in a moment.
@@ -108,8 +108,8 @@ export function RentCollectionPage() {
 
     if (err instanceof PaymentError && err.code === 'token-rejection') {
       return (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="font-semibold text-red-700">⚠ Session expired</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+          <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Session expired</p>
           <p className="mt-1 text-sm text-gray-600">
             Your session expired before this payment could be recorded. Reload the page to start
             fresh.
@@ -127,8 +127,8 @@ export function RentCollectionPage() {
 
     if (err instanceof PaymentError && err.code === 'lease-not-found') {
       return (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="font-semibold text-red-700">⚠ We couldn't find that lease</p>
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+          <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> We couldn't find that lease</p>
           <p className="mt-1 text-sm text-gray-600">
             The lease isn't available for payment recording. Please pick a different lease.
           </p>
@@ -148,8 +148,8 @@ export function RentCollectionPage() {
 
     // E4: generic server-error / unknown
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p className="font-semibold text-red-700">⚠ Something went wrong</p>
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
+        <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Something went wrong</p>
         <p className="mt-1 text-sm text-gray-600">
           Your payment couldn't be recorded right now. Please try again in a moment. If this keeps
           happening, check with your administrator.
