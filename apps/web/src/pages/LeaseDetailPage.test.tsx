@@ -116,6 +116,7 @@ describe('LeaseDetailPage', () => {
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
+    expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText(/failed to load lease/i)).toBeInTheDocument()
     expect(screen.getByText('Lease not found')).toBeInTheDocument()
   })
@@ -154,6 +155,7 @@ describe('LeaseDetailPage', () => {
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
+    expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText(/couldn't load payment history/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
   })
