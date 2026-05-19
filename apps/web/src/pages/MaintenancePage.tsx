@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useWorkOrders, useCreateWorkOrder } from '@/hooks/useMaintenance'
 import type { WorkOrderSummary } from '@/api/maintenance'  // rebound from @/api/erpnext — W#74 PR 3
 import { AuthRoleGate } from '@/components/AuthRoleGate'
+import { MaintenanceWorkOrderTimeline } from '@/components/MaintenanceWorkOrderTimeline'
 
 const STATUS_COLORS: Record<string, string> = {
   Draft:      'bg-blue-100 text-blue-700',
@@ -114,8 +115,11 @@ function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
   )
 }
 
+type View = 'table' | 'timeline'
+
 export function MaintenancePage() {
   const { data, isPending, isError, error, refetch } = useWorkOrders()
+  const [view, setView] = useState<View>('table')
 
   const workOrders = data?.items ?? []
   const openCount  = workOrders.filter(
@@ -124,11 +128,37 @@ export function MaintenancePage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Maintenance</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          {openCount} open work order{openCount !== 1 ? 's' : ''}
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold text-gray-900">Maintenance</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {openCount} open work order{openCount !== 1 ? 's' : ''}
+          </p>
+        </div>
+        {workOrders.length > 0 && (
+          <div
+            role="group"
+            aria-label="View mode"
+            className="flex rounded-md border border-gray-200 overflow-hidden text-sm"
+          >
+            <button
+              type="button"
+              onClick={() => setView('table')}
+              aria-pressed={view === 'table'}
+              className={`px-3 py-1.5 ${view === 'table' ? 'bg-gray-100 font-medium text-gray-900' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            >
+              Table
+            </button>
+            <button
+              type="button"
+              onClick={() => setView('timeline')}
+              aria-pressed={view === 'timeline'}
+              className={`px-3 py-1.5 border-l border-gray-200 ${view === 'timeline' ? 'bg-gray-100 font-medium text-gray-900' : 'bg-white text-gray-500 hover:bg-gray-50'}`}
+            >
+              Timeline
+            </button>
+          </div>
+        )}
       </div>
 
       <AuthRoleGate allow={['owner', 'manager']}>
@@ -154,7 +184,7 @@ export function MaintenancePage() {
         </p>
       )}
 
-      {workOrders.length > 0 && (
+      {workOrders.length > 0 && view === 'table' && (
         <div className="overflow-x-auto rounded-lg border border-gray-200">
           <table className="w-full text-left">
             <thead className="bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
@@ -173,6 +203,10 @@ export function MaintenancePage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {workOrders.length > 0 && view === 'timeline' && (
+        <MaintenanceWorkOrderTimeline items={workOrders} />
       )}
     </div>
   )
