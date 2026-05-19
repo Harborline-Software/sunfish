@@ -40,7 +40,7 @@ export function AccountingPage() {
               summaryQuery.refetch()
               outstandingQuery.refetch()
             }}
-            className="mt-3 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+            className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
           >
             Retry
           </button>
@@ -143,6 +143,7 @@ export function AccountingPage() {
         ) : invoices.length === 0 ? (
           <p className="text-sm text-gray-500">No outstanding invoices.</p>
         ) : (
+          <div className="overflow-x-auto">
           <table className="min-w-full text-sm" aria-label="Outstanding invoices">
             <thead>
               <tr className="border-b text-left text-gray-500">
@@ -165,6 +166,7 @@ export function AccountingPage() {
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </section>
     </div>
