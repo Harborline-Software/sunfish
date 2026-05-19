@@ -1,118 +1,170 @@
-import { useQuery } from '@tanstack/react-query'
-import { getAccountingSummary, getAccountingOutstanding } from '@/api/erpnext'
+import { useAccountingSummary, useAccountingOutstanding } from '@/hooks/useAccounting'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
 }
 
-export function AccountingPage() {
-  const summary = useQuery({
-    queryKey: ['accounting', 'summary'],
-    queryFn: getAccountingSummary,
-    staleTime: 5 * 60 * 1000,
-  })
+function DaysDuePill({ days }: { days: number }) {
+  if (days <= 30) return <span className="text-gray-600">{days} days</span>
+  if (days <= 60) return <span className="rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">{days} days</span>
+  if (days <= 90) return <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">{days} days</span>
+  return <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">{days} days</span>
+}
 
-  const outstanding = useQuery({
-    queryKey: ['accounting', 'outstanding'],
-    queryFn: getAccountingOutstanding,
-    staleTime: 5 * 60 * 1000,
-  })
+export function AccountingPage() {
+  const summaryQuery = useAccountingSummary()
+  const outstandingQuery = useAccountingOutstanding()
+
+  const isPending = summaryQuery.isPending || outstandingQuery.isPending
+  const isError = summaryQuery.isError || outstandingQuery.isError
+
+  const header = (
+    <div>
+      <h1 className="text-2xl font-semibold text-gray-900">Accounting</h1>
+      <p className="mt-1 text-sm text-gray-500">Summary of your receivables</p>
+    </div>
+  )
+
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        {header}
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+          <p className="font-semibold text-red-700">⚠ Couldn't load accounting data</p>
+          <p className="mt-1 text-sm text-gray-600">
+            We couldn't fetch your accounting data. Try again in a moment.
+          </p>
+          <button
+            onClick={() => {
+              summaryQuery.refetch()
+              outstandingQuery.refetch()
+            }}
+            className="mt-3 rounded border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  const summary = summaryQuery.data
+  const invoices = outstandingQuery.data?.items ?? []
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Accounting</h1>
-        <p className="mt-1 text-sm text-gray-500">Year-to-date summary from ERPNext General Ledger</p>
+      {header}
+
+      {/* Summary tiles — 4-up grid */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {isPending ? (
+          [0, 1, 2, 3].map((i) => (
+            <Card key={i} aria-busy="true">
+              <CardHeader className="pb-1">
+                <div className="h-4 w-20 rounded bg-gray-100 animate-pulse" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-7 w-24 rounded bg-gray-100 animate-pulse" />
+                <div className="mt-1 h-3 w-16 rounded bg-gray-100 animate-pulse" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <>
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm font-medium text-gray-500">Invoiced</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {formatCurrency(summary?.invoicedThisPeriod ?? 0)}
+                </p>
+                <p className="mt-0.5 text-xs text-gray-500">this period</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm font-medium text-gray-500">Received</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {formatCurrency(summary?.receivedThisPeriod ?? 0)}
+                </p>
+                <p className="mt-0.5 text-xs text-gray-500">this period</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm font-medium text-gray-500">Outstanding</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {formatCurrency(summary?.outstanding ?? 0)}
+                </p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  &gt;30 days: {formatCurrency(summary?.outstanding30Plus ?? 0)}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-1">
+                <CardTitle className="text-sm font-medium text-gray-500">Aging 60+</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-2xl font-semibold text-gray-900">
+                  {formatCurrency(summary?.aging60Plus ?? 0)}
+                </p>
+                <p className="mt-0.5 text-xs text-gray-500">
+                  {summary?.aging60PlusCount ?? 0}{' '}
+                  invoice{(summary?.aging60PlusCount ?? 0) !== 1 ? 's' : ''}
+                </p>
+              </CardContent>
+            </Card>
+          </>
+        )}
       </div>
 
-      {/* P&L Summary */}
+      {/* Outstanding invoices table */}
       <section>
-        <h2 className="text-lg font-medium text-gray-900 mb-4">P&amp;L Summary</h2>
-        {summary.isLoading && <p className="text-sm text-gray-500">Loading…</p>}
-        {summary.isError && (
-          <p className="text-sm text-red-600">
-            Could not load accounting summary: {summary.error instanceof Error ? summary.error.message : 'Unknown error'}
-          </p>
-        )}
-        {summary.data && (
-          <div className="overflow-hidden rounded-lg border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
-                    Category
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">
-                    {summary.data.period}
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                <tr>
-                  <td className="px-6 py-4 text-sm text-gray-900">Total Income</td>
-                  <td className="px-6 py-4 text-right text-sm font-medium text-green-700">
-                    {formatCurrency(summary.data.income)}
-                  </td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 text-sm text-gray-900">Total Expenses</td>
-                  <td className="px-6 py-4 text-right text-sm font-medium text-red-700">
-                    {formatCurrency(summary.data.expenses)}
-                  </td>
-                </tr>
-                <tr className="bg-gray-50">
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">Net Income</td>
-                  <td
-                    className={`px-6 py-4 text-right text-sm font-semibold ${
-                      summary.data.net >= 0 ? 'text-green-700' : 'text-red-700'
-                    }`}
-                  >
-                    {formatCurrency(summary.data.net)}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+        <h2 className="mb-4 text-lg font-medium text-gray-900">Outstanding invoices</h2>
+        {isPending ? (
+          <div aria-busy="true">
+            <span className="sr-only">Loading outstanding invoices</span>
+            <div className="space-y-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-10 rounded bg-gray-100 animate-pulse" />
+              ))}
+            </div>
           </div>
-        )}
-      </section>
-
-      {/* Outstanding Invoices */}
-      <section>
-        <h2 className="text-lg font-medium text-gray-900 mb-4">Outstanding Invoices</h2>
-        {outstanding.isLoading && <p className="text-sm text-gray-500">Loading…</p>}
-        {outstanding.isError && (
-          <p className="text-sm text-red-600">
-            Could not load outstanding invoices: {outstanding.error instanceof Error ? outstanding.error.message : 'Unknown error'}
-          </p>
-        )}
-        {outstanding.data && outstanding.data.length === 0 && (
+        ) : invoices.length === 0 ? (
           <p className="text-sm text-gray-500">No outstanding invoices.</p>
-        )}
-        {outstanding.data && outstanding.data.length > 0 && (
-          <div className="overflow-hidden rounded-lg border border-gray-200">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Customer</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Invoice</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">Due Date</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wide text-gray-500">Outstanding</th>
+        ) : (
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-gray-500">
+                <th scope="col" className="pb-2 pr-4 font-medium">Invoice</th>
+                <th scope="col" className="pb-2 pr-4 font-medium">Lease</th>
+                <th scope="col" className="pb-2 pr-4 font-medium">Amount</th>
+                <th scope="col" className="pb-2 font-medium">Days due</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {invoices.map((inv) => (
+                <tr key={inv.invoiceId}>
+                  <td className="py-2 pr-4 font-mono text-gray-500">{inv.invoiceId.slice(-8)}</td>
+                  <td className="py-2 pr-4 text-gray-700">{inv.tenantDisplayName}</td>
+                  <td className="py-2 pr-4 font-medium text-gray-900">{formatCurrency(inv.amount)}</td>
+                  <td className="py-2">
+                    <DaysDuePill days={inv.daysOverdue} />
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
-                {outstanding.data.map((inv) => (
-                  <tr key={inv.name}>
-                    <td className="px-6 py-4 text-sm text-gray-900">{inv.customer}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{inv.name}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{inv.due_date}</td>
-                    <td className="px-6 py-4 text-right text-sm font-medium text-red-700">
-                      {formatCurrency(inv.outstanding_amount)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         )}
       </section>
     </div>
