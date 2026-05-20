@@ -24,7 +24,7 @@ const fr: Partial<TranslationKeys> = {
     submit: 'Envoyer',
     clear: 'Effacer',
     units: '{{count}} unité',
-    units_plural: '{{count}} unités',
+    units_other: '{{count}} unités',
     pages: {
       previous: 'Précédent',
       next: 'Suivant',
