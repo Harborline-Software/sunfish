@@ -20,6 +20,7 @@ function buildFlagConfig(): ConstructorParameters<typeof InMemoryProvider>[0] {
     const resolved = stored === 'on' ? true : stored === 'off' ? false : defaultValue
 
     config[key] = {
+      disabled: false,
       defaultVariant: resolved ? 'on' : 'off',
       variants: { on: true, off: false },
     }
