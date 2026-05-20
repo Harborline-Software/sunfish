@@ -204,7 +204,7 @@ function AppLayout() {
       <OfflineBanner />
       <header className="border-b border-gray-200">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-between px-4">
-          <nav className="flex items-center gap-6 text-sm">
+          <nav aria-label="Main navigation" className="flex items-center gap-6 text-sm">
             <span className="font-semibold text-gray-900">Sunfish</span>
             <NavLink
               to="/properties"

@@ -45,11 +45,11 @@ export function VendorListView() {
         <table className="w-full overflow-hidden rounded border border-gray-200 bg-white text-sm">
           <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
             <tr>
-              <th className="px-3 py-2">Vendor</th>
-              <th className="px-3 py-2">Specialty</th>
-              <th className="px-3 py-2">W-9</th>
-              <th className="px-3 py-2 text-right">YTD Payments</th>
-              <th className="px-3 py-2">1099?</th>
+              <th scope="col" className="px-3 py-2">Vendor</th>
+              <th scope="col" className="px-3 py-2">Specialty</th>
+              <th scope="col" className="px-3 py-2">W-9</th>
+              <th scope="col" className="px-3 py-2 text-right">YTD Payments</th>
+              <th scope="col" className="px-3 py-2">1099?</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">

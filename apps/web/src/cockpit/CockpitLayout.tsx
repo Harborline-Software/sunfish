@@ -16,11 +16,11 @@ import { NavLink, Outlet } from 'react-router-dom'
 export function CockpitLayout() {
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)]">
-      <aside className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 px-3 py-4">
+      <aside aria-label="Cockpit" className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 px-3 py-4">
         <h2 className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
           Cockpit
         </h2>
-        <nav className="flex flex-col gap-1 text-sm">
+        <nav aria-label="Cockpit navigation" className="flex flex-col gap-1 text-sm">
           <CockpitNavLink to="/cockpit">Properties</CockpitNavLink>
           <CockpitNavLink to="/cockpit/work-orders">
             Work Orders
@@ -57,6 +57,8 @@ function CockpitNavLink({
       <span
         className="rounded px-3 py-2 text-gray-400"
         title="Coming in a later phase"
+        role="link"
+        aria-disabled="true"
       >
         {children}
       </span>
