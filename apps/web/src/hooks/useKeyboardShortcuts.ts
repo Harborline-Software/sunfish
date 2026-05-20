@@ -39,7 +39,7 @@ function isFormElement(el: EventTarget | null): boolean {
 export function useKeyboardShortcuts(onHelp: () => void): void {
   const navigate = useNavigate()
   const pendingGRef = useRef(false)
-  const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const handleHelp = useCallback(onHelp, [onHelp])
 
