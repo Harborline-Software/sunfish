@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLeases } from '@/hooks/useLeases'
 import { recordPayment } from '@/api/erpnext'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { enqueuePayment, drainQueue } from '@/lib/offlineQueue'
 
 const PAYMENT_METHODS = ['ACH', 'Check', 'Cash', 'Card'] as const
 
@@ -18,6 +19,7 @@ export function RentCollectionPage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [method, setMethod] = useState<string>('ACH')
   const [confirmation, setConfirmation] = useState<string | null>(null)
+  const [queuedOffline, setQueuedOffline] = useState(false)
 
   const mutation = useMutation({
     mutationFn: recordPayment,
@@ -27,15 +29,60 @@ export function RentCollectionPage() {
     },
   })
 
+  // Drain offline queue and retry when connectivity returns
+  useEffect(() => {
+    function onOnline() {
+      const queued = drainQueue()
+      for (const item of queued) {
+        mutation.mutate(item.payload)
+      }
+    }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [mutation])
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedLease || !amount || !date) return
-    mutation.mutate({
+    const payload = {
       Lease: selectedLease,
       Amount: parseFloat(amount),
       Date: date,
       PaymentMethod: method,
-    })
+    }
+    if (!navigator.onLine) {
+      enqueuePayment(payload)
+      setQueuedOffline(true)
+      return
+    }
+    mutation.mutate(payload)
+  }
+
+  if (queuedOffline) {
+    const lease = leases?.find((l) => l.leaseId === selectedLease)
+    return (
+      <div className="max-w-md">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
+          <h2 className="text-lg font-semibold text-amber-800">Payment queued</h2>
+          <p className="mt-1 text-sm text-gray-700">
+            <strong>${parseFloat(amount).toLocaleString()}</strong> for{' '}
+            {lease?.tenantDisplayName ?? selectedLease} will be sent when you're back online.
+          </p>
+          <div className="mt-4">
+            <button
+              onClick={() => {
+                setQueuedOffline(false)
+                setAmount('')
+                setSelectedLease('')
+              }}
+              className="rounded bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700"
+            >
+              Queue another
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (confirmation) {
