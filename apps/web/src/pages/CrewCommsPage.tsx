@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import * as signalR from '@microsoft/signalr'
+import { useHubConnection } from '@/hooks/useHubConnection'
 
 interface Message {
   threadId: string
@@ -18,46 +18,37 @@ export function CrewCommsPage() {
   const [activeThread, setActiveThread] = useState(THREADS[0]!.id)
   const [messages, setMessages] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
-  const [connected, setConnected] = useState(false)
-  const connectionRef = useRef<signalR.HubConnection | null>(null)
+  const prevThreadRef = useRef(activeThread)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    const conn = new signalR.HubConnectionBuilder()
-      .withUrl('/hubs/bridge', { withCredentials: true })
-      .withAutomaticReconnect()
-      .build()
+  const { hubState, invoke, on } = useHubConnection('/hubs/bridge')
+  const connected = hubState === 'connected'
 
-    conn.on('ReceiveMessage', (threadId: string, sender: string, text: string, timestamp: string) => {
-      setMessages((prev) => [...prev, { threadId, sender, text, timestamp }])
+  useEffect(() => {
+    return on('ReceiveMessage', (...args: unknown[]) => {
+      const [threadId, sender, text, timestamp] = args
+      setMessages((prev) => [
+        ...prev,
+        {
+          threadId: String(threadId),
+          sender: String(sender),
+          text: String(text),
+          timestamp: String(timestamp),
+        },
+      ])
     })
-
-    conn
-      .start()
-      .then(() => {
-        setConnected(true)
-        return conn.invoke('JoinThread', activeThread)
-      })
-      .catch((err) => {
-        if (import.meta.env.DEV) {
-          console.warn('SignalR connection failed (Bridge may not be running):', err)
-        }
-      })
-
-    connectionRef.current = conn
-
-    return () => {
-      conn.invoke('LeaveThread', activeThread).catch(() => {})
-      conn.stop().catch(() => {})
-    }
-  }, [])
+  }, [on])
 
   useEffect(() => {
-    const conn = connectionRef.current
-    if (!conn || conn.state !== signalR.HubConnectionState.Connected) return
-    conn.invoke('LeaveThread', activeThread).catch(() => {})
-    conn.invoke('JoinThread', activeThread).catch(() => {})
-  }, [activeThread])
+    if (hubState !== 'connected') return
+    const prev = prevThreadRef.current
+    const current = activeThread
+    prevThreadRef.current = current
+    if (prev !== current) {
+      invoke('LeaveThread', prev).catch(() => {})
+    }
+    invoke('JoinThread', current).catch(() => {})
+  }, [hubState, activeThread, invoke])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -68,12 +59,7 @@ export function CrewCommsPage() {
   async function handleSend() {
     const text = draft.trim()
     if (!text) return
-    const conn = connectionRef.current
-    if (!conn || conn.state !== signalR.HubConnectionState.Connected) {
-      alert('Not connected to Bridge. Make sure Bridge is running.')
-      return
-    }
-    await conn.invoke('SendMessage', activeThread, text)
+    await invoke('SendMessage', activeThread, text)
     setDraft('')
   }
 
@@ -109,15 +95,29 @@ export function CrewCommsPage() {
         <div className="mt-4 px-3">
           <span
             className={`inline-flex items-center gap-1 text-xs ${
-              connected ? 'text-green-600' : 'text-gray-400'
+              hubState === 'connected'
+                ? 'text-green-600'
+                : hubState === 'reconnecting'
+                  ? 'text-amber-600'
+                  : 'text-gray-400'
             }`}
           >
             <span
               className={`inline-block h-1.5 w-1.5 rounded-full ${
-                connected ? 'bg-green-500' : 'bg-gray-400'
+                hubState === 'connected'
+                  ? 'bg-green-500'
+                  : hubState === 'reconnecting'
+                    ? 'bg-amber-500 animate-pulse'
+                    : 'bg-gray-400'
               }`}
             />
-            {connected ? 'Connected' : 'Disconnected'}
+            {hubState === 'connected'
+              ? 'Connected'
+              : hubState === 'reconnecting'
+                ? 'Reconnecting…'
+                : hubState === 'connecting'
+                  ? 'Connecting…'
+                  : 'Disconnected'}
           </span>
         </div>
       </aside>
