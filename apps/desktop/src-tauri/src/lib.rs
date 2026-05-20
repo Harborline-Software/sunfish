@@ -5,6 +5,7 @@ pub mod sync;
 use std::sync::Arc;
 
 use tauri::Manager;
+use tauri_plugin_updater::UpdaterExt;
 
 /// Service name used for the OS-keychain entry that backs Stronghold's master key.
 /// Suffixed with `.stronghold` (council R7) to leave the bare app identifier free
@@ -102,6 +103,7 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_stronghold::Builder::new(move |_password_from_js| {
                 // Closure is now panic-free. The OS-keychain key was derived at
@@ -195,6 +197,24 @@ pub fn run() {
                 .await
                 {
                     eprintln!("[sync] startup write-queue drain failed: {e}");
+                }
+            });
+
+            // Background update check — fires once at startup, non-blocking.
+            // Silent on all errors: no network, GitHub rate-limit, pre-release
+            // channel mismatch. Restart is deferred until after download+install
+            // completes so the current session is not interrupted mid-use.
+            let update_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Ok(updater) = update_handle.updater() {
+                    if let Ok(Some(update)) = updater.check().await {
+                        let install_result = update
+                            .download_and_install(|_chunk, _total| {}, || {})
+                            .await;
+                        if install_result.is_ok() {
+                            update_handle.restart();
+                        }
+                    }
                 }
             });
 
