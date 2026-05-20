@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { useForm } from 'react-hook-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLeases } from '@/hooks/useLeases'
 import { recordPayment } from '@/api/erpnext'
@@ -7,46 +8,67 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 const PAYMENT_METHODS = ['ACH', 'Check', 'Cash', 'Card'] as const
 
+interface PaymentFormData {
+  lease: string
+  amount: string
+  date: string
+  method: string
+}
+
 export function RentCollectionPage() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { data: leases, isPending: leasesPending } = useLeases()
-
-  const [selectedLease, setSelectedLease] = useState(searchParams.get('lease') ?? '')
-  const [amount, setAmount] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
-  const [method, setMethod] = useState<string>('ACH')
   const [confirmation, setConfirmation] = useState<string | null>(null)
+  const [confirmedLease, setConfirmedLease] = useState<string>('')
+  const [confirmedAmount, setConfirmedAmount] = useState<string>('')
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    reset,
+    formState: { errors },
+  } = useForm<PaymentFormData>({
+    defaultValues: {
+      lease: searchParams.get('lease') ?? '',
+      amount: '',
+      date: new Date().toISOString().slice(0, 10),
+      method: 'ACH',
+    },
+  })
+
+  const selectedLease = watch('lease')
 
   const mutation = useMutation({
     mutationFn: recordPayment,
-    onSuccess: (payment) => {
+    onSuccess: (payment, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['payments'] })
+      setConfirmedLease(variables.Lease)
+      setConfirmedAmount(String(variables.Amount))
       setConfirmation(payment.name)
     },
   })
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!selectedLease || !amount || !date) return
+  function onSubmit(data: PaymentFormData) {
     mutation.mutate({
-      Lease: selectedLease,
-      Amount: parseFloat(amount),
-      Date: date,
-      PaymentMethod: method,
+      Lease: data.lease,
+      Amount: parseFloat(data.amount),
+      Date: data.date,
+      PaymentMethod: data.method,
     })
   }
 
   if (confirmation) {
-    const lease = leases?.find((l) => l.leaseId === selectedLease)
+    const lease = leases?.find((l) => l.leaseId === confirmedLease)
     return (
       <div className="max-w-md">
         <div className="rounded-lg border border-green-200 bg-green-50 p-6">
           <h2 className="text-lg font-semibold text-green-800">Payment recorded</h2>
           <p className="mt-1 text-sm text-gray-700">
-            <strong>${parseFloat(amount).toLocaleString()}</strong> recorded for{' '}
-            {lease?.tenantDisplayName ?? selectedLease} (ref: {confirmation}).
+            <strong>${parseFloat(confirmedAmount).toLocaleString()}</strong> recorded for{' '}
+            {lease?.tenantDisplayName ?? confirmedLease} (ref: {confirmation}).
           </p>
           <p className="mt-1 text-sm text-gray-500">
             Verify in ERPNext admin that the ledger entry is correct.
@@ -55,15 +77,14 @@ export function RentCollectionPage() {
             <button
               onClick={() => {
                 setConfirmation(null)
-                setAmount('')
-                setSelectedLease('')
+                reset({ lease: '', amount: '', date: new Date().toISOString().slice(0, 10), method: 'ACH' })
               }}
               className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
             >
               Record another
             </button>
             <Link
-              to={`/leases/${selectedLease}`}
+              to={`/leases/${confirmedLease}`}
               className="rounded border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
             >
               View lease
@@ -84,16 +105,14 @@ export function RentCollectionPage() {
           <CardTitle className="text-base">Payment details</CardTitle>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700" htmlFor="lease">
                 Lease
               </label>
               <select
                 id="lease"
-                value={selectedLease}
-                onChange={(e) => setSelectedLease(e.target.value)}
-                required
+                {...register('lease', { required: 'Please select a lease' })}
                 disabled={leasesPending}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50"
               >
@@ -107,6 +126,9 @@ export function RentCollectionPage() {
                     </option>
                   ))}
               </select>
+              {errors.lease && (
+                <p className="mt-1 text-xs text-red-600">{errors.lease.message}</p>
+              )}
             </div>
 
             <div>
@@ -118,12 +140,16 @@ export function RentCollectionPage() {
                 type="number"
                 min="0.01"
                 step="0.01"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                required
                 placeholder="0.00"
+                {...register('amount', {
+                  required: 'Amount is required',
+                  min: { value: 0.01, message: 'Amount must be greater than 0' },
+                })}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+              {errors.amount && (
+                <p className="mt-1 text-xs text-red-600">{errors.amount.message}</p>
+              )}
               {selectedLease && leases && (
                 <p className="mt-1 text-xs text-gray-500">
                   Monthly rent: $
@@ -139,11 +165,12 @@ export function RentCollectionPage() {
               <input
                 id="date"
                 type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                required
+                {...register('date', { required: 'Date is required' })}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               />
+              {errors.date && (
+                <p className="mt-1 text-xs text-red-600">{errors.date.message}</p>
+              )}
             </div>
 
             <div>
@@ -152,8 +179,7 @@ export function RentCollectionPage() {
               </label>
               <select
                 id="method"
-                value={method}
-                onChange={(e) => setMethod(e.target.value)}
+                {...register('method')}
                 className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
               >
                 {PAYMENT_METHODS.map((m) => (

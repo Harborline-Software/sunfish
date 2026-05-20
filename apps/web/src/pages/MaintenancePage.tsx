@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
 import { useWorkOrders, useCreateWorkOrder } from '@/hooks/useMaintenance'
 import type { WorkOrderSummary } from '@/api/maintenance'  // rebound from @/api/erpnext — W#74 PR 3
 import { AuthRoleGate } from '@/components/AuthRoleGate'
@@ -33,29 +34,36 @@ function WorkOrderRow({ wo }: { wo: WorkOrderSummary }) {
   )
 }
 
-function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
-  const [subject,       setSubject]       = useState('')
-  const [vendorId,      setVendorId]      = useState('')
-  const [priority,      setPriority]      = useState('Normal')
-  const [scheduledDate, setScheduledDate] = useState('')
+interface WorkOrderFormData {
+  subject: string
+  vendorId: string
+  priority: string
+  scheduledDate: string
+}
 
+function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
   const mutation = useCreateWorkOrder()
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<WorkOrderFormData>({
+    defaultValues: { subject: '', vendorId: '', priority: 'Normal', scheduledDate: '' },
+  })
+
+  function onSubmit(data: WorkOrderFormData) {
     mutation.mutate(
       {
-        subject,
-        vendorId,
-        priority,
-        scheduledDate: scheduledDate || null,
+        subject: data.subject,
+        vendorId: data.vendorId,
+        priority: data.priority,
+        scheduledDate: data.scheduledDate || null,
       },
       {
         onSuccess: () => {
-          setSubject('')
-          setVendorId('')
-          setPriority('Normal')
-          setScheduledDate('')
+          reset()
           onSuccess()
         },
       },
@@ -64,28 +72,29 @@ function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={handleSubmit(onSubmit)}
       className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3"
     >
       <h3 className="text-sm font-semibold text-gray-700">New Work Order</h3>
       <div className="grid grid-cols-2 gap-3">
         <input
-          required
+          aria-label="Subject / description"
           placeholder="Subject / description"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
+          {...register('subject', { required: 'Subject is required' })}
           className="col-span-2 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        {errors.subject && (
+          <p className="col-span-2 text-xs text-red-600">{errors.subject.message}</p>
+        )}
         <input
-          required
+          aria-label="Vendor ID"
           placeholder="Vendor ID"
-          value={vendorId}
-          onChange={(e) => setVendorId(e.target.value)}
+          {...register('vendorId', { required: 'Vendor ID is required' })}
           className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         <select
-          value={priority}
-          onChange={(e) => setPriority(e.target.value)}
+          aria-label="Priority"
+          {...register('priority')}
           className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="Low">Low</option>
@@ -93,12 +102,14 @@ function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
           <option value="High">High</option>
           <option value="Emergency">Emergency</option>
         </select>
+        {errors.vendorId && (
+          <p className="col-span-2 text-xs text-red-600">{errors.vendorId.message}</p>
+        )}
         <input
           type="date"
-          placeholder="Scheduled date"
-          value={scheduledDate}
-          onChange={(e) => setScheduledDate(e.target.value)}
-          className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+          aria-label="Scheduled date"
+          {...register('scheduledDate')}
+          className="col-span-2 rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
       <button
