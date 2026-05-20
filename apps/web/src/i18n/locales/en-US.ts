@@ -113,7 +113,7 @@ const enUS = {
     success: 'Payment recorded',
     successMessage: '{{amount}} recorded for {{lease}}',
     queued: 'Payment queued',
-    queuedMessage: 'Payment will sync when you're back online.',
+    queuedMessage: "Payment will sync when you're back online.",
     errorMessage: 'Failed to record payment',
   },
   accounting: {
