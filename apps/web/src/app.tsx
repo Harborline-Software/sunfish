@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from 'react-error-boundary'
+import { OpenFeatureProvider } from '@openfeature/react-sdk'
 import { useEffect } from 'react'
 import { PropertiesPage } from '@/pages/PropertiesPage'
 import { LeasesPage } from '@/pages/LeasesPage'
@@ -190,12 +191,14 @@ function AppLayout() {
 
 export function App() {
   return (
-    <ErrorBoundary FallbackComponent={AppErrorFallback}>
-      <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <AppLayout />
-        </BrowserRouter>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <OpenFeatureProvider>
+      <ErrorBoundary FallbackComponent={AppErrorFallback}>
+        <QueryClientProvider client={queryClient}>
+          <BrowserRouter>
+            <AppLayout />
+          </BrowserRouter>
+        </QueryClientProvider>
+      </ErrorBoundary>
+    </OpenFeatureProvider>
   )
 }

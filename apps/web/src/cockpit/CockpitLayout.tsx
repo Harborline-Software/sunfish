@@ -1,4 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
+import { useBooleanFlagValue } from '@openfeature/react-sdk'
+import { FLAGS } from '@/lib/flags'
 
 /**
  * W#29 Phase 1 — Owner cockpit shell layout.
@@ -14,6 +16,8 @@ import { NavLink, Outlet } from 'react-router-dom'
  * the current role can reach.
  */
 export function CockpitLayout() {
+  const dashboardEnabled = useBooleanFlagValue(FLAGS.cockpitDashboard, false)
+
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)]">
       <aside className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 px-3 py-4">
@@ -28,7 +32,7 @@ export function CockpitLayout() {
           <CockpitNavLink to="/cockpit/vendors">
             Vendors
           </CockpitNavLink>
-          <CockpitNavLink to="/cockpit/dashboard" disabled>
+          <CockpitNavLink to="/cockpit/dashboard" disabled={!dashboardEnabled}>
             Dashboard
           </CockpitNavLink>
         </nav>
