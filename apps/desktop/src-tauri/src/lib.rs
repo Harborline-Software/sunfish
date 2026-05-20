@@ -26,8 +26,8 @@ const STRONGHOLD_KEY_LEN: usize = 32;
 const STRONGHOLD_KEY_SENTINEL: [u8; STRONGHOLD_KEY_LEN] = [0u8; STRONGHOLD_KEY_LEN];
 
 /// Derives the Stronghold master key from the OS keychain. On first launch this
-/// generates a fresh 32-byte random key via `OsRng` (Windows: BCryptGenRandom;
-/// macOS: getentropy/SecRandomCopyBytes; Linux: getrandom(2) — council R6) and
+/// generates a fresh 32-byte random key via `rand::rng()` (seeded from OS entropy:
+/// BCryptGenRandom on Windows, getrandom(2) on Linux, getentropy on macOS — council R6) and
 /// persists it in the platform credential store (Windows Credential Manager via
 /// DPAPI, macOS Keychain, Linux Secret Service via libsecret). On subsequent
 /// launches the stored key is returned verbatim.
