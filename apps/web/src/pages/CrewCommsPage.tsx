@@ -71,10 +71,10 @@ export function CrewCommsPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-10rem)] gap-0 overflow-hidden rounded-lg border border-gray-200">
+    <div className="flex h-[calc(100vh-10rem)] gap-0 overflow-hidden rounded-lg border border-border">
       {/* Thread list */}
-      <aside aria-label="Threads" className="w-48 flex-none border-r border-gray-200 bg-gray-50">
-        <div className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
+      <aside aria-label="Threads" className="w-48 flex-none border-r border-border bg-muted">
+        <div className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
           Threads
         </div>
         <nav aria-label="Message threads" className="space-y-0.5 px-2">
@@ -84,8 +84,8 @@ export function CrewCommsPage() {
               onClick={() => setActiveThread(t.id)}
               className={`w-full rounded-md px-3 py-2 text-left text-sm ${
                 activeThread === t.id
-                  ? 'bg-white font-medium text-gray-900 shadow-sm'
-                  : 'text-gray-600 hover:bg-white hover:text-gray-900'
+                  ? 'bg-background font-medium text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:bg-background hover:text-foreground'
               }`}
             >
               # {t.label}
@@ -99,7 +99,7 @@ export function CrewCommsPage() {
                 ? 'text-green-600'
                 : hubState === 'reconnecting'
                   ? 'text-amber-600'
-                  : 'text-gray-400'
+                  : 'text-muted-foreground'
             }`}
           >
             <span
@@ -108,7 +108,7 @@ export function CrewCommsPage() {
                   ? 'bg-green-500'
                   : hubState === 'reconnecting'
                     ? 'bg-amber-500 animate-pulse'
-                    : 'bg-gray-400'
+                    : 'bg-muted-foreground'
               }`}
             />
             {hubState === 'connected'
@@ -126,26 +126,26 @@ export function CrewCommsPage() {
       <div className="flex flex-1 flex-col">
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
           {threadMessages.length === 0 && (
-            <p className="text-center text-sm text-gray-400 mt-8">
+            <p className="text-center text-sm text-muted-foreground mt-8">
               No messages yet. Say hello!
             </p>
           )}
           {threadMessages.map((m, i) => (
             <div key={i} className="flex flex-col gap-0.5">
               <div className="flex items-baseline gap-2">
-                <span className="text-sm font-medium text-gray-900">{m.sender}</span>
-                <span className="text-xs text-gray-400">
+                <span className="text-sm font-medium text-foreground">{m.sender}</span>
+                <span className="text-xs text-muted-foreground">
                   {new Date(m.timestamp).toLocaleTimeString()}
                 </span>
               </div>
-              <p className="text-sm text-gray-700 whitespace-pre-wrap">{m.text}</p>
+              <p className="text-sm text-foreground whitespace-pre-wrap">{m.text}</p>
             </div>
           ))}
           <div ref={bottomRef} />
         </div>
 
         {/* Input */}
-        <div className="border-t border-gray-200 px-4 py-3">
+        <div className="border-t border-border px-4 py-3">
           <div className="flex items-end gap-2">
             <textarea
               value={draft}
@@ -154,17 +154,17 @@ export function CrewCommsPage() {
               aria-label={`Message ${THREADS.find((t) => t.id === activeThread)?.label ?? activeThread} thread`}
               placeholder={`Message #${THREADS.find((t) => t.id === activeThread)?.label ?? activeThread}`}
               rows={2}
-              className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="flex-1 resize-none rounded-md border border-border px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <button
               onClick={() => { handleSend().catch(() => {}) }}
               disabled={!draft.trim() || !connected}
-              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-40"
+              className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-40"
             >
               Send
             </button>
           </div>
-          <p className="mt-1 text-xs text-gray-400">Enter to send · Shift+Enter for new line</p>
+          <p className="mt-1 text-xs text-muted-foreground">Enter to send · Shift+Enter for new line</p>
         </div>
       </div>
     </div>

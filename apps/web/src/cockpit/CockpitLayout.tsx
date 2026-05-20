@@ -20,8 +20,8 @@ export function CockpitLayout() {
 
   return (
     <div className="flex min-h-[calc(100vh-3.5rem)]">
-      <aside aria-label="Cockpit" className="w-56 shrink-0 border-r border-gray-200 bg-gray-50 px-3 py-4">
-        <h2 className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <aside aria-label="Cockpit" className="w-56 shrink-0 border-r border-border bg-muted px-3 py-4">
+        <h2 className="mb-3 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           Cockpit
         </h2>
         <nav aria-label="Cockpit navigation" className="flex flex-col gap-1 text-sm">
@@ -59,7 +59,7 @@ function CockpitNavLink({
   if (disabled) {
     return (
       <span
-        className="rounded px-3 py-2 text-gray-400"
+        className="rounded px-3 py-2 text-muted-foreground"
         title="Coming in a later phase"
         role="link"
         aria-disabled="true"
@@ -74,8 +74,8 @@ function CockpitNavLink({
       end
       className={({ isActive }) =>
         isActive
-          ? 'rounded bg-white px-3 py-2 font-medium text-gray-900 shadow-sm'
-          : 'rounded px-3 py-2 text-gray-600 hover:bg-white hover:text-gray-900'
+          ? 'rounded bg-background px-3 py-2 font-medium text-foreground shadow-sm'
+          : 'rounded px-3 py-2 text-muted-foreground hover:bg-background hover:text-foreground'
       }
     >
       {children}

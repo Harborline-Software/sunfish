@@ -5,7 +5,7 @@ function StatusBadge({ status }: { status: RentRollRow['status'] }) {
   const styles = {
     Current: 'bg-green-100 text-green-800',
     Overdue: 'bg-red-100 text-red-800',
-    Vacant:  'bg-gray-100 text-gray-600',
+    Vacant:  'bg-muted text-muted-foreground',
   } as const
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${styles[status]}`}>
@@ -35,11 +35,11 @@ export function RentRoll() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Rent Roll</h1>
-        <p className="mt-1 text-sm text-gray-500">All properties × units — occupancy and payment status</p>
+        <h1 className="text-2xl font-semibold text-foreground">Rent Roll</h1>
+        <p className="mt-1 text-sm text-muted-foreground">All properties × units — occupancy and payment status</p>
       </div>
 
-      {isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+      {isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {isError && (
         <p className="text-sm text-red-600">
@@ -48,32 +48,32 @@ export function RentRoll() {
       )}
 
       {sorted.length > 0 && (
-        <div className="overflow-hidden rounded-lg border border-gray-200">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-gray-50">
+        <div className="overflow-hidden rounded-lg border border-border">
+          <table className="min-w-full divide-y divide-border text-sm">
+            <thead className="bg-muted">
               <tr>
-                <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Property</th>
-                <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Unit</th>
-                <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Tenant</th>
-                <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Lease Start</th>
-                <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Lease End</th>
-                <th scope="col" className="px-4 py-3 text-right font-medium text-gray-500">Monthly Rent</th>
-                <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Last Payment</th>
-                <th scope="col" className="px-4 py-3 text-right font-medium text-gray-500">Balance Due</th>
-                <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Property</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Unit</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Tenant</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Lease Start</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Lease End</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium text-muted-foreground">Monthly Rent</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Last Payment</th>
+                <th scope="col" className="px-4 py-3 text-right font-medium text-muted-foreground">Balance Due</th>
+                <th scope="col" className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
+            <tbody className="divide-y divide-border bg-background">
               {sorted.map((row, i) => (
-                <tr key={`${row.propertyId}-${row.unit ?? i}`} className="hover:bg-gray-50">
-                  <td className="px-4 py-3 font-medium text-gray-900">{row.propertyName}</td>
-                  <td className="px-4 py-3 text-gray-600">{row.unit ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-900">{row.tenantName || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{row.leaseStart ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{row.leaseEnd ?? '—'}</td>
-                  <td className="px-4 py-3 text-right text-gray-900">{fmt(row.monthlyRent)}</td>
-                  <td className="px-4 py-3 text-gray-600">{row.lastPaymentDate ?? '—'}</td>
-                  <td className="px-4 py-3 text-right font-medium text-gray-900">{fmt(row.balanceDue)}</td>
+                <tr key={`${row.propertyId}-${row.unit ?? i}`} className="hover:bg-muted">
+                  <td className="px-4 py-3 font-medium text-foreground">{row.propertyName}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.unit ?? '—'}</td>
+                  <td className="px-4 py-3 text-foreground">{row.tenantName || '—'}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.leaseStart ?? '—'}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.leaseEnd ?? '—'}</td>
+                  <td className="px-4 py-3 text-right text-foreground">{fmt(row.monthlyRent)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{row.lastPaymentDate ?? '—'}</td>
+                  <td className="px-4 py-3 text-right font-medium text-foreground">{fmt(row.balanceDue)}</td>
                   <td className="px-4 py-3">
                     <StatusBadge status={row.status} />
                   </td>
@@ -85,7 +85,7 @@ export function RentRoll() {
       )}
 
       {!isLoading && !isError && sorted.length === 0 && (
-        <p className="text-sm text-gray-500">No leases found.</p>
+        <p className="text-sm text-muted-foreground">No leases found.</p>
       )}
     </div>
   )

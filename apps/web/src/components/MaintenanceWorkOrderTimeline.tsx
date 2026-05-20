@@ -34,7 +34,7 @@ const BAR_COLORS: Record<string, string> = {
   Scheduled:  'bg-amber-200 border-amber-400',
   InProgress: 'bg-orange-300 border-orange-500',
   Completed:  'bg-green-200 border-green-400',
-  OnHold:     'bg-gray-200 border-gray-400',
+  OnHold:     'bg-muted border-border',
   Cancelled:  'bg-red-100 border-red-300',
 }
 
@@ -106,7 +106,7 @@ export function MaintenanceWorkOrderTimeline({ items }: Props) {
   if (items.length === 0) {
     return (
       <Card>
-        <CardContent className="py-8 text-center text-sm text-gray-500">
+        <CardContent className="py-8 text-center text-sm text-muted-foreground">
           No work orders to display on the timeline.
         </CardContent>
       </Card>
@@ -125,10 +125,10 @@ export function MaintenanceWorkOrderTimeline({ items }: Props) {
           aria-label="Maintenance work order timeline"
         >
           {/* date header */}
-          <div className="flex items-end border-b border-gray-200 bg-gray-50 select-none">
+          <div className="flex items-end border-b border-border bg-muted select-none">
             <div
               style={{ width: LABEL_COL_W, minWidth: LABEL_COL_W }}
-              className="shrink-0 px-3 py-2 text-xs font-medium text-gray-500"
+              className="shrink-0 px-3 py-2 text-xs font-medium text-muted-foreground"
             >
               Work Order
             </div>
@@ -136,7 +136,7 @@ export function MaintenanceWorkOrderTimeline({ items }: Props) {
               {ticks.map((t) => (
                 <span
                   key={t.pct}
-                  className="absolute bottom-1 text-xs text-gray-400 -translate-x-1/2 whitespace-nowrap"
+                  className="absolute bottom-1 text-xs text-muted-foreground -translate-x-1/2 whitespace-nowrap"
                   style={{ left: `${t.pct}%` }}
                   aria-hidden="true"
                 >
@@ -184,14 +184,14 @@ export function MaintenanceWorkOrderTimeline({ items }: Props) {
                 role="listitem"
                 tabIndex={0}
                 aria-label={label}
-                className="flex items-center border-b border-gray-100 last:border-0 hover:bg-gray-50 focus:outline-none focus-visible:bg-blue-50 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
+                className="flex items-center border-b border-border last:border-0 hover:bg-muted focus:outline-none focus-visible:bg-blue-50 dark:focus-visible:bg-blue-900/30 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-500"
               >
                 {/* label column */}
                 <div
                   style={{ width: LABEL_COL_W, minWidth: LABEL_COL_W }}
                   className="shrink-0 flex items-center gap-2 px-3 py-2"
                 >
-                  <span className="font-mono text-xs text-gray-500 truncate leading-none">
+                  <span className="font-mono text-xs text-muted-foreground truncate leading-none">
                     {wo.workOrderId.slice(-8)}
                   </span>
                   <Badge
@@ -215,14 +215,14 @@ export function MaintenanceWorkOrderTimeline({ items }: Props) {
                     <div
                       className={cn(
                         'absolute inset-y-2 rounded border',
-                        BAR_COLORS[wo.status] ?? 'bg-gray-100 border-gray-300',
+                        BAR_COLORS[wo.status] ?? 'bg-muted border-border',
                       )}
                       style={{ left: `${leftPct}%`, width: `${widthPct}%` }}
                       aria-hidden="true"
                     />
                   ) : (
                     <span
-                      className="absolute inset-0 flex items-center px-1 text-xs text-gray-400 italic"
+                      className="absolute inset-0 flex items-center px-1 text-xs text-muted-foreground italic"
                       aria-hidden="true"
                     >
                       no date
@@ -236,14 +236,14 @@ export function MaintenanceWorkOrderTimeline({ items }: Props) {
       </CardContent>
 
       {/* status legend */}
-      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-gray-100 px-4 pb-3 pt-2">
+      <div className="flex flex-wrap gap-x-4 gap-y-1 border-t border-border px-4 pb-3 pt-2">
         {Object.entries(BAR_COLORS).map(([status, cls]) => (
-          <span key={status} className="flex items-center gap-1.5 text-xs text-gray-500">
+          <span key={status} className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <span className={cn('inline-block h-2.5 w-4 rounded-sm border', cls)} aria-hidden="true" />
             {status}
           </span>
         ))}
-        <span className="flex items-center gap-1.5 text-xs text-gray-500">
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <span className="inline-block h-2.5 w-px bg-blue-400" aria-hidden="true" />
           Today
         </span>

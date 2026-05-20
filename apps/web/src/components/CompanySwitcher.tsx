@@ -16,7 +16,7 @@ export function CompanySwitcher() {
     <select
       value={activeCompany}
       onChange={handleChange}
-      className="rounded border border-gray-300 bg-white px-3 py-1.5 text-sm"
+      className="rounded border border-border bg-background px-3 py-1.5 text-sm"
       aria-label="Active company"
     >
       {availableCompanies.map((c) => (

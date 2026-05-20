@@ -39,13 +39,13 @@ export function PLReport() {
     <div className="space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Profit &amp; Loss</h1>
-          <p className="mt-1 text-sm text-gray-500">Income and expenses from ERPNext General Ledger</p>
+          <h1 className="text-2xl font-semibold text-foreground">Profit &amp; Loss</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Income and expenses from ERPNext General Ledger</p>
         </div>
         <button
           onClick={handleExport}
           disabled={exporting || plQuery.isLoading}
-          className="rounded bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90 disabled:opacity-50"
         >
           {exporting ? 'Exporting…' : 'Export CSV'}
         </button>
@@ -54,12 +54,12 @@ export function PLReport() {
       {/* Selectors */}
       <div className="flex flex-wrap gap-4">
         <div className="flex flex-col gap-1">
-          <label htmlFor="pl-property" className="text-xs font-medium text-gray-500">Property</label>
+          <label htmlFor="pl-property" className="text-xs font-medium text-muted-foreground">Property</label>
           <select
             id="pl-property"
             value={propertyId}
             onChange={(e) => setPropertyId(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="">All properties</option>
             {propertiesQuery.data?.map((p) => (
@@ -69,12 +69,12 @@ export function PLReport() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="pl-period" className="text-xs font-medium text-gray-500">Period</label>
+          <label htmlFor="pl-period" className="text-xs font-medium text-muted-foreground">Period</label>
           <select
             id="pl-period"
             value={period}
             onChange={(e) => setPeriod(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           >
             <option value="month">Month to date</option>
             <option value="quarter">Quarter to date</option>
@@ -83,18 +83,18 @@ export function PLReport() {
         </div>
 
         <div className="flex flex-col gap-1">
-          <label htmlFor="pl-asof" className="text-xs font-medium text-gray-500">As of</label>
+          <label htmlFor="pl-asof" className="text-xs font-medium text-muted-foreground">As of</label>
           <input
             id="pl-asof"
             type="date"
             value={asOf}
             onChange={(e) => setAsOf(e.target.value)}
-            className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="rounded border border-border px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
         </div>
       </div>
 
-      {plQuery.isLoading && <p className="text-sm text-gray-500">Loading…</p>}
+      {plQuery.isLoading && <p className="text-sm text-muted-foreground">Loading…</p>}
 
       {plQuery.isError && (
         <p className="text-sm text-red-600">
@@ -106,17 +106,17 @@ export function PLReport() {
         <div className="space-y-6">
           {/* Summary */}
           <div className="grid grid-cols-3 gap-4">
-            <div className="rounded-lg border border-gray-200 p-4">
-              <p className="text-xs font-medium text-gray-500">Total Income</p>
+            <div className="rounded-lg border border-border p-4">
+              <p className="text-xs font-medium text-muted-foreground">Total Income</p>
               <p className="mt-1 text-xl font-semibold text-green-700">{fmt(plQuery.data.income)}</p>
             </div>
-            <div className="rounded-lg border border-gray-200 p-4">
-              <p className="text-xs font-medium text-gray-500">Total Expenses</p>
-              <p className="mt-1 text-xl font-semibold text-red-700">{fmt(plQuery.data.expenses)}</p>
+            <div className="rounded-lg border border-border p-4">
+              <p className="text-xs font-medium text-muted-foreground">Total Expenses</p>
+              <p className="mt-1 text-xl font-semibold text-red-700 dark:text-red-400">{fmt(plQuery.data.expenses)}</p>
             </div>
-            <div className="rounded-lg border border-gray-200 p-4">
-              <p className="text-xs font-medium text-gray-500">Net Income</p>
-              <p className={`mt-1 text-xl font-semibold ${plQuery.data.net >= 0 ? 'text-gray-900' : 'text-red-700'}`}>
+            <div className="rounded-lg border border-border p-4">
+              <p className="text-xs font-medium text-muted-foreground">Net Income</p>
+              <p className={`mt-1 text-xl font-semibold ${plQuery.data.net >= 0 ? 'text-foreground' : 'text-red-700 dark:text-red-400'}`}>
                 {fmt(plQuery.data.net)}
               </p>
             </div>
@@ -125,13 +125,13 @@ export function PLReport() {
           {/* Income lines */}
           {plQuery.data.incomeLines.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-2">Income</h2>
-              <div className="rounded-lg border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-100 text-sm">
-                  <tbody className="bg-white divide-y divide-gray-50">
+              <h2 className="text-sm font-semibold text-foreground mb-2">Income</h2>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="min-w-full divide-y divide-border text-sm">
+                  <tbody className="bg-background divide-y divide-border">
                     {plQuery.data.incomeLines.map((line) => (
                       <tr key={line.account}>
-                        <td className="px-4 py-2 text-gray-700">{line.account}</td>
+                        <td className="px-4 py-2 text-foreground">{line.account}</td>
                         <td className="px-4 py-2 text-right font-medium text-green-700">{fmt(line.amount)}</td>
                       </tr>
                     ))}
@@ -144,14 +144,14 @@ export function PLReport() {
           {/* Expense lines */}
           {plQuery.data.expenseLines.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold text-gray-700 mb-2">Expenses</h2>
-              <div className="rounded-lg border border-gray-200 overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-100 text-sm">
-                  <tbody className="bg-white divide-y divide-gray-50">
+              <h2 className="text-sm font-semibold text-foreground mb-2">Expenses</h2>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <table className="min-w-full divide-y divide-border text-sm">
+                  <tbody className="bg-background divide-y divide-border">
                     {plQuery.data.expenseLines.map((line) => (
                       <tr key={line.account}>
-                        <td className="px-4 py-2 text-gray-700">{line.account}</td>
-                        <td className="px-4 py-2 text-right font-medium text-red-700">{fmt(line.amount)}</td>
+                        <td className="px-4 py-2 text-foreground">{line.account}</td>
+                        <td className="px-4 py-2 text-right font-medium text-red-700 dark:text-red-400">{fmt(line.amount)}</td>
                       </tr>
                     ))}
                   </tbody>
