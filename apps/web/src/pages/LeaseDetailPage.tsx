@@ -117,19 +117,19 @@ export function LeaseDetailPage() {
             <>
               <table className="min-w-full text-sm" aria-label="Payment history">
                 <thead>
-                  <tr className="border-b text-left text-gray-500">
-                    <th scope="col" className="pb-2 pr-4 font-medium">ID</th>
-                    <th scope="col" className="pb-2 pr-4 font-medium">Date</th>
-                    <th scope="col" className="pb-2 pr-4 font-medium">Amount</th>
+                  <tr className="border-b text-start text-gray-500">
+                    <th scope="col" className="pb-2 pe-4 font-medium">ID</th>
+                    <th scope="col" className="pb-2 pe-4 font-medium">Date</th>
+                    <th scope="col" className="pb-2 pe-4 font-medium">Amount</th>
                     <th scope="col" className="pb-2 font-medium">Method</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {payments.map((p) => (
                     <tr key={p.paymentId}>
-                      <td className="py-2 pr-4 font-mono text-gray-500">{p.paymentId.slice(-8)}</td>
-                      <td className="py-2 pr-4 text-gray-700">{p.receivedAt.slice(0, 10)}</td>
-                      <td className="py-2 pr-4 font-medium text-gray-900">${p.amount.toLocaleString()}</td>
+                      <td className="py-2 pe-4 font-mono text-gray-500">{p.paymentId.slice(-8)}</td>
+                      <td className="py-2 pe-4 text-gray-700">{p.receivedAt.slice(0, 10)}</td>
+                      <td className="py-2 pe-4 font-medium text-gray-900">${p.amount.toLocaleString()}</td>
                       <td className="py-2 text-gray-600">{p.paymentMethod}</td>
                     </tr>
                   ))}
