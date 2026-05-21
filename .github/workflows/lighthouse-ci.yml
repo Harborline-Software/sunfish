@@ -30,6 +30,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           path: sunfish
+          persist-credentials: false
 
       - name: Checkout sibling shipyard
         uses: actions/checkout@v6
@@ -37,6 +38,7 @@ jobs:
           repository: Harborline-Software/shipyard
           path: shipyard
           ref: main
+          persist-credentials: false
 
       - uses: actions/setup-node@v6
         with:
@@ -62,6 +64,10 @@ jobs:
         working-directory: sunfish/apps/web
         run: npm run build
 
+      - name: Serve production bundle
+        run: npx --yes serve@14 sunfish/apps/web/dist --single --listen 4173 &
+        # Background server; Lighthouse CI polls the URLs until they respond.
+
       - name: Audit with Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
         with:
@@ -70,7 +76,5 @@ jobs:
             http://localhost:4173/leases
             http://localhost:4173/accounting
             http://localhost:4173/rent-collection
-          startServerCommand: 'npx serve@14 sunfish/apps/web/dist --single --listen 4173'
-          startServerReadyPattern: 'Accepting connections'
           uploadArtifacts: true
           temporaryPublicStorage: true
