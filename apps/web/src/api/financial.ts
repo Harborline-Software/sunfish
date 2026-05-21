@@ -46,9 +46,9 @@ export interface AccountingSummary {
   invoicedThisPeriod: number
   receivedThisPeriod: number
   outstanding: number           // total outstanding
-  outstanding30Plus: number     // outstanding > 30 days overdue
-  aging60Plus: number           // outstanding ≥ 60 days overdue
-  aging60PlusCount: number      // count of invoices ≥ 60 days overdue
+  outstanding30Plus: number     // outstanding > 30 days overdue (exclusive lower bound)
+  aging60Plus: number           // outstanding > 60 days overdue (exclusive lower bound; matches outstanding30Plus convention)
+  aging60PlusCount: number      // count of invoices > 60 days overdue
   currency: string              // ISO 4217 (e.g. 'USD')
 }
 
