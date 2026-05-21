@@ -135,47 +135,37 @@ export interface RecordPaymentResult {
  *
  * Throws PaymentError with typed code so the caller can render E1/E2/E3/E4 UX.
  * Mirrors cohort-1 createWorkOrder + getCsrfToken pattern from maintenance.ts.
- *
- * DRAFT-MOCK: returns static fixture; throws nothing. Swap after backend unblocks.
  */
 export async function recordPayment(input: RecordPaymentInput): Promise<RecordPaymentResult> {
-  // TODO(W#76 PR 3): replace with real fetch
-  //
   // Step 1: fetch CSRF token (throws PaymentError 'token-fetch-error' on failure → E1)
-  // let csrfToken: string
-  // try {
-  //   const tokenResp = await fetch('/api/v1/financial/antiforgery-token', { credentials: 'include' })
-  //   if (!tokenResp.ok) throw new Error(`Token fetch failed: ${tokenResp.status}`)
-  //   const body = (await tokenResp.json()) as { token: string }
-  //   csrfToken = body.token
-  // } catch {
-  //   throw new PaymentError("Couldn't reach the payment service.", 'token-fetch-error')
-  // }
-  //
+  let csrfToken: string
+  try {
+    const tokenResp = await fetch('/api/v1/financial/antiforgery-token', { credentials: 'include' })
+    if (!tokenResp.ok) throw new Error(`Token fetch failed: ${tokenResp.status}`)
+    const body = (await tokenResp.json()) as { token: string }
+    csrfToken = body.token
+  } catch {
+    throw new PaymentError("Couldn't reach the payment service.", 'token-fetch-error')
+  }
+
   // Step 2: POST (distinguishes E2/E3/E4 by status + body)
-  // const resp = await fetch('/api/v1/financial/payments', {
-  //   method: 'POST',
-  //   credentials: 'include',
-  //   headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': csrfToken },
-  //   body: JSON.stringify(input),
-  // })
-  // if (!resp.ok) {
-  //   if (resp.status === 419 || resp.status === 403) {
-  //     throw new PaymentError('Session expired.', 'token-rejection')   // → E2
-  //   }
-  //   if (resp.status === 400) {
-  //     const text = await resp.text()
-  //     if (/lease|not.found/i.test(text)) {
-  //       throw new PaymentError("Couldn't find that lease.", 'lease-not-found')   // → E3
-  //     }
-  //   }
-  //   throw new PaymentError(`Payment failed: ${resp.status}`, 'server-error')   // → E4
-  // }
-  // return (await resp.json()) as RecordPaymentResult
-  void input // suppress unused-arg warning in mock
-  return Promise.resolve({
-    paymentId: 'pay_mock00001234',
-    status: 'Received',
-    recordedAt: new Date().toISOString(),
+  const resp = await fetch('/api/v1/financial/payments', {
+    method: 'POST',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json', 'X-XSRF-TOKEN': csrfToken },
+    body: JSON.stringify(input),
   })
+  if (!resp.ok) {
+    if (resp.status === 419 || resp.status === 403) {
+      throw new PaymentError('Session expired.', 'token-rejection')   // → E2
+    }
+    if (resp.status === 400) {
+      const text = await resp.text()
+      if (/lease|not.found/i.test(text)) {
+        throw new PaymentError("Couldn't find that lease.", 'lease-not-found')   // → E3
+      }
+    }
+    throw new PaymentError(`Payment failed: ${resp.status}`, 'server-error')   // → E4
+  }
+  return (await resp.json()) as RecordPaymentResult
 }
