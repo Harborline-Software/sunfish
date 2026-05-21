@@ -1,0 +1,114 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release:
+    name: Release (${{ matrix.target }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: macos-13
+            target: x86_64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+
+      - name: Checkout sibling shipyard
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: sunfish/apps/desktop/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install Rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: sunfish/apps/desktop/src-tauri
+
+      - name: Refresh Rust toolchain after cache restore
+        run: rustup update stable --no-self-update && rustup target add ${{ matrix.target }}
+
+      - name: Install Linux system dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-dev \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+
+      - name: Build @sunfish/ui-react (sibling shipyard)
+        working-directory: shipyard/packages/ui-react
+        shell: bash
+        run: |
+          if [ -f package.json ]; then
+            npm install
+            npm run build
+          fi
+
+      - name: Install npm dependencies
+        working-directory: sunfish/apps/desktop
+        run: npm ci
+
+      # TAURI_SIGNING_PRIVATE_KEY must be set in GitHub Actions secrets.
+      # Generate on the build machine: npx tauri signer generate --password ""
+      # Copy the private key file contents into the secret.
+      # No TAURI_SIGNING_PRIVATE_KEY_PASSWORD needed (key has no password).
+      - name: Build and release
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: 'Anchor v__VERSION__'
+          releaseBody: |
+            ## Anchor v__VERSION__
+
+            ### Installation
+            - **Windows x64**: `Anchor_<version>_x64_en-US.msi`
+            - **Windows ARM64**: `Anchor_<version>_arm64_en-US.msi`
+            - **macOS (Apple Silicon)**: `Anchor_<version>_aarch64.dmg`
+            - **macOS (Intel)**: `Anchor_<version>_x64.dmg`
+            - **Linux**: `Anchor_<version>_amd64.AppImage`
+
+            Existing installs update automatically via the built-in updater.
+          releaseDraft: true
+          prerelease: false
+          projectPath: sunfish/apps/desktop
+          tauriScript: npm run tauri
+          args: --target ${{ matrix.target }}
