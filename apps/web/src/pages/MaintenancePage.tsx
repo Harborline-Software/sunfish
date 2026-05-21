@@ -228,7 +228,7 @@ export function MaintenancePage() {
 
       {workOrders.length > 0 && view === 'table' && (
         <div className="overflow-x-auto rounded-lg border border-gray-200">
-          <table className="w-full text-left">
+          <table className="w-full text-start">
             <thead className="bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
               <tr>
                 <th className="py-3 px-4">ID</th>
