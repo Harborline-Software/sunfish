@@ -59,17 +59,20 @@ export function AccountingPage() {
       {/* Summary tiles — 4-up grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {isPending ? (
-          [0, 1, 2, 3].map((i) => (
-            <Card key={i} aria-busy="true">
-              <CardHeader className="pb-1">
-                <div className="h-4 w-20 rounded bg-gray-100 animate-pulse" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-7 w-24 rounded bg-gray-100 animate-pulse" />
-                <div className="mt-1 h-3 w-16 rounded bg-gray-100 animate-pulse" />
-              </CardContent>
-            </Card>
-          ))
+          <>
+            <span className="sr-only">Loading accounting summary</span>
+            {[0, 1, 2, 3].map((i) => (
+              <Card key={i} aria-busy="true">
+                <CardHeader className="pb-1">
+                  <div className="h-4 w-20 rounded bg-gray-100 animate-pulse" />
+                </CardHeader>
+                <CardContent>
+                  <div className="h-7 w-24 rounded bg-gray-100 animate-pulse" />
+                  <div className="mt-1 h-3 w-16 rounded bg-gray-100 animate-pulse" />
+                </CardContent>
+              </Card>
+            ))}
+          </>
         ) : (
           <>
             <Card>
