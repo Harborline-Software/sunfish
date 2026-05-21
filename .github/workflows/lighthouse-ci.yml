@@ -70,6 +70,8 @@ jobs:
 
       - name: Audit with Lighthouse CI
         uses: treosh/lighthouse-ci-action@v12
+        env:
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
         with:
           urls: |
             http://localhost:4173/
