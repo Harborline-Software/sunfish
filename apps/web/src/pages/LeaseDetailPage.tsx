@@ -49,7 +49,7 @@ export function LeaseDetailPage() {
           <CardTitle className="text-base">Lease Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2 sm:gap-x-6">
             <div>
               <dt className="text-gray-500">Property</dt>
               <dd className="font-medium text-gray-900">{lease.propertyDisplayName ?? lease.propertyId ?? '—'}</dd>
@@ -115,6 +115,7 @@ export function LeaseDetailPage() {
             </div>
           ) : (
             <>
+              <div className="overflow-x-auto">
               <table className="min-w-full text-sm" aria-label="Payment history">
                 <thead>
                   <tr className="border-b text-start text-gray-500">
@@ -135,6 +136,7 @@ export function LeaseDetailPage() {
                   ))}
                 </tbody>
               </table>
+              </div>
               <div className="mt-4">
                 <Link
                   to={recordPaymentHref}
