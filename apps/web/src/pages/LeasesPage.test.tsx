@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
@@ -46,6 +47,8 @@ const MOCK_LEASES: LeaseSummary[] = [
 ]
 
 describe('LeasesPage', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
+
   beforeEach(() => {
     vi.restoreAllMocks()
   })
@@ -113,6 +116,19 @@ describe('LeasesPage', () => {
     render(<LeasesPage />, { wrapper })
     expect(screen.getByText(/failed to load leases/i)).toBeInTheDocument()
     expect(screen.getByText('Network error')).toBeInTheDocument()
+  })
+
+  it('has no a11y violations in loaded state', async () => {
+    vi.spyOn(useLeaseHook, 'useLeases').mockReturnValue({
+      data: MOCK_LEASES,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useLeaseHook.useLeases>)
+
+    const { container } = render(<LeasesPage />, { wrapper })
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('shows updated empty-state copy (no ERPNext reference)', () => {

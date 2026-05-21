@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { render, screen } from '@testing-library/react'
 import { MaintenanceWorkOrderTimeline } from './MaintenanceWorkOrderTimeline'
 import type { WorkOrderSummary } from '@/api/maintenance'
@@ -43,6 +44,13 @@ const ITEMS: WorkOrderSummary[] = [
 ]
 
 describe('MaintenanceWorkOrderTimeline', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
+
+  it('has no a11y violations with work orders loaded', async () => {
+    const { container } = render(<MaintenanceWorkOrderTimeline items={ITEMS} />)
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
   it('shows empty state when items is empty', () => {
     render(<MaintenanceWorkOrderTimeline items={[]} />)
     expect(screen.getByText(/no work orders to display on the timeline/i)).toBeInTheDocument()

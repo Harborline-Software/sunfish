@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter } from 'react-router-dom'
@@ -50,6 +51,8 @@ const mockData: PropertyList = {
 }
 
 describe('PropertiesPage', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
+
   beforeEach(() => {
     mockUseProperties.mockReset()
   })
@@ -105,6 +108,20 @@ describe('PropertiesPage', () => {
     expect(screen.getByText(/failed to load properties/i)).toBeInTheDocument()
     expect(screen.getByText('Bridge unavailable')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+  })
+
+  it('has no a11y violations in loaded state', async () => {
+    mockUseProperties.mockReturnValue({
+      data: mockData,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    })
+
+    const { container } = render(<PropertiesPage />, { wrapper })
+    await waitFor(() => expect(screen.getByText('150 Lexington Ct')).toBeInTheDocument())
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('shows empty-state copy without ERPNext mention', () => {

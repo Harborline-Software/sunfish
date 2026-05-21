@@ -1,5 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { PLReport } from './PLReport'
@@ -42,6 +43,8 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('PLReport page', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
+
   beforeEach(() => {
     vi.clearAllMocks()
     mockGetProperties.mockResolvedValue(MOCK_PROPERTIES)
@@ -82,6 +85,12 @@ describe('PLReport page', () => {
     const periodSelect = screen.getByLabelText(/period/i)
     fireEvent.change(periodSelect, { target: { value: 'month' } })
     expect((periodSelect as HTMLSelectElement).value).toBe('month')
+  })
+
+  it('has no a11y violations in loaded state', async () => {
+    const { container } = render(<PLReport />, { wrapper })
+    await screen.findByText('Rent Income')
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('calls exportProfitLoss when Export CSV is clicked', async () => {

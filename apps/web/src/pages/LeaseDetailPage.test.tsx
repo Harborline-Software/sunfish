@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
@@ -57,8 +58,26 @@ const MOCK_PAYMENTS: PaymentList = {
 }
 
 describe('LeaseDetailPage', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
+
   beforeEach(() => {
     vi.restoreAllMocks()
+  })
+
+  it('has no a11y violations in loaded state', async () => {
+    vi.spyOn(useLeaseHook, 'useLease').mockReturnValue({
+      data: MOCK_DETAIL,
+      isPending: false,
+      isError: false,
+      error: null,
+    } as unknown as ReturnType<typeof useLeaseHook.useLease>)
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+      data: [],
+      isPending: false,
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+
+    const { container } = render(<LeaseDetailPage />, { wrapper })
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('shows loading state while lease is pending', () => {
