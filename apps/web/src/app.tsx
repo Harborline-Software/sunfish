@@ -25,6 +25,8 @@ const WorkOrderDetailView = lazy(() => import('@/cockpit/work-orders/WorkOrderDe
 const VendorListView = lazy(() => import('@/cockpit/vendors/VendorListView').then(m => ({ default: m.VendorListView })))
 const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView').then(m => ({ default: m.VendorDetailView })))
 const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
+const AuditEventsPage = lazy(() => import('@/pages/AuditEventsPage').then(m => ({ default: m.AuditEventsPage })))
+const AuditEventDetailPage = lazy(() => import('@/pages/AuditEventDetailPage').then(m => ({ default: m.AuditEventDetailPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -156,6 +158,14 @@ function AppLayout() {
             >
               Cockpit
             </NavLink>
+            <NavLink
+              to="/audit-trail"
+              className={({ isActive }) =>
+                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
+              }
+            >
+              Audit
+            </NavLink>
           </nav>
           <CompanySwitcher />
         </div>
@@ -174,6 +184,8 @@ function AppLayout() {
             <Route path="/reports" element={<Navigate to="/reports/rent-roll" replace />} />
             <Route path="/reports/rent-roll" element={<RentRoll />} />
             <Route path="/reports/profit-loss" element={<PLReport />} />
+            <Route path="/audit-trail" element={<AuditEventsPage />} />
+            <Route path="/audit-trail/:auditId" element={<AuditEventDetailPage />} />
             <Route path="/cockpit" element={<CockpitLayout />}>
               <Route index element={<PropertySelector />} />
               <Route path="work-orders" element={<WorkOrderListView />} />
