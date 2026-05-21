@@ -116,6 +116,7 @@ export interface RecordPaymentInput {
   direction: 'Inbound' | 'Outbound'
   paidAt?: string              // ISO timestamp; defaults to server time if absent
   externalRef?: string         // caller-supplied reference (check number, etc.)
+  method?: string              // payment method (ACH/Check/Cash/Card); defaults to Cash server-side if absent
 }
 
 export interface RecordPaymentResult {

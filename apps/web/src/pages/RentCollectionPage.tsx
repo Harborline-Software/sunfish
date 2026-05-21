@@ -39,6 +39,7 @@ export function RentCollectionPage() {
       currency: 'USD',
       direction: 'Inbound',
       paidAt: new Date(date).toISOString(),
+      method,
     })
   }
 
