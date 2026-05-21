@@ -3,10 +3,12 @@ const QUEUE_KEY = 'sunfish:offline-payment-queue'
 export interface QueuedPayment {
   id: string
   payload: {
-    Lease: string
-    Amount: number
-    Date: string
-    PaymentMethod: string
+    leaseId: string
+    amount: number
+    currency: string
+    direction: string
+    paidAt: string
+    method: string
   }
   queuedAt: string
 }
