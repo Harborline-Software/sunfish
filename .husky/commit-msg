@@ -73,3 +73,11 @@ if [ $RESULT -ne 0 ]; then
 fi
 
 exit $RESULT
+
+# ----------------------------------------------------------------------------
+# Fleet pre-flight hook — catches W#NN, bare Word: trailers, long lines,
+# cross-repo hash refs, and fixture-init risks before they reach CI.
+# Runs in warn mode by default (commit proceeds; advisory only).
+# See: .husky/commit-msg-fleet-preflight.sh
+# ----------------------------------------------------------------------------
+.husky/commit-msg-fleet-preflight.sh "$1"
