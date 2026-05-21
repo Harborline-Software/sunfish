@@ -146,19 +146,19 @@ export function AccountingPage() {
           <div className="overflow-x-auto">
           <table className="min-w-full text-sm" aria-label="Outstanding invoices">
             <thead>
-              <tr className="border-b text-left text-gray-500">
-                <th scope="col" className="pb-2 pr-4 font-medium">Invoice</th>
-                <th scope="col" className="pb-2 pr-4 font-medium">Lease</th>
-                <th scope="col" className="pb-2 pr-4 font-medium">Amount</th>
+              <tr className="border-b text-start text-gray-500">
+                <th scope="col" className="pb-2 pe-4 font-medium">Invoice</th>
+                <th scope="col" className="pb-2 pe-4 font-medium">Lease</th>
+                <th scope="col" className="pb-2 pe-4 font-medium">Amount</th>
                 <th scope="col" className="pb-2 font-medium">Days due</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {invoices.map((inv) => (
                 <tr key={inv.invoiceId}>
-                  <td className="py-2 pr-4 font-mono text-gray-500">{inv.invoiceId.slice(-8)}</td>
-                  <td className="py-2 pr-4 text-gray-700">{inv.tenantDisplayName}</td>
-                  <td className="py-2 pr-4 font-medium text-gray-900">{formatCurrency(inv.amount)}</td>
+                  <td className="py-2 pe-4 font-mono text-gray-500">{inv.invoiceId.slice(-8)}</td>
+                  <td className="py-2 pe-4 text-gray-700">{inv.tenantDisplayName}</td>
+                  <td className="py-2 pe-4 font-medium text-gray-900">{formatCurrency(inv.amount)}</td>
                   <td className="py-2">
                     <DaysDuePill days={inv.daysOverdue} />
                   </td>
