@@ -60,6 +60,17 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-query': ['@tanstack/react-query'],
+          'vendor-signalr': ['@microsoft/signalr'],
+        },
+      },
+    },
+  },
   server: {
     proxy: {
       '/api/v1': {
