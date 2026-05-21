@@ -1,0 +1,70 @@
+import { Canvas, Controls, Meta, Story } from '@storybook/blocks'
+import * as BadgeStories from './badge.stories'
+
+<Meta of={BadgeStories} />
+
+# Badge
+
+Categorical label for entity status, classification, or taxonomy. Use `Badge` when the value
+is a discrete category (Active / Expired / Cancelled) — not an ordinal or threshold-based
+value. For threshold-based signals (aging days, due dates), use `StatusPill` instead.
+
+## When to use
+
+| Variant | Canonical Sunfish usage |
+|---|---|
+| `success` | Active leases, paid invoices, healthy status |
+| `warning` | Expiring leases (within N days), pending actions |
+| `destructive` | Cancelled leases, overdue invoices, blocked states |
+| `secondary` | Pending setup, draft state, unknown status |
+| `outline` | Expired / inactive, neutral terminated states |
+| `default` | Generic label; avoid in favour of semantic variants |
+
+## Anti-patterns
+
+- **Don't use `Badge` for numeric / ordinal signals.** "42 days overdue" is a `StatusPill`;
+  "Overdue" (categorical) is a `Badge`.
+- **Don't combine multiple Badge variants in a single row for unrelated statuses.** One status
+  badge per entity is the expected pattern; multiple badges in one row should signal
+  orthogonal dimensions (e.g. status + type), not gradations of a single dimension.
+- **Don't use `Badge` as a button.** It renders a `<div>`; it is not focusable or actionable.
+  If you need a clickable tag/filter, build a separate component.
+- **Don't use `default` variant in production UI.** `default` is a Shadcn CVA placeholder.
+  Always use a semantic variant.
+
+## Accessibility
+
+- `Badge` renders a `<div>` — it is a block-level element. In table cells or flex rows,
+  wrap in an `<li>` or use `inline-flex` variants if you need inline flow.
+- The colour alone does not convey the status to screen readers. The **text content must be
+  the status label** (e.g. `<Badge variant="success">Active</Badge>` not just a coloured
+  dot).
+- All six variants meet WCAG 2.2 AA colour contrast (4.5:1) against white and `gray-50`
+  backgrounds.
+
+## All variants
+
+<Canvas of={BadgeStories.AllVariants} />
+
+## Lease status usage
+
+<Canvas of={BadgeStories.LeaseStatuses} />
+
+The `success` / `outline` / `secondary` trio covers the three canonical lease lifecycle
+states. These are the only Badge usages in `LeaseDetailPage` and `LeasesPage`.
+
+## Expiry warning inline chip
+
+<Canvas of={BadgeStories.ExpiryWarning} />
+
+`warning` with `text-xs` override for inline expiry chips in the leases table end-date column.
+The `className` prop passes through via `cn` so size can be overridden without forking the
+component.
+
+## Dark mode note
+
+`Badge` uses Tailwind design-system tokens (`bg-primary`, `bg-secondary`, etc.) for `default`
+and `secondary` variants — these will invert correctly when the design-system token layer
+adds `dark:` mappings (pending sunfish#31 dark-mode PR). The named colour variants
+(`success`, `warning`, `destructive`) use Tailwind semantic colours (`green-100`, `amber-100`,
+`red-...`) — verify these in a full dark-mode pass after sunfish#31 merges.
