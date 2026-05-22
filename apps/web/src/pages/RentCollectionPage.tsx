@@ -51,7 +51,7 @@ export function RentCollectionPage() {
       leaseId: selectedLease,
       amount: parseFloat(amount),
       currency: 'USD',
-      direction: 'Inbound',
+      direction: 'Inbound' as const,
       paidAt: new Date(date).toISOString(),
       method,
     }

@@ -27,7 +27,7 @@ export default defineConfig({
         runtimeCaching: [
           {
             // API reads — NetworkFirst; falls back to cached response when offline
-            urlPattern: ({ url }) => url.pathname.startsWith('/api/v1/') && url.hostname === location.hostname,
+            urlPattern: ({ url }) => url.pathname.startsWith('/api/v1/'),
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-read-cache',
