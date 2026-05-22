@@ -147,6 +147,3 @@ export function useAuditEventDetail(auditId: string) {
     enabled: Boolean(auditId),
   })
 }
-
-// Re-export so callers can reset the audit-events query cache on tenant change
-export { useQueryClient }
