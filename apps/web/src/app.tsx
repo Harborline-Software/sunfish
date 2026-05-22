@@ -1,7 +1,7 @@
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useMatch } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from 'react-error-boundary'
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { PropertiesPage } from '@/pages/PropertiesPage'
 import { LeasesPage } from '@/pages/LeasesPage'
 import { LeaseDetailPage } from '@/pages/LeaseDetailPage'
@@ -11,6 +11,8 @@ import { CrewCommsPage } from '@/pages/CrewCommsPage'
 import { MaintenancePage } from '@/pages/MaintenancePage'
 import { RentRoll } from '@/pages/RentRoll'
 import { PLReport } from '@/pages/PLReport'
+import { TrialBalancePage } from '@/pages/TrialBalancePage'
+import { ArAgingPage } from '@/pages/ArAgingPage'
 import { CockpitLayout } from '@/cockpit/CockpitLayout'
 import { PropertySelector } from '@/cockpit/PropertySelector'
 import { PropertyDetailView } from '@/cockpit/properties/PropertyDetailView'
@@ -63,6 +65,57 @@ function AppErrorFallback({ error, resetErrorBoundary }: { error: Error; resetEr
           Retry
         </button>
       </div>
+    </div>
+  )
+}
+
+const REPORT_LINKS = [
+  { to: '/reports/trial-balance', label: 'Trial Balance' },
+  { to: '/reports/ar-aging', label: 'AR Aging' },
+  { to: '/reports/profit-and-loss-by-property', label: 'P&L by Property' },
+  { to: '/reports/rent-roll', label: 'Rent Roll' },
+]
+
+function ReportsNavGroup() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const isActive = Boolean(useMatch('/reports/*'))
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className={isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'}
+      >
+        Reports
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+          {REPORT_LINKS.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              onClick={() => setOpen(false)}
+              className={({ isActive: a }) =>
+                `block px-4 py-2 text-sm ${a ? 'bg-gray-50 font-medium text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -140,14 +193,7 @@ function AppLayout() {
             >
               Maintenance
             </NavLink>
-            <NavLink
-              to="/reports/rent-roll"
-              className={({ isActive }) =>
-                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
-              }
-            >
-              Reports
-            </NavLink>
+            <ReportsNavGroup />
             <NavLink
               to="/cockpit"
               className={({ isActive }) =>
@@ -170,9 +216,15 @@ function AppLayout() {
           <Route path="/accounting" element={<AccountingPage />} />
           <Route path="/comms" element={<CrewCommsPage />} />
           <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/reports" element={<Navigate to="/reports/rent-roll" replace />} />
+          <Route path="/reports" element={<Navigate to="/reports/trial-balance" replace />} />
+          <Route path="/reports/trial-balance" element={<TrialBalancePage />} />
+          <Route path="/reports/ar-aging" element={<ArAgingPage />} />
+          {/* /reports/profit-and-loss-by-property — stub; replaced by cohort-3 PR 3 */}
+          <Route path="/reports/profit-and-loss-by-property" element={<PLReport />} />
+          {/* /reports/rent-roll — stub; replaced by cohort-3 PR 2 */}
           <Route path="/reports/rent-roll" element={<RentRoll />} />
-          <Route path="/reports/profit-loss" element={<PLReport />} />
+          {/* Legacy redirects from pre-cohort-3 URLs */}
+          <Route path="/reports/profit-loss" element={<Navigate to="/reports/profit-and-loss-by-property" replace />} />
           <Route path="/cockpit" element={<CockpitLayout />}>
             <Route index element={<PropertySelector />} />
             <Route path="work-orders" element={<WorkOrderListView />} />
