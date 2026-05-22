@@ -1,29 +1,30 @@
 import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from 'react-error-boundary'
-import { useEffect } from 'react'
-import { PropertiesPage } from '@/pages/PropertiesPage'
-import { LeasesPage } from '@/pages/LeasesPage'
-import { LeaseDetailPage } from '@/pages/LeaseDetailPage'
-import { RentCollectionPage } from '@/pages/RentCollectionPage'
-import { AccountingPage } from '@/pages/AccountingPage'
-import { CrewCommsPage } from '@/pages/CrewCommsPage'
-import { MaintenancePage } from '@/pages/MaintenancePage'
-import { RentRoll } from '@/pages/RentRoll'
-import { PLReport } from '@/pages/PLReport'
-import { CockpitLayout } from '@/cockpit/CockpitLayout'
-import { PropertySelector } from '@/cockpit/PropertySelector'
-import { PropertyDetailView } from '@/cockpit/properties/PropertyDetailView'
-import { WorkOrderListView } from '@/cockpit/work-orders/WorkOrderListView'
-import { WorkOrderDetailView } from '@/cockpit/work-orders/WorkOrderDetailView'
-import { VendorListView } from '@/cockpit/vendors/VendorListView'
-import { VendorDetailView } from '@/cockpit/vendors/VendorDetailView'
-import { DashboardView } from '@/cockpit/DashboardView'
+import { lazy, Suspense, useEffect } from 'react'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { ErrorCard } from '@/components/ErrorCard'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useAuthStore } from '@/stores/authStore'
+
+const PropertiesPage = lazy(() => import('@/pages/PropertiesPage').then(m => ({ default: m.PropertiesPage })))
+const LeasesPage = lazy(() => import('@/pages/LeasesPage').then(m => ({ default: m.LeasesPage })))
+const LeaseDetailPage = lazy(() => import('@/pages/LeaseDetailPage').then(m => ({ default: m.LeaseDetailPage })))
+const RentCollectionPage = lazy(() => import('@/pages/RentCollectionPage').then(m => ({ default: m.RentCollectionPage })))
+const AccountingPage = lazy(() => import('@/pages/AccountingPage').then(m => ({ default: m.AccountingPage })))
+const CrewCommsPage = lazy(() => import('@/pages/CrewCommsPage').then(m => ({ default: m.CrewCommsPage })))
+const MaintenancePage = lazy(() => import('@/pages/MaintenancePage').then(m => ({ default: m.MaintenancePage })))
+const RentRoll = lazy(() => import('@/pages/RentRoll').then(m => ({ default: m.RentRoll })))
+const PLReport = lazy(() => import('@/pages/PLReport').then(m => ({ default: m.PLReport })))
+const CockpitLayout = lazy(() => import('@/cockpit/CockpitLayout').then(m => ({ default: m.CockpitLayout })))
+const PropertySelector = lazy(() => import('@/cockpit/PropertySelector').then(m => ({ default: m.PropertySelector })))
+const PropertyDetailView = lazy(() => import('@/cockpit/properties/PropertyDetailView').then(m => ({ default: m.PropertyDetailView })))
+const WorkOrderListView = lazy(() => import('@/cockpit/work-orders/WorkOrderListView').then(m => ({ default: m.WorkOrderListView })))
+const WorkOrderDetailView = lazy(() => import('@/cockpit/work-orders/WorkOrderDetailView').then(m => ({ default: m.WorkOrderDetailView })))
+const VendorListView = lazy(() => import('@/cockpit/vendors/VendorListView').then(m => ({ default: m.VendorListView })))
+const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView').then(m => ({ default: m.VendorDetailView })))
+const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -160,28 +161,30 @@ function AppLayout() {
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">
-        <Routes>
-          <Route path="/" element={<Navigate to="/properties" replace />} />
-          <Route path="/properties" element={<PropertiesPage />} />
-          <Route path="/leases" element={<LeasesPage />} />
-          <Route path="/leases/:name" element={<LeaseDetailPage />} />
-          <Route path="/rent" element={<RentCollectionPage />} />
-          <Route path="/accounting" element={<AccountingPage />} />
-          <Route path="/comms" element={<CrewCommsPage />} />
-          <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/reports" element={<Navigate to="/reports/rent-roll" replace />} />
-          <Route path="/reports/rent-roll" element={<RentRoll />} />
-          <Route path="/reports/profit-loss" element={<PLReport />} />
-          <Route path="/cockpit" element={<CockpitLayout />}>
-            <Route index element={<PropertySelector />} />
-            <Route path="work-orders" element={<WorkOrderListView />} />
-            <Route path="work-orders/:workOrderId" element={<WorkOrderDetailView />} />
-            <Route path="vendors" element={<VendorListView />} />
-            <Route path="vendors/:vendorId" element={<VendorDetailView />} />
-            <Route path=":propertyId/dashboard" element={<DashboardView />} />
-            <Route path=":propertyId" element={<PropertyDetailView />} />
-          </Route>
-        </Routes>
+        <Suspense fallback={<div className="flex items-center justify-center h-48 text-gray-500">Loading…</div>}>
+          <Routes>
+            <Route path="/" element={<Navigate to="/properties" replace />} />
+            <Route path="/properties" element={<PropertiesPage />} />
+            <Route path="/leases" element={<LeasesPage />} />
+            <Route path="/leases/:name" element={<LeaseDetailPage />} />
+            <Route path="/rent" element={<RentCollectionPage />} />
+            <Route path="/accounting" element={<AccountingPage />} />
+            <Route path="/comms" element={<CrewCommsPage />} />
+            <Route path="/maintenance" element={<MaintenancePage />} />
+            <Route path="/reports" element={<Navigate to="/reports/rent-roll" replace />} />
+            <Route path="/reports/rent-roll" element={<RentRoll />} />
+            <Route path="/reports/profit-loss" element={<PLReport />} />
+            <Route path="/cockpit" element={<CockpitLayout />}>
+              <Route index element={<PropertySelector />} />
+              <Route path="work-orders" element={<WorkOrderListView />} />
+              <Route path="work-orders/:workOrderId" element={<WorkOrderDetailView />} />
+              <Route path="vendors" element={<VendorListView />} />
+              <Route path="vendors/:vendorId" element={<VendorDetailView />} />
+              <Route path=":propertyId/dashboard" element={<DashboardView />} />
+              <Route path=":propertyId" element={<PropertyDetailView />} />
+            </Route>
+          </Routes>
+        </Suspense>
       </main>
     </div>
   )
