@@ -1,10 +1,11 @@
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useSearchParams, Link, useNavigate } from 'react-router-dom'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useLeases } from '@/hooks/useLeases'
 import { recordPayment, PaymentError } from '@/api/financial'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { AuthRoleGate } from '@/components/AuthRoleGate'
+import { enqueuePayment, drainQueue } from '@/lib/offlineQueue'
 import type { RecordPaymentResult } from '@/api/financial'
 
 const PAYMENT_METHODS = ['ACH', 'Check', 'Cash', 'Card'] as const
@@ -21,6 +22,7 @@ export function RentCollectionPage() {
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [method, setMethod] = useState<string>('ACH')
   const [confirmation, setConfirmation] = useState<RecordPaymentResult | null>(null)
+  const [queuedOffline, setQueuedOffline] = useState(false)
 
   const mutation = useMutation({
     mutationFn: recordPayment,
@@ -30,17 +32,66 @@ export function RentCollectionPage() {
     },
   })
 
+  // Drain offline queue and retry when connectivity returns
+  useEffect(() => {
+    function onOnline() {
+      const queued = drainQueue()
+      for (const item of queued) {
+        mutation.mutate(item.payload)
+      }
+    }
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
+  }, [mutation])
+
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedLease || !amount || !date) return
-    mutation.mutate({
+    const payload = {
       leaseId: selectedLease,
       amount: parseFloat(amount),
       currency: 'USD',
-      direction: 'Inbound',
+      direction: 'Inbound' as const,
       paidAt: new Date(date).toISOString(),
       method,
-    })
+    }
+    if (!navigator.onLine) {
+      enqueuePayment(payload)
+      setQueuedOffline(true)
+      return
+    }
+    mutation.mutate(payload)
+  }
+
+  if (queuedOffline) {
+    const lease = leases?.find((l) => l.leaseId === selectedLease)
+    return (
+      <div className="max-w-md">
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
+          <h2 className="text-lg font-semibold text-amber-800">Payment queued</h2>
+          <p className="mt-1 text-sm text-gray-700">
+            <strong>
+              {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
+                parseFloat(amount),
+              )}
+            </strong>{' '}
+            for {lease?.tenantDisplayName ?? selectedLease} will be sent when you're back online.
+          </p>
+          <div className="mt-4">
+            <button
+              onClick={() => {
+                setQueuedOffline(false)
+                setAmount('')
+                setSelectedLease('')
+              }}
+              className="rounded bg-amber-600 px-4 py-2 text-sm text-white hover:bg-amber-700"
+            >
+              Queue another
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (confirmation) {
@@ -147,7 +198,6 @@ export function RentCollectionPage() {
       )
     }
 
-    // E4: generic server-error / unknown
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
         <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Something went wrong</p>
