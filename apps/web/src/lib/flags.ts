@@ -10,6 +10,7 @@ const flagDefaults: Record<string, boolean> = {
   'comms-signalr': true,
   'reports-pl': true,
   'maintenance-timeline': true,
+  'audit-trail': false,
 }
 
 function buildFlagConfig(): ConstructorParameters<typeof InMemoryProvider>[0] {
@@ -40,4 +41,5 @@ export const FLAGS = Object.fromEntries(
   commsSignalr: 'comms-signalr'
   reportsPl: 'reports-pl'
   maintenanceTimeline: 'maintenance-timeline'
+  auditTrail: 'audit-trail'
 }

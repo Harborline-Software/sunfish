@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useBooleanFlagValue } from '@openfeature/react-sdk'
+import { FLAGS } from '@/lib/flags'
 import { useWorkOrders, useCreateWorkOrder } from '@/hooks/useMaintenance'
 import type { WorkOrderSummary } from '@/api/maintenance'  // rebound from @/api/erpnext — W#74 PR 3
 import { AuthRoleGate } from '@/components/AuthRoleGate'
@@ -118,6 +120,7 @@ function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
 type View = 'table' | 'timeline'
 
 export function MaintenancePage() {
+  const maintenanceTimelineEnabled = useBooleanFlagValue(FLAGS.maintenanceTimeline, true)
   const { data, isPending, isError, error, refetch } = useWorkOrders()
   const [view, setView] = useState<View>('table')
 
@@ -135,7 +138,7 @@ export function MaintenancePage() {
             {openCount} open work order{openCount !== 1 ? 's' : ''}
           </p>
         </div>
-        {workOrders.length > 0 && (
+        {workOrders.length > 0 && maintenanceTimelineEnabled && (
           <div
             role="group"
             aria-label="View mode"
@@ -205,7 +208,7 @@ export function MaintenancePage() {
         </div>
       )}
 
-      {workOrders.length > 0 && view === 'timeline' && (
+      {workOrders.length > 0 && maintenanceTimelineEnabled && view === 'timeline' && (
         <MaintenanceWorkOrderTimeline items={workOrders} />
       )}
     </div>

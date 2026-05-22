@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import * as signalR from '@microsoft/signalr'
+import { useBooleanFlagValue } from '@openfeature/react-sdk'
+import { FLAGS } from '@/lib/flags'
 
 interface Message {
   threadId: string
@@ -15,6 +17,7 @@ const THREADS = [
 ]
 
 export function CrewCommsPage() {
+  const commsSignalrEnabled = useBooleanFlagValue(FLAGS.commsSignalr, true)
   const [activeThread, setActiveThread] = useState(THREADS[0].id)
   const [messages, setMessages] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
@@ -23,6 +26,7 @@ export function CrewCommsPage() {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    if (!commsSignalrEnabled) return
     const conn = new signalR.HubConnectionBuilder()
       .withUrl('/hubs/bridge', { withCredentials: true })
       .withAutomaticReconnect()
@@ -142,8 +146,14 @@ export function CrewCommsPage() {
           <div ref={bottomRef} />
         </div>
 
+        {!commsSignalrEnabled && (
+          <div className="border-t border-gray-200 px-4 py-3 text-sm text-gray-500">
+            Messaging temporarily unavailable.
+          </div>
+        )}
+
         {/* Input */}
-        <div className="border-t border-gray-200 px-4 py-3">
+        <div className={`border-t border-gray-200 px-4 py-3${!commsSignalrEnabled ? ' hidden' : ''}`}>
           <div className="flex items-end gap-2">
             <textarea
               value={draft}
