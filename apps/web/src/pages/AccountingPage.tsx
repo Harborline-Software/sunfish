@@ -1,5 +1,6 @@
 import { useAccountingSummary, useAccountingOutstanding } from '@/hooks/useAccounting'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ErrorCard } from '@sunfish/ui-react'
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
@@ -30,21 +31,15 @@ export function AccountingPage() {
     return (
       <div className="space-y-6">
         {header}
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
-          <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Couldn't load accounting data</p>
-          <p className="mt-1 text-sm text-gray-600">
-            We couldn't fetch your accounting data. Try again in a moment.
-          </p>
-          <button
-            onClick={() => {
-              summaryQuery.refetch()
-              outstandingQuery.refetch()
-            }}
-            className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorCard
+          variant="compact"
+          title="Couldn't load accounting data"
+          message="We couldn't fetch your accounting data. Try again in a moment."
+          onRetry={() => {
+            summaryQuery.refetch()
+            outstandingQuery.refetch()
+          }}
+        />
       </div>
     )
   }
