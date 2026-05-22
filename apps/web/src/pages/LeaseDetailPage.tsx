@@ -2,6 +2,8 @@ import { useParams, Link } from 'react-router-dom'
 import { useLease, useLeasePayments } from '@/hooks/useLeases'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ErrorCard } from '@/components/ErrorCard'
+import { LoadingState } from '@/components/LoadingState'
 
 export function LeaseDetailPage() {
   const { name } = useParams<{ name: string }>()
@@ -13,15 +15,12 @@ export function LeaseDetailPage() {
     refetch: refetchPayments,
   } = useLeasePayments(name ?? '')
 
-  if (leasePending) {
-    return <div className="flex items-center justify-center h-48 text-gray-500">Loading lease…</div>
-  }
+  if (leasePending) return <LoadingState label="Loading lease…" />
 
   if (leaseError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6" role="alert">
-        <p className="font-semibold text-red-700">Failed to load lease</p>
-        <p className="mt-1 text-sm text-gray-600">{leaseErr.message}</p>
+      <div>
+        <ErrorCard title="Failed to load lease" message={leaseErr.message} />
         <Link to="/leases" className="mt-3 inline-block text-sm text-blue-600 hover:underline">
           ← Back to leases
         </Link>
@@ -82,27 +81,14 @@ export function LeaseDetailPage() {
         </CardHeader>
         <CardContent>
           {paymentsPending ? (
-            <div aria-busy="true">
-              <span className="sr-only">Loading payments</span>
-              <div className="space-y-2">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-8 rounded bg-gray-100 animate-pulse" />
-                ))}
-              </div>
-            </div>
+            <LoadingState label="Loading payments…" variant="inline" />
           ) : paymentsError ? (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4" role="alert">
-              <p className="font-semibold text-red-700"><span aria-hidden="true">⚠</span> Couldn't load payment history</p>
-              <p className="mt-1 text-sm text-gray-600">
-                We couldn't fetch this lease's payment history. Try again in a moment.
-              </p>
-              <button
-                onClick={() => refetchPayments()}
-                className="mt-3 rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-              >
-                Retry
-              </button>
-            </div>
+            <ErrorCard
+              variant="compact"
+              title="Couldn't load payment history"
+              message="We couldn't fetch this lease's payment history. Try again in a moment."
+              onRetry={() => refetchPayments()}
+            />
           ) : payments.length === 0 ? (
             <div>
               <p className="text-sm text-gray-500">No payments recorded yet for this lease.</p>
