@@ -1,6 +1,6 @@
 import { useAccountingSummary, useAccountingOutstanding } from '@/hooks/useAccounting'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ErrorCard } from '@/components/ErrorCard'
+import { ErrorCard } from '@sunfish/ui-react'
 
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount)
