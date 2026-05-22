@@ -106,6 +106,44 @@ describe('MaintenancePage', () => {
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
   })
 
+  it('renders accessible form labels', () => {
+    vi.spyOn(useMaintenanceHook, 'useWorkOrders').mockReturnValue({
+      data: MOCK_LIST,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useMaintenanceHook.useWorkOrders>)
+
+    render(<MaintenancePage />, { wrapper })
+    expect(screen.getByLabelText(/subject/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/vendor id/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/priority/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/scheduled date/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/description/i)).toBeInTheDocument()
+  })
+
+  it('submit button carries aria-busy when mutation is pending', () => {
+    vi.spyOn(useMaintenanceHook, 'useWorkOrders').mockReturnValue({
+      data: MOCK_LIST,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useMaintenanceHook.useWorkOrders>)
+    vi.spyOn(useMaintenanceHook, 'useCreateWorkOrder').mockReturnValue({
+      mutate: vi.fn(),
+      isPending: true,
+      isError: false,
+      error: null,
+    } as unknown as ReturnType<typeof useMaintenanceHook.useCreateWorkOrder>)
+
+    render(<MaintenancePage />, { wrapper })
+    const submitBtn = screen.getByRole('button', { name: /submitting/i })
+    expect(submitBtn).toHaveAttribute('aria-busy', 'true')
+    expect(submitBtn).toBeDisabled()
+  })
+
   it('shows updated empty-state copy (no ERPNext reference)', () => {
     vi.spyOn(useMaintenanceHook, 'useWorkOrders').mockReturnValue({
       data: { items: [], total: 0, page: 1, pageSize: 20 },
