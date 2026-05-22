@@ -9,7 +9,7 @@ export function ErrorCard({ title, message, onRetry, variant = 'default' }: Erro
   const padding = variant === 'page' ? 'p-8' : variant === 'default' ? 'p-6' : 'p-4'
 
   return (
-    <div className={`rounded-lg border border-red-200 bg-red-50 ${padding}`}>
+    <div role="alert" className={`rounded-lg border border-red-200 bg-red-50 ${padding}`}>
       {variant === 'page' ? (
         <h2 className="text-xl font-bold text-red-700">{title}</h2>
       ) : (
