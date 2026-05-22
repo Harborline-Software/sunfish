@@ -2,21 +2,20 @@ import { useParams, Link } from 'react-router-dom'
 import { useLease, usePayments } from '@/hooks/useLeases'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ErrorCard } from '@/components/ErrorCard'
+import { LoadingState } from '@/components/LoadingState'
 
 export function LeaseDetailPage() {
   const { name } = useParams<{ name: string }>()
   const { data: lease, isPending: leasePending, isError: leaseError, error: leaseErr } = useLease(name ?? '')
   const { data: allPayments, isPending: paymentsPending } = usePayments()
 
-  if (leasePending) {
-    return <div className="flex items-center justify-center h-48 text-gray-500">Loading lease…</div>
-  }
+  if (leasePending) return <LoadingState label="Loading lease…" />
 
   if (leaseError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-        <p className="font-semibold text-red-700">Failed to load lease</p>
-        <p className="mt-1 text-sm text-gray-600">{leaseErr.message}</p>
+      <div>
+        <ErrorCard title="Failed to load lease" message={leaseErr.message} />
         <Link to="/leases" className="mt-3 inline-block text-sm text-blue-600 hover:underline">
           ← Back to leases
         </Link>
@@ -87,7 +86,7 @@ export function LeaseDetailPage() {
         </CardHeader>
         <CardContent>
           {paymentsPending ? (
-            <p className="text-sm text-gray-500">Loading payments…</p>
+            <LoadingState label="Loading payments…" variant="inline" />
           ) : payments.length === 0 ? (
             <div>
               <p className="text-sm text-gray-500">No payments recorded for this lease.</p>

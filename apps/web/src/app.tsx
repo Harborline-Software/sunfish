@@ -20,6 +20,7 @@ import { VendorListView } from '@/cockpit/vendors/VendorListView'
 import { VendorDetailView } from '@/cockpit/vendors/VendorDetailView'
 import { DashboardView } from '@/cockpit/DashboardView'
 import { OfflineBanner } from '@/components/OfflineBanner'
+import { ErrorCard } from '@/components/ErrorCard'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useAuthStore } from '@/stores/authStore'
@@ -50,18 +51,16 @@ function AppErrorFallback({ error, resetErrorBoundary }: { error: Error; resetEr
 
   return (
     <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="rounded-lg border border-red-200 bg-red-50 p-8 max-w-md w-full">
-        <h2 className="text-xl font-bold text-red-700">Something went wrong</h2>
-        <p className="mt-2 text-sm text-gray-600">{error.message}</p>
-        <button
-          onClick={() => {
+      <div className="max-w-md w-full">
+        <ErrorCard
+          variant="page"
+          title="Something went wrong"
+          message={error.message}
+          onRetry={() => {
             queryClient.clear()
             resetErrorBoundary()
           }}
-          className="mt-4 rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
-          Retry
-        </button>
+        />
       </div>
     </div>
   )

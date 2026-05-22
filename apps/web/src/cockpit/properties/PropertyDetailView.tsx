@@ -1,6 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { getCockpitPropertyDetail } from '@/cockpit/api'
+import { ErrorCard } from '@/components/ErrorCard'
+import { LoadingState } from '@/components/LoadingState'
 
 /**
  * W#29 Phase 2 — Cockpit property detail view.
@@ -29,30 +31,17 @@ export function PropertyDetailView() {
     return <NotFound />
   }
 
-  if (isPending) {
-    return (
-      <div className="flex items-center justify-center h-48 text-gray-500">
-        Loading property…
-      </div>
-    )
-  }
+  if (isPending) return <LoadingState label="Loading property…" />
 
   if (isError) {
     const isNotFound = error instanceof Error && error.message === 'Property not found'
     if (isNotFound) return <NotFound />
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-        <p className="font-semibold text-red-700">Failed to load property</p>
-        <p className="mt-1 text-sm text-gray-600">
-          {error instanceof Error ? error.message : String(error)}
-        </p>
-        <button
-          onClick={() => void refetch()}
-          className="mt-3 rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
+      <ErrorCard
+        title="Failed to load property"
+        message={error instanceof Error ? error.message : String(error)}
+        onRetry={() => void refetch()}
+      />
     )
   }
 

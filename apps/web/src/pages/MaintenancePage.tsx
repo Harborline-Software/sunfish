@@ -3,6 +3,8 @@ import { useWorkOrders, useCreateWorkOrder } from '@/hooks/useMaintenance'
 import type { WorkOrderSummary } from '@/api/maintenance'  // rebound from @/api/erpnext — W#74 PR 3
 import { AuthRoleGate } from '@/components/AuthRoleGate'
 import { MaintenanceWorkOrderTimeline } from '@/components/MaintenanceWorkOrderTimeline'
+import { ErrorCard } from '@/components/ErrorCard'
+import { LoadingState } from '@/components/LoadingState'
 
 const STATUS_COLORS: Record<string, string> = {
   Draft:      'bg-blue-100 text-blue-700',
@@ -165,17 +167,14 @@ export function MaintenancePage() {
         <CreateWorkOrderForm onSuccess={() => void refetch()} />
       </AuthRoleGate>
 
-      {isPending && <p className="text-sm text-gray-500">Loading work orders…</p>}
+      {isPending && <LoadingState label="Loading work orders…" variant="inline" />}
       {isError && (
-        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-          <p className="text-sm text-red-600">Error: {(error as Error).message}</p>
-          <button
-            onClick={() => void refetch()}
-            className="mt-2 rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
-          >
-            Retry
-          </button>
-        </div>
+        <ErrorCard
+          variant="compact"
+          title="Failed to load work orders"
+          message={(error as Error).message}
+          onRetry={() => void refetch()}
+        />
       )}
 
       {!isPending && !isError && workOrders.length === 0 && (
