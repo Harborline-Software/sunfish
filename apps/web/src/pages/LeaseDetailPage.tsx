@@ -1,9 +1,8 @@
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 import { useParams, Link } from 'react-router-dom'
 import { useLease, useLeasePayments } from '@/hooks/useLeases'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
 
 export function LeaseDetailPage() {
   const { name } = useParams<{ name: string }>()

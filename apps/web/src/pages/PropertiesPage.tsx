@@ -1,10 +1,9 @@
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 import { useProperties } from '@/hooks/useProperties'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 // W#74 PR 1: rebound from ERPNext API to /api/v1/properties Bridge cluster endpoint.
 import type { PropertySummary } from '@/api/properties'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
 
 function statusVariant(status: PropertySummary['status']) {
   switch (status) {
