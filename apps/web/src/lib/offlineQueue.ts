@@ -6,7 +6,7 @@ export interface QueuedPayment {
     leaseId: string
     amount: number
     currency: string
-    direction: string
+    direction: 'Inbound' | 'Outbound'
     paidAt: string
     method: string
   }
