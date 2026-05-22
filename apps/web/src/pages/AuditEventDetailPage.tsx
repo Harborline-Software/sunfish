@@ -3,30 +3,20 @@ import { useAuditEventDetail, type AuditEventDetail, type SignatureState } from 
 import { Badge } from '@/components/ui/badge'
 import { ErrorCard } from '@/components/ErrorCard'
 import { LoadingState } from '@/components/LoadingState'
-import { useCompanyStore } from '@/stores/companyStore'
 
 // Route: /audit-trail/:auditId
+// A1-NOTE: Client-side tenant assertion (defense-in-depth) is deferred until
+// /api/v1/whoami exposes a tenantId mapping. The server is the security
+// boundary (ADR 0092); the assertion requires substrate-to-substrate comparison
+// that is not yet available on the wire. Forward-watch filed with Admiral.
 
 export function AuditEventDetailPage() {
   const { auditId } = useParams<{ auditId: string }>()
   const { data: detail, error, isPending } = useAuditEventDetail(auditId!)
 
-  // A1 — defense-in-depth client-side tenant assertion
-  // The server IS the security boundary (ADR 0092); this guard surfaces a regression before demo.
-  const activeCompany = useCompanyStore((s) => s.activeCompany)
-
   if (isPending) return <LoadingState label="Loading audit event..." />
   if (error) return <ErrorCard title="Failed to load audit event" message={(error as Error).message} />
   if (!detail) return null
-
-  // A1 — detect and warn on cross-tenant data leak (should never happen in production)
-  if (activeCompany && detail.tenant_id && detail.tenant_id !== activeCompany) {
-    console.warn('Audit event tenant_id mismatch — server bug suspected', {
-      eventTenant: detail.tenant_id,
-      activeTenant: activeCompany,
-    })
-    return <ErrorCard title="Audit event unavailable" message="This event is not available for the current account." />
-  }
 
   return (
     <div className="space-y-6">
@@ -68,23 +58,16 @@ export function AuditEventDetailPage() {
       {/* A1 — structured payload render per event type */}
       <EventPayload detail={detail} />
 
-      {/* Attesting signatures */}
-      {detail.signatures.length > 0 && (
+      {/* Attesting signatures — forward-watch: Engineer to surface IOperationVerifier
+          attestation data on AuditEventDto. SignatureState is available now
+          (rendered above via SignatureBadge); the full attesting-signer list
+          surfaces in a follow-on Engineer PR. */}
+      {detail.signature_state === 'Verified' && (
         <section>
           <h2 className="mb-2 text-sm font-semibold text-gray-700">Attesting signatures</h2>
-          <div className="space-y-2">
-            {detail.signatures.map((sig, idx) => (
-              <div
-                key={idx}
-                className="rounded border border-gray-200 bg-gray-50 p-3 text-xs font-mono"
-              >
-                <div className="text-gray-500">
-                  {sig.signer_id} · {sig.algorithm} · {sig.signed_at}
-                </div>
-                <div className="mt-1 truncate text-gray-700">{sig.signature}</div>
-              </div>
-            ))}
-          </div>
+          <p className="text-xs text-gray-500">
+            Signature verification surface pending substrate ship (IOperationVerifier, cohort-5+).
+          </p>
         </section>
       )}
     </div>
@@ -96,14 +79,17 @@ export function AuditEventDetailPage() {
 // ---------------------------------------------------------------------------
 
 function EventPayload({ detail }: { detail: AuditEventDetail }) {
+  // A1 — payload fields are in payload_summary (server field: PayloadSummary).
+  // There is no top-level `payload` on the wire; see signal-bridge AuditEventDto.
+  const payload = detail.payload_summary
   if (detail.event_type === 'Security.TenantBoundaryViolation') {
-    return <TenantBoundaryViolationPayload payload={detail.payload} />
+    return <TenantBoundaryViolationPayload payload={payload} />
   }
   if (detail.event_type === 'Security.AuthenticationFailed') {
-    return <AuthenticationFailedPayload payload={detail.payload} />
+    return <AuthenticationFailedPayload payload={payload} />
   }
   // Catch-all for known and future event types — render as labeled field list
-  return <UnknownPayloadRender eventType={detail.event_type} payload={detail.payload} />
+  return <UnknownPayloadRender eventType={detail.event_type} payload={payload} />
 }
 
 // A1 — Canonical 5-field structured render for TenantBoundaryViolation

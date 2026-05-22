@@ -148,6 +148,50 @@ describe('AuditEventsPage', () => {
     expect(screen.getByRole('option', { name: 'Authentication only' })).toBeInTheDocument()
   })
 
+  // Test 6b — A2: client-side severity filter hides non-matching events
+  it('severity filter applied client-side: Security filter hides Financial events', () => {
+    // The hook mock returns both events; client-side filter should hide Financial
+    vi.spyOn(auditEventsApi, 'useAuditEvents').mockImplementation((filters) => {
+      return {
+        data: {
+          pages: [
+            {
+              events:
+                filters.severity === 'Security'
+                  ? [MOCK_SECURITY_EVENT]
+                  : [MOCK_FINANCIAL_EVENT, MOCK_SECURITY_EVENT],
+              next_cursor: null,
+              has_more: false,
+            },
+          ],
+          pageParams: [undefined],
+        },
+        error: null,
+        isPending: false,
+        isFetching: false,
+        isFetchingNextPage: false,
+        hasNextPage: false,
+        fetchNextPage: vi.fn(),
+        refetch: vi.fn(),
+      } as unknown as ReturnType<typeof auditEventsApi.useAuditEvents>
+    })
+
+    mockHookSuccess([MOCK_FINANCIAL_EVENT, MOCK_SECURITY_EVENT])
+    render(<AuditEventsPage />, { wrapper })
+
+    // Both visible with no filter
+    expect(screen.getByText('Financial.InvoicePosted')).toBeInTheDocument()
+    expect(screen.getByText('Security.TenantBoundaryViolation')).toBeInTheDocument()
+
+    // Select Security severity filter
+    const severitySelect = screen.getByLabelText('Severity')
+    fireEvent.change(severitySelect, { target: { value: 'Security' } })
+
+    // After filter: only Security event visible
+    expect(screen.queryByText('Financial.InvoicePosted')).not.toBeInTheDocument()
+    expect(screen.getByText('Security.TenantBoundaryViolation')).toBeInTheDocument()
+  })
+
   // Test 7
   it('clicking event row navigates to /audit-trail/:auditId', () => {
     mockHookSuccess([MOCK_FINANCIAL_EVENT])

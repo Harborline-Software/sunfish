@@ -20,18 +20,13 @@ export interface AuditEventSummary {
   signature_state: SignatureState
 }
 
-export interface AuditEventDetail extends AuditEventSummary {
-  tenant_id: string               // A1 — client-side tenant assertion
-  payload: Record<string, unknown>
-  signatures: AttestingSignature[]
-}
-
-export interface AttestingSignature {
-  signer_id: string
-  algorithm: string               // e.g. "Ed25519"
-  signed_at: string               // ISO 8601 UTC
-  signature: string               // base64-encoded
-}
+// AuditEventDetail is the same wire shape as AuditEventSummary — the detail
+// endpoint returns the same AuditEventDto (6 fields). Payload fields are in
+// payload_summary (inherited from AuditEventSummary). No tenant_id, payload,
+// or signatures on the wire — see signal-bridge AuditEventsDtos.cs.
+// Forward-watch: signatures surface will be added when Engineer ships
+// IOperationVerifier; tenant_id will surface when whoami exposes tenant mapping.
+export type AuditEventDetail = AuditEventSummary
 
 // ---------------------------------------------------------------------------
 // Paginated list response
@@ -96,7 +91,10 @@ export function useAuditEvents(filters: AuditEventFilters) {
       if (filters.to) params.append('to', filters.to)
       if (filters.eventType) params.append('event_type', filters.eventType)
       if (filters.correlationId) params.append('correlation_id', filters.correlationId)
-      if (filters.severity) params.append('severity', filters.severity)
+      // severity is a client-side filter only — the Bridge endpoint does not
+      // accept a severity param; sending it is silently ignored. Filter is
+      // applied post-fetch in AuditEventsPage. Forward-watch: Engineer to add
+      // server-side severity → event_type prefix mapping in cohort-5+.
       // G1 — cursor passed verbatim; no URL re-encoding, no JSON-parse
       if (pageParam) params.append('cursor', pageParam)
 
@@ -106,9 +104,10 @@ export function useAuditEvents(filters: AuditEventFilters) {
       })
 
       // G1 — 400 tenant_changed: discard cursor; reset to page 1
+      // Bridge returns RFC 7807 ProblemDetails; the error code is in `title`.
       if (response.status === 400) {
         const body = await response.json().catch(() => ({}))
-        if (body.error === 'tenant_changed_reload_page') {
+        if (body.title === 'tenant_changed_reload_page') {
           throw new TenantChangedError()
         }
       }

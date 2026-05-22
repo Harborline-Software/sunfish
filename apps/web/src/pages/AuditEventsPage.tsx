@@ -42,7 +42,13 @@ export function AuditEventsPage() {
     )
   }
 
-  const events = data?.pages.flatMap((page) => page.events) ?? []
+  const allEvents = data?.pages.flatMap((page) => page.events) ?? []
+  // A2 — client-side severity filter. The Bridge endpoint does not accept a
+  // `severity` query param; filtering is applied post-fetch against the loaded
+  // pages. Forward-watch: Engineer to add server-side severity filter in cohort-5+.
+  const events = filters.severity
+    ? allEvents.filter((e) => e.event_type.startsWith(filters.severity + '.'))
+    : allEvents
 
   return (
     <div>

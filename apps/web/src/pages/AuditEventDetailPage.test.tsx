@@ -5,6 +5,9 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { AuditEventDetailPage } from './AuditEventDetailPage'
 import * as auditEventsApi from '@/api/audit-events'
 import type { AuditEventDetail } from '@/api/audit-events'
+// NOTE: AuditEventDetail is now an alias for AuditEventSummary (6-field wire
+// contract matching signal-bridge AuditEventDto). No tenant_id, payload, or
+// signatures on the real wire — these are forward-watched substrate extensions.
 
 vi.mock('@/components/ErrorCard', () => ({
   ErrorCard: ({ title, message }: { title: string; message?: string }) => (
@@ -16,13 +19,6 @@ vi.mock('@/components/ErrorCard', () => ({
 }))
 vi.mock('@/components/LoadingState', () => ({
   LoadingState: ({ label }: { label: string }) => <div data-testid="loading-state">{label}</div>,
-}))
-
-// Tenant mock — controlled via module-level variable
-let mockActiveCompany = 'tenant-acme'
-vi.mock('@/stores/companyStore', () => ({
-  useCompanyStore: (selector: (s: { activeCompany: string }) => unknown) =>
-    selector({ activeCompany: mockActiveCompany }),
 }))
 
 function wrapper({ children }: { children: React.ReactNode }) {
@@ -39,23 +35,22 @@ function wrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
+// MOCK_TBV_DETAIL uses the real 6-field AuditEventDto wire contract.
+// TBV payload fields live in payload_summary (per signal-bridge AuditEventsDtos.cs).
 const MOCK_TBV_DETAIL: AuditEventDetail = {
   audit_id: '01HZ4KW2P3RQNVT8X6J0M5LMNO',
   occurred_at: '2026-05-21T14:48:30Z',
   event_type: 'Security.TenantBoundaryViolation',
   actor: null,
   correlation_id: 'f9e8d7c6-b5a4-3210-fedc-ba9876543210',
-  payload_summary: {},
-  signature_state: 'VerificationFailed',
-  tenant_id: 'tenant-acme',
-  payload: {
+  payload_summary: {
     entity_type: 'Lease',
     entity_id: 'lease-ulid-0001',
     requested_tenant: 'tenant-acme',
     actual_tenant: 'tenant-beta',
     correlation_id: 'f9e8d7c6-b5a4-3210-fedc-ba9876543210',
   },
-  signatures: [],
+  signature_state: 'VerificationFailed',
 }
 
 function mockDetailSuccess(detail: AuditEventDetail) {
@@ -71,7 +66,6 @@ function mockDetailSuccess(detail: AuditEventDetail) {
 describe('AuditEventDetailPage', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
-    mockActiveCompany = 'tenant-acme'
   })
 
   // Test 1 — A1
@@ -109,23 +103,14 @@ describe('AuditEventDetailPage', () => {
     expect(screen.getAllByText('Correlation ID').length).toBeGreaterThanOrEqual(1)
   })
 
-  // Test 3 — A1
-  it('tenant_id mismatch triggers console.warn and renders degraded fallback', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    mockDetailSuccess({ ...MOCK_TBV_DETAIL, tenant_id: 'tenant-different' })
-
+  // Test 3 — A1: signature_state badge renders for VerificationFailed
+  it('renders VerificationFailed signature badge', () => {
+    mockDetailSuccess(MOCK_TBV_DETAIL) // signature_state: 'VerificationFailed'
     render(<AuditEventDetailPage />, { wrapper })
 
-    expect(warnSpy).toHaveBeenCalledWith(
-      'Audit event tenant_id mismatch — server bug suspected',
-      expect.objectContaining({
-        eventTenant: 'tenant-different',
-        activeTenant: 'tenant-acme',
-      })
-    )
-    expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.queryByText('Entity type')).not.toBeInTheDocument()
-    warnSpy.mockRestore()
+    expect(screen.getByText(/Failed/)).toBeInTheDocument()
+    // No "Attesting signatures" section for non-Verified state
+    expect(screen.queryByText('Attesting signatures')).not.toBeInTheDocument()
   })
 
   // Test 4 — Nit 7
@@ -140,11 +125,11 @@ describe('AuditEventDetailPage', () => {
   })
 
   // Test 5
-  it('unknown event type renders payload as key-value pairs via UnknownPayloadRender', () => {
+  it('unknown event type renders payload_summary as key-value pairs via UnknownPayloadRender', () => {
     const msgDetail: AuditEventDetail = {
       ...MOCK_TBV_DETAIL,
       event_type: 'Messaging.MessageDispatched',
-      payload: { message_id: 'msg-001', channel: 'email' },
+      payload_summary: { message_id: 'msg-001', channel: 'email' },
     }
     mockDetailSuccess(msgDetail)
     render(<AuditEventDetailPage />, { wrapper })
@@ -155,17 +140,12 @@ describe('AuditEventDetailPage', () => {
     expect(screen.queryByText('Entity type')).not.toBeInTheDocument()
   })
 
-  // Test 6 — A1 integration: AuditTrailPage_CursorTenantMismatch_400_TriggersReload
-  it('AuditTrailPage_CursorTenantMismatch_400_TriggersReload: cross-tenant event shows degraded fallback', () => {
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
-    mockDetailSuccess({ ...MOCK_TBV_DETAIL, tenant_id: 'tenant-injected' })
-
+  // Test 6 — A1: Verified signature_state shows attesting-signatures section with pending placeholder
+  it('AuditEventDetail_VerifiedState_ShowsSignaturePendingPlaceholder', () => {
+    mockDetailSuccess({ ...MOCK_TBV_DETAIL, signature_state: 'Verified' })
     render(<AuditEventDetailPage />, { wrapper })
 
-    expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.getByText('Audit event unavailable')).toBeInTheDocument()
-    expect(screen.queryByText('Cross-tenant boundary violation')).not.toBeInTheDocument()
-    expect(warnSpy).toHaveBeenCalled()
-    warnSpy.mockRestore()
+    expect(screen.getByText('Attesting signatures')).toBeInTheDocument()
+    expect(screen.getByText(/Signature verification surface pending/)).toBeInTheDocument()
   })
 })
