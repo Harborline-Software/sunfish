@@ -1,22 +1,25 @@
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 import { useParams, Link } from 'react-router-dom'
-import { useLease, usePayments } from '@/hooks/useLeases'
+import { useLease, useLeasePayments } from '@/hooks/useLeases'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function LeaseDetailPage() {
   const { name } = useParams<{ name: string }>()
   const { data: lease, isPending: leasePending, isError: leaseError, error: leaseErr } = useLease(name ?? '')
-  const { data: allPayments, isPending: paymentsPending } = usePayments()
+  const {
+    data: paymentsData,
+    isPending: paymentsPending,
+    isError: paymentsError,
+    refetch: refetchPayments,
+  } = useLeasePayments(name ?? '')
 
-  if (leasePending) {
-    return <div className="flex items-center justify-center h-48 text-gray-500">Loading lease…</div>
-  }
+  if (leasePending) return <LoadingState label="Loading lease…" />
 
   if (leaseError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-        <p className="font-semibold text-red-700">Failed to load lease</p>
-        <p className="mt-1 text-sm text-gray-600">{leaseErr.message}</p>
+      <div>
+        <ErrorCard title="Failed to load lease" message={leaseErr.message} />
         <Link to="/leases" className="mt-3 inline-block text-sm text-blue-600 hover:underline">
           ← Back to leases
         </Link>
@@ -26,10 +29,8 @@ export function LeaseDetailPage() {
 
   if (!lease) return null
 
-  // TODO: payments will rebind in Cohort 2 RB-8 once blocks-financial-payments lands.
-  // The leaseId format from /api/v1/leases (ULID) may differ from the ERPNext payment
-  // key (LEASE-0001). Payment list may be empty until Cohort 2 lands — documented below.
-  const payments = allPayments?.filter((p) => p.lease === lease.leaseId) ?? []
+  const payments = paymentsData?.items ?? []
+  const recordPaymentHref = `/rent?lease=${encodeURIComponent(lease.leaseId)}`
 
   return (
     <div className="max-w-2xl">
@@ -46,7 +47,7 @@ export function LeaseDetailPage() {
           <CardTitle className="text-base">Lease Details</CardTitle>
         </CardHeader>
         <CardContent>
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+          <dl className="grid grid-cols-1 gap-y-3 text-sm sm:grid-cols-2 sm:gap-x-6">
             <div>
               <dt className="text-gray-500">Property</dt>
               <dd className="font-medium text-gray-900">{lease.propertyDisplayName ?? lease.propertyId ?? '—'}</dd>
@@ -70,58 +71,66 @@ export function LeaseDetailPage() {
               <dd className="font-medium text-gray-900">${lease.monthlyRent.toLocaleString()}</dd>
             </div>
           </dl>
-          <div className="mt-4">
-            <Link
-              to={`/rent?lease=${encodeURIComponent(lease.leaseId)}`}
-              className="rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-            >
-              Record payment
-            </Link>
-          </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Payment history</CardTitle>
+          <CardTitle className="text-lg font-semibold">Payment history</CardTitle>
         </CardHeader>
         <CardContent>
           {paymentsPending ? (
-            <p className="text-sm text-gray-500">Loading payments…</p>
+            <LoadingState label="Loading payments…" variant="inline" />
+          ) : paymentsError ? (
+            <ErrorCard
+              variant="compact"
+              title="Couldn't load payment history"
+              message="We couldn't fetch this lease's payment history. Try again in a moment."
+              onRetry={() => refetchPayments()}
+            />
           ) : payments.length === 0 ? (
             <div>
-              <p className="text-sm text-gray-500">No payments recorded for this lease.</p>
-              {/* Known temporary regression: payment IDs use ERPNext format until Cohort 2 RB-8
-                  rebinds the payments endpoint to /api/v1/financial/payments. */}
-              <p className="mt-2 text-xs text-amber-700 rounded bg-amber-50 border border-amber-200 px-3 py-2">
-                Payment history will appear after the next migration step (Cohort 2).
-              </p>
+              <p className="text-sm text-gray-500">No payments recorded yet for this lease.</p>
+              <Link
+                to={recordPaymentHref}
+                className="mt-3 inline-block rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Record the first payment
+              </Link>
             </div>
           ) : (
-            <table className="min-w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-gray-500">
-                  <th className="pb-2 pr-4 font-medium">Date</th>
-                  <th className="pb-2 pr-4 font-medium">Amount</th>
-                  <th className="pb-2 pr-4 font-medium">Method</th>
-                  <th className="pb-2 font-medium">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {payments.map((p) => (
-                  <tr key={p.name}>
-                    <td className="py-2 pr-4 text-gray-700">{p.date}</td>
-                    <td className="py-2 pr-4 font-medium text-gray-900">${p.amount.toLocaleString()}</td>
-                    <td className="py-2 pr-4 text-gray-600">{p.payment_method}</td>
-                    <td className="py-2">
-                      <Badge variant={p.status === 'Completed' ? 'success' : 'secondary'}>
-                        {p.status}
-                      </Badge>
-                    </td>
+            <>
+              <div className="overflow-x-auto">
+              <table className="min-w-full text-sm" aria-label="Payment history">
+                <thead>
+                  <tr className="border-b text-start text-gray-500">
+                    <th scope="col" className="pb-2 pe-4 font-medium">ID</th>
+                    <th scope="col" className="pb-2 pe-4 font-medium">Date</th>
+                    <th scope="col" className="pb-2 pe-4 font-medium">Amount</th>
+                    <th scope="col" className="pb-2 font-medium">Method</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {payments.map((p) => (
+                    <tr key={p.paymentId}>
+                      <td className="py-2 pe-4 font-mono text-gray-500">{p.paymentId.slice(-8)}</td>
+                      <td className="py-2 pe-4 text-gray-700">{p.receivedAt.slice(0, 10)}</td>
+                      <td className="py-2 pe-4 font-medium text-gray-900">${p.amount.toLocaleString()}</td>
+                      <td className="py-2 text-gray-600">{p.paymentMethod}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              </div>
+              <div className="mt-4">
+                <Link
+                  to={recordPaymentHref}
+                  className="inline-block rounded border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                >
+                  + Record a new payment
+                </Link>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>

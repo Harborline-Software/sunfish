@@ -53,10 +53,12 @@ export interface CompletionAttestationSummary {
   signatureRef: string
 }
 
+export type WorkOrderPriority = 'Low' | 'Normal' | 'High' | 'Emergency'
+
 export interface CreateWorkOrderInput {
   subject: string
   vendorId: string
-  priority?: string
+  priority?: WorkOrderPriority
   propertyId?: string | null
   description?: string | null
   scheduledDate?: string | null

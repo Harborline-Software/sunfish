@@ -26,11 +26,23 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "signingIdentity": "Apple Development: Christopher Wood (MCV34H888C)"
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVEMzE2M0I1NTA5Njg5QTEKUldTaGlaWlF0V014WGV0VUdKT3p2UnV4eUYzT1dzc2l0OTJVQlhqU3hreXlveFRuM2lHaGtOaDUK",
+      "endpoints": [
+        "https://github.com/Harborline-Software/sunfish/releases/latest/download/latest.json"
+      ]
+    }
   }
 }

@@ -1,3 +1,4 @@
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 import { Link } from 'react-router-dom'
 import { useLeases } from '@/hooks/useLeases'
 import { Badge } from '@/components/ui/badge'
@@ -15,22 +16,15 @@ function LeaseStatusBadge({ status }: { status: LeaseSummary['status'] }) {
 export function LeasesPage() {
   const { data: leases, isPending, isError, error, refetch } = useLeases()
 
-  if (isPending) {
-    return <div className="flex items-center justify-center h-48 text-gray-500">Loading leases…</div>
-  }
+  if (isPending) return <LoadingState label="Loading leases…" />
 
   if (isError) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-        <p className="font-semibold text-red-700">Failed to load leases</p>
-        <p className="mt-1 text-sm text-gray-600">{error.message}</p>
-        <button
-          onClick={() => void refetch()}
-          className="mt-3 rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
+      <ErrorCard
+        title="Failed to load leases"
+        message={error.message}
+        onRetry={() => void refetch()}
+      />
     )
   }
 

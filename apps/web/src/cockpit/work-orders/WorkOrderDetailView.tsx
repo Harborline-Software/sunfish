@@ -1,3 +1,4 @@
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { getCockpitWorkOrderDetail } from '@/cockpit/api'
@@ -26,26 +27,18 @@ export function WorkOrderDetailView() {
 
   if (!id) return <NotFound />
 
-  if (isPending) {
-    return <p className="text-gray-500">Loading work order…</p>
-  }
+  if (isPending) return <LoadingState label="Loading work order…" variant="inline" />
 
   if (isError) {
     const isNotFound = error instanceof Error && error.message === 'Work order not found'
     if (isNotFound) return <NotFound />
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <p className="font-semibold text-red-700">Failed to load work order</p>
-        <p className="mt-1 text-sm text-gray-600">
-          {error instanceof Error ? error.message : String(error)}
-        </p>
-        <button
-          onClick={() => void refetch()}
-          className="mt-3 rounded bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700"
-        >
-          Retry
-        </button>
-      </div>
+      <ErrorCard
+        variant="compact"
+        title="Failed to load work order"
+        message={error instanceof Error ? error.message : String(error)}
+        onRetry={() => void refetch()}
+      />
     )
   }
 

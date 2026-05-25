@@ -4,8 +4,8 @@ pub mod sync;
 
 use std::sync::Arc;
 
-use rand::TryRngCore;
 use tauri::Manager;
+use tauri_plugin_updater::UpdaterExt;
 
 /// Service name used for the OS-keychain entry that backs Stronghold's master key.
 /// Suffixed with `.stronghold` (council R7) to leave the bare app identifier free
@@ -26,8 +26,8 @@ const STRONGHOLD_KEY_LEN: usize = 32;
 const STRONGHOLD_KEY_SENTINEL: [u8; STRONGHOLD_KEY_LEN] = [0u8; STRONGHOLD_KEY_LEN];
 
 /// Derives the Stronghold master key from the OS keychain. On first launch this
-/// generates a fresh 32-byte random key via `OsRng` (Windows: BCryptGenRandom;
-/// macOS: getentropy/SecRandomCopyBytes; Linux: getrandom(2) — council R6) and
+/// generates a fresh 32-byte random key via `rand::rng()` (seeded from OS entropy:
+/// BCryptGenRandom on Windows, getrandom(2) on Linux, getentropy on macOS — council R6) and
 /// persists it in the platform credential store (Windows Credential Manager via
 /// DPAPI, macOS Keychain, Linux Secret Service via libsecret). On subsequent
 /// launches the stored key is returned verbatim.
@@ -59,16 +59,12 @@ fn derive_stronghold_master_key() -> Result<Vec<u8>, String> {
         Err(_) => {
             // No entry yet (first launch) — generate + persist.
             //
-            // rand 0.10: `OsRng` no longer impls the infallible `RngCore`;
-            // it impls only `TryRngCore`. Use `try_fill_bytes` and propagate
-            // the error via the function's existing `Result<_, String>` shape.
-            // A CSPRNG initialization failure here is unrecoverable for the
-            // session — `keychain_status` surfaces it to the JS AuthGate so
-            // the user sees a precise banner instead of an opaque Stronghold
-            // decryption error (council A1.4).
+            // getrandom::fill delegates to the platform CSPRNG (Windows:
+            // BCryptGenRandom; macOS: getentropy; Linux: getrandom(2)) and
+            // returns a Result so CSPRNG failures propagate cleanly instead
+            // of panicking the Tauri runtime (council A1.4).
             let mut key = vec![0u8; STRONGHOLD_KEY_LEN];
-            rand::rngs::OsRng
-                .try_fill_bytes(&mut key)
+            getrandom::fill(&mut key)
                 .map_err(|e| format!("OS CSPRNG fill failed: {e}"))?;
             entry
                 .set_secret(&key)
@@ -107,6 +103,7 @@ pub fn run() {
             }
         }))
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(
             tauri_plugin_stronghold::Builder::new(move |_password_from_js| {
                 // Closure is now panic-free. The OS-keychain key was derived at
@@ -200,6 +197,24 @@ pub fn run() {
                 .await
                 {
                     eprintln!("[sync] startup write-queue drain failed: {e}");
+                }
+            });
+
+            // Background update check — fires once at startup, non-blocking.
+            // Silent on all errors: no network, GitHub rate-limit, pre-release
+            // channel mismatch. Restart is deferred until after download+install
+            // completes so the current session is not interrupted mid-use.
+            let update_handle = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                if let Ok(updater) = update_handle.updater() {
+                    if let Ok(Some(update)) = updater.check().await {
+                        let install_result = update
+                            .download_and_install(|_chunk, _total| {}, || {})
+                            .await;
+                        if install_result.is_ok() {
+                            update_handle.restart();
+                        }
+                    }
                 }
             });
 
