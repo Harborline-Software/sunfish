@@ -171,8 +171,8 @@ describe('ArAgingPage', () => {
     )
     render(<ArAgingPage />, { wrapper })
 
-    expect(await screen.findByText(/by customer/i)).toBeInTheDocument()
-    expect(screen.getByText(/by property/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /by customer/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /by property/i })).toBeInTheDocument()
     expect(screen.getByText('Alice Smith')).toBeInTheDocument()
     expect(screen.getByText('Harbor View')).toBeInTheDocument()
   })
