@@ -39,7 +39,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDVEMzE2M0I1NTA5Njg5QTEKUldTaGlaWlF0V014WGV0VUdKT3p2UnV4eUYzT1dzc2l0OTJVQlhqU3hreXlveFRuM2lHaGtOaDUK",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDhBOUM5MTJCMDZCNzhBQkMKUldTOGlyY0dLNUdjaW1tbUFlekNTelA5OW8xVXV4cDg3VTdvcXczSVhDWE5neDcvQ1VOaTRKVDkK",
       "endpoints": [
         "https://github.com/Harborline-Software/sunfish/releases/latest/download/latest.json"
       ]
