@@ -1,133 +1,61 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-
-// ---------------------------------------------------------------------------
-// Types — inline until sunfish#58 (audit-events.ts) merges into main
-// ---------------------------------------------------------------------------
-
-type SignatureState = 'Verified' | 'VerificationFailed' | 'NotSigned'
-
-interface AuditEventSummary {
-  audit_id: string
-  occurred_at: string
-  event_type: string
-  actor: string | null
-  correlation_id: string | null
-  payload_summary: Record<string, unknown>
-  signature_state: SignatureState
-}
-
-const KNOWN_AUDIT_EVENT_TYPES = [
-  'Messaging.MessageDispatched',
-  'Messaging.MessageFailed',
-  'Financial.InvoicePosted',
-  'Financial.PaymentRecorded',
-  'Financial.JournalPosted',
-  'Security.TenantBoundaryViolation',
-  'Security.AuthenticationFailed',
-] as const
-
-// ---------------------------------------------------------------------------
-// Mock data — replaced by Bridge GET /api/v1/audit-events once Engineer PR 0 ships
-// ---------------------------------------------------------------------------
-
-const MOCK_EVENTS: AuditEventSummary[] = [
-  {
-    audit_id: '01HZ4KW2P3RQNVT8X6J0M5CDEF',
-    occurred_at: '2026-05-21T18:32:11Z',
-    event_type: 'Messaging.MessageDispatched',
-    actor: 'system',
-    correlation_id: '7a3f2c11-9b4e-4d8a-bc91-1234567890ab',
-    payload_summary: { message_id: 'msg-ulid-aaa001', channel: 'email' },
-    signature_state: 'Verified',
-  },
-  {
-    audit_id: '01HZ4KW2P3RQNVT8X6J0M5ABCD',
-    occurred_at: '2026-05-21T17:15:44Z',
-    event_type: 'Financial.InvoicePosted',
-    actor: 'admin@sunfish.local',
-    correlation_id: 'a1b2c3d4-e5f6-7890-abcd-ef1234567890',
-    payload_summary: { invoice_name: 'INV-2026-05-21-0001-0001', amount: 2400 },
-    signature_state: 'Verified',
-  },
-  {
-    audit_id: '01HZ4KW2P3RQNVT8X6J0M5WXYZ',
-    occurred_at: '2026-05-21T16:02:07Z',
-    event_type: 'Financial.PaymentRecorded',
-    actor: 'admin@sunfish.local',
-    correlation_id: null,
-    payload_summary: { amount: 1800, payment_method: 'ACH' },
-    signature_state: 'NotSigned',
-  },
-  {
-    audit_id: '01HZ4KW2P3RQNVT8X6J0M5LMNO',
-    occurred_at: '2026-05-21T14:48:30Z',
-    event_type: 'Security.AuthenticationFailed',
-    actor: null,
-    correlation_id: 'f9e8d7c6-b5a4-3210-fedc-ba9876543210',
-    payload_summary: { ip: '203.0.113.42', attempt_count: 3 },
-    signature_state: 'VerificationFailed',
-  },
-  {
-    audit_id: '01HZ4KW2P3RQNVT8X6J0M5PQRS',
-    occurred_at: '2026-05-21T09:11:55Z',
-    event_type: 'Financial.JournalPosted',
-    actor: 'admin@sunfish.local',
-    correlation_id: '11223344-5566-7788-99aa-bbccddeeff00',
-    payload_summary: { journal_name: 'JV-2026-05-21-0001', debit_total: 5000 },
-    signature_state: 'Verified',
-  },
-]
-
-// ---------------------------------------------------------------------------
-// SignatureBadge
-// ---------------------------------------------------------------------------
-
-function SignatureBadge({ state }: { state: SignatureState }) {
-  if (state === 'Verified') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-        ✓ Verified
-      </span>
-    )
-  }
-  if (state === 'VerificationFailed') {
-    return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 ring-1 ring-inset ring-red-600/20">
-        ⚠ Failed
-      </span>
-    )
-  }
-  return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/20">
-      — Not signed
-    </span>
-  )
-}
+import { useQueryClient } from '@tanstack/react-query'
+import {
+  useAuditEvents,
+  TenantChangedError,
+  InvalidSeverityError,
+  KNOWN_AUDIT_EVENT_TYPES,
+  type AuditEventFilters,
+  type AuditEventSummary,
+  type SignatureState,
+} from '@/api/audit-events'
+import { Badge } from '@/components/ui/badge'
+import { ErrorCard } from '@/components/ErrorCard'
+import { LoadingState } from '@/components/LoadingState'
 
 // ---------------------------------------------------------------------------
 // AuditEventsPage
 // ---------------------------------------------------------------------------
 
 export function AuditEventsPage() {
-  const navigate = useNavigate()
+  const [filters, setFilters] = useState<AuditEventFilters>({})
+  const queryClient = useQueryClient()
+  const { data, error, isPending, fetchNextPage, hasNextPage, isFetchingNextPage, refetch } =
+    useAuditEvents(filters)
 
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
-  const [eventType, setEventType] = useState('')
-  const [correlationId, setCorrelationId] = useState('')
+  // G1 — 400 tenant_changed: discard stale cursor pages; restart from page 1
+  useEffect(() => {
+    if (error instanceof TenantChangedError) {
+      queryClient.resetQueries({ queryKey: ['audit-events'] })
+    }
+  }, [error, queryClient])
 
-  // Filtered view against mock data — replaced by useAuditEvents hook post-Bridge
-  const filtered = MOCK_EVENTS.filter((ev) => {
-    if (fromDate && ev.occurred_at < fromDate) return false
-    if (toDate && ev.occurred_at > toDate + 'T23:59:59Z') return false
-    if (eventType && ev.event_type !== eventType) return false
-    if (correlationId && ev.correlation_id !== correlationId) return false
-    return true
-  })
+  if (isPending) return <LoadingState label="Loading audit events..." />
+  if (error instanceof TenantChangedError) return <LoadingState label="Session changed. Reloading..." />
+  if (error instanceof InvalidSeverityError) {
+    return (
+      <ErrorCard
+        title="Invalid severity filter"
+        message="The selected severity is not recognised by the server. Please select a valid option."
+        onRetry={refetch}
+      />
+    )
+  }
+  if (error) {
+    return (
+      <ErrorCard
+        title="Failed to load audit events"
+        message={(error as Error).message}
+        onRetry={refetch}
+      />
+    )
+  }
 
-  // Mock CSV export URL — replaced by buildAuditCsvUrl() post-Bridge
-  const csvHref = '#'
+  // A2 — server-side severity filter (cohort-4 cycle 2). The `severity` filter
+  // is sent as a query param to the Bridge and applied server-side. No client-
+  // side post-fetch filter is needed; the server returns only matching events.
+  const events = data?.pages.flatMap((page) => page.events) ?? []
 
   return (
     <div>
@@ -138,81 +66,14 @@ export function AuditEventsPage() {
             Immutable record of all system events for this account
           </p>
         </div>
-        <a
-          href={csvHref}
-          className="rounded-md bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-        >
-          Export CSV
-        </a>
       </div>
 
-      {/* Filter bar */}
-      <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <div className="flex flex-wrap items-end gap-3">
-          <div>
-            <label className="block text-xs font-medium text-gray-600">From</label>
-            <input
-              type="date"
-              value={fromDate}
-              onChange={(e) => setFromDate(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600">To</label>
-            <input
-              type="date"
-              value={toDate}
-              onChange={(e) => setToDate(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-gray-600">Event type</label>
-            <select
-              value={eventType}
-              onChange={(e) => setEventType(e.target.value)}
-              className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
-            >
-              <option value="">All types</option>
-              {KNOWN_AUDIT_EVENT_TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="flex-1 min-w-48">
-            <label className="block text-xs font-medium text-gray-600">Correlation ID</label>
-            <input
-              type="text"
-              value={correlationId}
-              onChange={(e) => setCorrelationId(e.target.value)}
-              placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-              className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 text-sm font-mono"
-            />
-          </div>
-          <button
-            onClick={() => {/* filter state already reactive */}}
-            className="rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700"
-          >
-            Filter
-          </button>
-          {(fromDate || toDate || eventType || correlationId) && (
-            <button
-              onClick={() => { setFromDate(''); setToDate(''); setEventType(''); setCorrelationId('') }}
-              className="text-sm text-gray-500 hover:text-gray-900 underline"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      </div>
+      <FilterBar filters={filters} onChange={setFilters} />
 
-      {/* Results table */}
-      <div className="overflow-hidden rounded-lg border border-gray-200">
+      <div className="mt-4 overflow-hidden rounded-lg border border-gray-200">
         <table className="w-full text-sm" aria-label="Audit events">
-          <thead className="bg-gray-50">
+          {/* Nit 3 — sticky thead for long lists */}
+          <thead className="sticky top-0 z-10 bg-gray-50">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
                 Audit ID
@@ -232,60 +93,201 @@ export function AuditEventsPage() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">
-            {filtered.length === 0 && (
+            {events.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-sm text-gray-500">
                   No audit events match the current filters.
                 </td>
               </tr>
             )}
-            {filtered.map((ev) => (
-              <tr
-                key={ev.audit_id}
-                onClick={() => navigate(`/audit-trail/${ev.audit_id}`)}
-                className="cursor-pointer hover:bg-gray-50"
-                role="button"
-                tabIndex={0}
-                aria-label={`Audit event ${ev.audit_id.slice(-8)} — ${ev.event_type}`}
-                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') navigate(`/audit-trail/${ev.audit_id}`) }}
-              >
-                <td className="px-4 py-3 font-mono text-xs text-gray-700">
-                  {ev.audit_id.slice(-8).toUpperCase()}
-                </td>
-                <td className="px-4 py-3 text-gray-700">
-                  {new Date(ev.occurred_at).toLocaleString('en-US', {
-                    dateStyle: 'short',
-                    timeStyle: 'short',
-                  })}
-                </td>
-                <td className="px-4 py-3 font-mono text-xs text-gray-700">{ev.event_type}</td>
-                <td className="px-4 py-3 text-gray-500">{ev.actor ?? '—'}</td>
-                <td className="px-4 py-3">
-                  <SignatureBadge state={ev.signature_state} />
-                </td>
-              </tr>
+            {events.map((ev) => (
+              <EventRow key={ev.audit_id} event={ev} />
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Load more — wired to mock state; replaced by cursor pagination post-Bridge */}
-      {filtered.length > 0 && (
+      {/* Nit 2 — hide Load more entirely when next_cursor === null */}
+      {hasNextPage && (
         <div className="mt-4 flex justify-center">
           <button
-            disabled
-            className="rounded-md px-4 py-2 text-sm font-medium text-gray-400 ring-1 ring-inset ring-gray-300 cursor-not-allowed"
-            title="Pagination available after Bridge endpoint ships"
+            onClick={() => void fetchNextPage()}
+            disabled={isFetchingNextPage}
+            className="rounded-md px-4 py-2 text-sm font-medium text-gray-700 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:text-gray-400"
           >
-            Load more ↓
+            {isFetchingNextPage ? 'Loading...' : 'Load more ↓'}
           </button>
         </div>
       )}
+    </div>
+  )
+}
 
-      {/* Mock-data notice — remove when Bridge endpoint ships */}
-      <p className="mt-6 text-center text-xs text-gray-400">
-        Showing mock data — live data available after Bridge audit-events endpoint ships
-      </p>
+// ---------------------------------------------------------------------------
+// EventRow — A2: Security.* rows get red-tinted bg + SECURITY badge
+// ---------------------------------------------------------------------------
+
+function EventRow({ event }: { event: AuditEventSummary }) {
+  const navigate = useNavigate()
+  const isSecurityEvent = event.event_type.startsWith('Security.')
+
+  const rowClass = isSecurityEvent
+    ? 'cursor-pointer bg-red-50 hover:bg-red-100'
+    : 'cursor-pointer hover:bg-gray-50'
+
+  const eventTypeCellClass = isSecurityEvent ? 'font-mono text-xs text-red-700' : 'font-mono text-xs text-gray-700'
+
+  return (
+    <tr
+      role="button"
+      tabIndex={0}
+      aria-label={`Audit event ${event.audit_id.slice(-8)} — ${event.event_type}`}
+      className={rowClass}
+      onClick={() => navigate(`/audit-trail/${event.audit_id}`)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') navigate(`/audit-trail/${event.audit_id}`)
+      }}
+    >
+      <td className="px-4 py-3 font-mono text-xs text-gray-700">
+        {event.audit_id.slice(-8).toUpperCase()}
+      </td>
+      <td className="px-4 py-3 text-gray-700">
+        {new Date(event.occurred_at).toLocaleString('en-US', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+        })}
+      </td>
+      <td className={`px-4 py-3 ${eventTypeCellClass}`}>
+        <span className="inline-flex items-center gap-1.5">
+          {event.event_type}
+          {/* A2 — color-blind safety: pair red background with text badge */}
+          {isSecurityEvent && (
+            <Badge variant="destructive" className="text-xs">
+              SECURITY
+            </Badge>
+          )}
+        </span>
+      </td>
+      <td className="px-4 py-3 text-gray-500">{event.actor ?? '—'}</td>
+      <td className="px-4 py-3">
+        {/* Nit 1 — canonical <Badge> from @/components/ui/badge */}
+        <SignatureBadge state={event.signature_state} />
+      </td>
+    </tr>
+  )
+}
+
+function SignatureBadge({ state }: { state: SignatureState }) {
+  if (state === 'Verified') return <Badge variant="success">✓ Verified</Badge>
+  if (state === 'VerificationFailed') return <Badge variant="destructive">⚠ Failed</Badge>
+  return <Badge variant="outline">— Not signed</Badge>
+}
+
+// ---------------------------------------------------------------------------
+// FilterBar — Nit 4: htmlFor/id; Nit 5: no-op Filter button removed
+// ---------------------------------------------------------------------------
+
+interface FilterBarProps {
+  filters: AuditEventFilters
+  onChange: (f: AuditEventFilters) => void
+}
+
+function FilterBar({ filters, onChange }: FilterBarProps) {
+  const hasActive = Boolean(
+    filters.from || filters.to || filters.eventType || filters.correlationId || filters.severity
+  )
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+      <div className="flex flex-wrap items-end gap-3">
+        <div>
+          <label htmlFor="audit-filter-from" className="block text-xs font-medium text-gray-600">
+            From
+          </label>
+          <input
+            id="audit-filter-from"
+            type="date"
+            value={filters.from ?? ''}
+            onChange={(e) => onChange({ ...filters, from: e.target.value || undefined })}
+            className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="audit-filter-to" className="block text-xs font-medium text-gray-600">
+            To
+          </label>
+          <input
+            id="audit-filter-to"
+            type="date"
+            value={filters.to ?? ''}
+            onChange={(e) => onChange({ ...filters, to: e.target.value || undefined })}
+            className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+          />
+        </div>
+        <div>
+          <label htmlFor="audit-filter-event-type" className="block text-xs font-medium text-gray-600">
+            Event type
+          </label>
+          <select
+            id="audit-filter-event-type"
+            value={filters.eventType ?? ''}
+            onChange={(e) => onChange({ ...filters, eventType: e.target.value || undefined })}
+            className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+          >
+            <option value="">All types</option>
+            {KNOWN_AUDIT_EVENT_TYPES.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+        </div>
+        {/* A2 — severity filter */}
+        <div>
+          <label htmlFor="audit-filter-severity" className="block text-xs font-medium text-gray-600">
+            Severity
+          </label>
+          <select
+            id="audit-filter-severity"
+            value={filters.severity ?? ''}
+            onChange={(e) =>
+              onChange({
+                ...filters,
+                severity: (e.target.value as AuditEventFilters['severity']) || undefined,
+              })
+            }
+            className="mt-1 rounded border border-gray-300 px-2 py-1.5 text-sm"
+          >
+            <option value="">All severities</option>
+            <option value="Security">Security only</option>
+            <option value="Financial">Financial only</option>
+            <option value="Messaging">Messaging only</option>
+            <option value="Authentication">Authentication only</option>
+          </select>
+        </div>
+        <div className="min-w-48 flex-1">
+          <label htmlFor="audit-filter-correlation" className="block text-xs font-medium text-gray-600">
+            Correlation ID
+          </label>
+          <input
+            id="audit-filter-correlation"
+            type="text"
+            value={filters.correlationId ?? ''}
+            onChange={(e) => onChange({ ...filters, correlationId: e.target.value || undefined })}
+            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+            className="mt-1 w-full rounded border border-gray-300 px-2 py-1.5 font-mono text-sm"
+          />
+        </div>
+        {/* Nit 5 — no-op Filter button removed; state is reactive via onChange */}
+        {hasActive && (
+          <button
+            onClick={() => onChange({})}
+            className="text-sm text-gray-500 underline hover:text-gray-900"
+          >
+            Clear
+          </button>
+        )}
+      </div>
     </div>
   )
 }
