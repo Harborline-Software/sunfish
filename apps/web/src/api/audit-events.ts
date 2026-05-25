@@ -1,4 +1,6 @@
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { ProblemDetailsError, throwFromResponse } from './problem-details'
+export { ProblemDetailsError } from './problem-details'
 
 // ---------------------------------------------------------------------------
 // Signature verification state
@@ -119,20 +121,16 @@ export function useAuditEvents(filters: AuditEventFilters) {
       })
 
       // G1 — 400 handling: Bridge returns RFC 7807 ProblemDetails; error code is in `title`.
+      // Body is consumed here; throwFromResponse must not re-read it for 400s.
       if (response.status === 400) {
         const body = await response.json().catch(() => ({}))
-        if (body.title === 'tenant_changed_reload_page') {
-          throw new TenantChangedError()
-        }
+        if (body.title === 'tenant_changed_reload_page') throw new TenantChangedError()
         // Cohort-4 cycle 2 — invalid_severity: render inline error, not a tenant reload.
-        if (body.title === 'invalid_severity') {
-          throw new InvalidSeverityError(filters.severity ?? '')
-        }
+        if (body.title === 'invalid_severity') throw new InvalidSeverityError(filters.severity ?? '')
+        throw new ProblemDetailsError(body.title ?? `HTTP ${response.status}`, response.status, body.detail)
       }
 
-      if (!response.ok) {
-        throw new Error(`Audit events fetch failed: ${response.status}`)
-      }
+      if (!response.ok) return throwFromResponse(response, 'Audit events fetch failed')
 
       return response.json() as Promise<AuditEventsListResponse>
     },
@@ -156,9 +154,7 @@ export function useAuditEventDetail(auditId: string) {
         credentials: 'include',
         headers: { Accept: 'application/json' },
       })
-      if (!response.ok) {
-        throw new Error(`Audit event fetch failed: ${response.status}`)
-      }
+      if (!response.ok) return throwFromResponse(response, 'Audit event fetch failed')
       return response.json() as Promise<AuditEventDetail>
     },
     enabled: Boolean(auditId),

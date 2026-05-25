@@ -17,20 +17,12 @@
 
 // -------------------------------------------------------------------------
 // ProblemDetails error hierarchy — ADR 0093 Amendment J
-// Reads body.title (RFC 7807) as the discriminator, NOT body.error.
+// Base class + throwFromResponse shared in ./problem-details.ts.
+// Domain-specific discriminators for the reports endpoint family live here.
 // -------------------------------------------------------------------------
 
-export class ProblemDetailsError extends Error {
-  constructor(
-    public readonly title: string,
-    public readonly status: number,
-    public readonly detail?: string,
-  ) {
-    super(detail ? `${title}: ${detail}` : `${title} (HTTP ${status})`)
-    this.name = 'ProblemDetailsError'
-    Object.setPrototypeOf(this, new.target.prototype)
-  }
-}
+export { ProblemDetailsError } from './problem-details'
+import { ProblemDetailsError, throwFromResponse as _throwFromResponse } from './problem-details'
 
 /** Thrown when Bridge AuthenticatedTenantPolicy rejects a cross-tenant request. */
 export class TenantBoundaryViolationError extends ProblemDetailsError {
@@ -50,30 +42,13 @@ export class InvalidChartIdError extends ProblemDetailsError {
   }
 }
 
-/**
- * Parses a non-OK response.
- * If Content-Type is application/problem+json, reads body.title and throws
- * the appropriate typed ProblemDetailsError subclass (or a generic
- * ProblemDetailsError for unrecognised titles).
- * Falls through to a generic Error for non-ProblemDetails error responses.
- */
-async function throwFromResponse(resp: Response, genericMessage: string): Promise<never> {
-  const contentType = resp.headers.get('Content-Type') ?? ''
-  if (contentType.includes('application/problem+json')) {
-    const problem = (await resp.json()) as { title?: string; status?: number; detail?: string }
-    const title = problem.title ?? `HTTP ${resp.status}`
-    const status = problem.status ?? resp.status
-    const detail = problem.detail
-    switch (title) {
-      case 'tenant_boundary_violation':
-        throw new TenantBoundaryViolationError(status, detail)
-      case 'invalid_chart_id':
-        throw new InvalidChartIdError(status, detail)
-      default:
-        throw new ProblemDetailsError(title, status, detail)
-    }
-  }
-  throw new Error(`${genericMessage}: ${resp.status} ${resp.statusText}`)
+const REPORT_DISCRIMINATORS = {
+  tenant_boundary_violation: (s: number, d?: string) => { throw new TenantBoundaryViolationError(s, d) },
+  invalid_chart_id: (s: number, d?: string) => { throw new InvalidChartIdError(s, d) },
+} as const
+
+function throwFromResponse(resp: Response, genericMessage: string): Promise<never> {
+  return _throwFromResponse(resp, genericMessage, REPORT_DISCRIMINATORS)
 }
 
 // ChartId wire format: naked JSON string (opaque). Default value is Guid.ToString();

@@ -1,3 +1,6 @@
+import { throwFromResponse } from './problem-details'
+export { ProblemDetailsError } from './problem-details'
+
 // W#74 PR 1 — Properties API client for the Bridge /api/v1/properties
 // cluster endpoint. Replaces the ERPNext-backed getProperties() fetcher
 // in src/api/erpnext.ts. Per hand-off §3.2:
@@ -26,8 +29,6 @@ export interface PropertyList {
 
 export async function getProperties(): Promise<PropertyList> {
   const resp = await fetch('/api/v1/properties', { credentials: 'include' })
-  if (!resp.ok) {
-    throw new Error(`Failed to load properties: ${resp.status} ${resp.statusText}`)
-  }
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to load properties')
   return (await resp.json()) as PropertyList
 }

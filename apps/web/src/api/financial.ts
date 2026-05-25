@@ -6,6 +6,9 @@
  * @candidate-pattern: pattern-010-financial-write-path
  */
 
+import { throwFromResponse } from './problem-details'
+export { ProblemDetailsError } from './problem-details'
+
 // ── Wire-format types ──────────────────────────────────────────────────────
 
 export interface PaymentSummary {
@@ -36,7 +39,7 @@ export interface PaymentList {
 export async function getLeasePayments(leaseId: string): Promise<PaymentList> {
   const qs = new URLSearchParams({ leaseId })
   const resp = await fetch(`/api/v1/financial/payments?${qs}`, { credentials: 'include' })
-  if (!resp.ok) throw new Error(`Failed to load payments: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to load payments')
   return (await resp.json()) as PaymentList
 }
 
@@ -59,7 +62,7 @@ export interface AccountingSummary {
  */
 export async function getAccountingSummary(): Promise<AccountingSummary> {
   const resp = await fetch('/api/v1/financial/accounting/summary', { credentials: 'include' })
-  if (!resp.ok) throw new Error(`Failed to load accounting summary: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to load accounting summary')
   return (await resp.json()) as AccountingSummary
 }
 
@@ -86,7 +89,7 @@ export interface OutstandingInvoiceList {
  */
 export async function getAccountingOutstanding(): Promise<OutstandingInvoiceList> {
   const resp = await fetch('/api/v1/financial/accounting/outstanding', { credentials: 'include' })
-  if (!resp.ok) throw new Error(`Failed to load outstanding invoices: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to load outstanding invoices')
   return (await resp.json()) as OutstandingInvoiceList
 }
 
