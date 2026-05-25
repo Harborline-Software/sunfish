@@ -1,8 +1,8 @@
 import { ErrorCard } from '@sunfish/ui-react'
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useMatch } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from 'react-error-boundary'
-import { lazy, Suspense, useEffect } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState } from 'react'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
 import { useCompanyStore } from '@/stores/companyStore'
@@ -17,6 +17,8 @@ const CrewCommsPage = lazy(() => import('@/pages/CrewCommsPage').then(m => ({ de
 const MaintenancePage = lazy(() => import('@/pages/MaintenancePage').then(m => ({ default: m.MaintenancePage })))
 const RentRoll = lazy(() => import('@/pages/RentRoll').then(m => ({ default: m.RentRoll })))
 const PLReport = lazy(() => import('@/pages/PLReport').then(m => ({ default: m.PLReport })))
+const TrialBalancePage = lazy(() => import('@/pages/TrialBalancePage').then(m => ({ default: m.TrialBalancePage })))
+const ArAgingPage = lazy(() => import('@/pages/ArAgingPage').then(m => ({ default: m.ArAgingPage })))
 const CockpitLayout = lazy(() => import('@/cockpit/CockpitLayout').then(m => ({ default: m.CockpitLayout })))
 const PropertySelector = lazy(() => import('@/cockpit/PropertySelector').then(m => ({ default: m.PropertySelector })))
 const PropertyDetailView = lazy(() => import('@/cockpit/properties/PropertyDetailView').then(m => ({ default: m.PropertyDetailView })))
@@ -65,6 +67,57 @@ function AppErrorFallback({ error, resetErrorBoundary }: { error: Error; resetEr
           }}
         />
       </div>
+    </div>
+  )
+}
+
+const REPORT_LINKS = [
+  { to: '/reports/trial-balance', label: 'Trial Balance' },
+  { to: '/reports/ar-aging', label: 'AR Aging' },
+  { to: '/reports/profit-and-loss-by-property', label: 'P&L by Property' },
+  { to: '/reports/rent-roll', label: 'Rent Roll' },
+]
+
+function ReportsNavGroup() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const isActive = Boolean(useMatch('/reports/*'))
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className={isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'}
+      >
+        Reports
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+          {REPORT_LINKS.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              onClick={() => setOpen(false)}
+              className={({ isActive: a }) =>
+                `block px-4 py-2 text-sm ${a ? 'bg-gray-50 font-medium text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`
+              }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -153,14 +206,7 @@ function AppLayout() {
             >
               Maintenance
             </NavLink>
-            <NavLink
-              to="/reports/rent-roll"
-              className={({ isActive }) =>
-                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
-              }
-            >
-              Reports
-            </NavLink>
+            <ReportsNavGroup />
             <NavLink
               to="/cockpit"
               className={({ isActive }) =>
@@ -192,9 +238,12 @@ function AppLayout() {
             <Route path="/accounting" element={<AccountingPage />} />
             <Route path="/comms" element={<CrewCommsPage />} />
             <Route path="/maintenance" element={<MaintenancePage />} />
-            <Route path="/reports" element={<Navigate to="/reports/rent-roll" replace />} />
+            <Route path="/reports" element={<Navigate to="/reports/trial-balance" replace />} />
+            <Route path="/reports/trial-balance" element={<TrialBalancePage />} />
+            <Route path="/reports/ar-aging" element={<ArAgingPage />} />
+            <Route path="/reports/profit-and-loss-by-property" element={<PLReport />} />
             <Route path="/reports/rent-roll" element={<RentRoll />} />
-            <Route path="/reports/profit-loss" element={<PLReport />} />
+            <Route path="/reports/profit-loss" element={<Navigate to="/reports/profit-and-loss-by-property" replace />} />
             <Route path="/audit-trail" element={<AuditEventsPage />} />
             <Route path="/audit-trail/:auditId" element={<AuditEventDetailPage />} />
             <Route path="/cockpit" element={<CockpitLayout />}>
