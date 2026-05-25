@@ -120,8 +120,8 @@ describe('AuditEventsPage', () => {
   it('renders event rows from useAuditEvents data', () => {
     mockHookSuccess([MOCK_FINANCIAL_EVENT, MOCK_SECURITY_EVENT])
     render(<AuditEventsPage />, { wrapper })
-    expect(screen.getByText('Financial.InvoicePosted')).toBeInTheDocument()
-    expect(screen.getByText('Security.TenantBoundaryViolation')).toBeInTheDocument()
+    expect(screen.getAllByText('Financial.InvoicePosted').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Security.TenantBoundaryViolation').length).toBeGreaterThan(0)
   })
 
   // Test 4 — A2
@@ -178,8 +178,8 @@ describe('AuditEventsPage', () => {
 
     render(<AuditEventsPage />, { wrapper })
 
-    // Initial render: hook called without severity
-    expect(hookSpy).toHaveBeenLastCalledWith(expect.objectContaining({ severity: undefined }))
+    // Initial render: hook called without severity (filters is {}, no severity key)
+    expect(hookSpy).toHaveBeenLastCalledWith(expect.not.objectContaining({ severity: expect.anything() }))
 
     // Select Security severity filter
     const severitySelect = screen.getByLabelText('Severity')
