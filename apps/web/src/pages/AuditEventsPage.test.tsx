@@ -7,18 +7,21 @@ import * as auditEventsApi from '@/api/audit-events'
 import { TenantChangedError, InvalidSeverityError } from '@/api/audit-events'
 import type { AuditEventSummary } from '@/api/audit-events'
 
-// ErrorCard + LoadingState live on main (sunfish#61); mock for this branch
-vi.mock('@/components/ErrorCard', () => ({
-  ErrorCard: ({ title, message }: { title: string; message?: string }) => (
-    <div role="alert" data-testid="error-card">
-      {title}
-      {message && <span>{message}</span>}
-    </div>
-  ),
-}))
-vi.mock('@/components/LoadingState', () => ({
-  LoadingState: ({ label }: { label: string }) => <div data-testid="loading-state">{label}</div>,
-}))
+// ErrorCard + LoadingState are now shared @sunfish/ui-react components; stub
+// only those two, preserving the rest of the package.
+vi.mock('@sunfish/ui-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@sunfish/ui-react')>()
+  return {
+    ...actual,
+    ErrorCard: ({ title, message }: { title: string; message?: string }) => (
+      <div role="alert" data-testid="error-card">
+        {title}
+        {message && <span>{message}</span>}
+      </div>
+    ),
+    LoadingState: ({ label }: { label: string }) => <div data-testid="loading-state">{label}</div>,
+  }
+})
 
 const mockNavigate = vi.fn()
 vi.mock('react-router-dom', async (importOriginal) => {

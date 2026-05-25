@@ -10,17 +10,21 @@ import * as companyStore from '@/stores/companyStore'
 // matching signal-bridge AuditEventDto as of cohort-4 PR 2). tenant_id is the
 // substrate opaque TenantId.Value used for the A1 defense-in-depth assertion.
 
-vi.mock('@/components/ErrorCard', () => ({
-  ErrorCard: ({ title, message }: { title: string; message?: string }) => (
-    <div role="alert" data-testid="error-card">
-      {title}
-      {message && <span>{message}</span>}
-    </div>
-  ),
-}))
-vi.mock('@/components/LoadingState', () => ({
-  LoadingState: ({ label }: { label: string }) => <div data-testid="loading-state">{label}</div>,
-}))
+// ErrorCard + LoadingState are now shared @sunfish/ui-react components; stub
+// only those two, preserving the rest of the package.
+vi.mock('@sunfish/ui-react', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@sunfish/ui-react')>()
+  return {
+    ...actual,
+    ErrorCard: ({ title, message }: { title: string; message?: string }) => (
+      <div role="alert" data-testid="error-card">
+        {title}
+        {message && <span>{message}</span>}
+      </div>
+    ),
+    LoadingState: ({ label }: { label: string }) => <div data-testid="loading-state">{label}</div>,
+  }
+})
 
 // Helper to set the activeTenantId that the component reads from useCompanyStore.
 // The real store is a Zustand singleton — mutate its state directly in tests.

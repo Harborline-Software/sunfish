@@ -11,8 +11,7 @@ import {
   type SignatureState,
 } from '@/api/audit-events'
 import { Badge } from '@/components/ui/badge'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 
 // ---------------------------------------------------------------------------
 // AuditEventsPage

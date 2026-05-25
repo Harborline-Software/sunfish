@@ -1,8 +1,7 @@
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams } from 'react-router-dom'
 import { getCockpitDashboard } from '@/cockpit/api'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
 
 /**
  * W#29 Phase 5 — per-property dashboard.
