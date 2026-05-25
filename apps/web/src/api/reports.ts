@@ -4,11 +4,77 @@
  * The endpoint family is authored in blocks-reports (W#77) and exposed by
  * signal-bridge under /api/v1/reports/{kind}.
  *
+ * Error handling: non-OK responses with Content-Type application/problem+json
+ * are parsed per RFC 7807 ProblemDetails. The body.title field is the
+ * discriminator string (per ADR 0093 Amendment J). Known 400 titles are
+ * surfaced as typed subclasses of ProblemDetailsError.
+ *
  * @standing-pattern: pattern-013-cartridge-read-via-post
  * @candidate-pattern: pattern-015-provisional-report-surface
  * @candidate-pattern: pattern-016-run-on-demand-report
  * @candidate-pattern: pattern-017-csv-export-affordance
  */
+
+// -------------------------------------------------------------------------
+// ProblemDetails error hierarchy — ADR 0093 Amendment J
+// Reads body.title (RFC 7807) as the discriminator, NOT body.error.
+// -------------------------------------------------------------------------
+
+export class ProblemDetailsError extends Error {
+  constructor(
+    public readonly title: string,
+    public readonly status: number,
+    public readonly detail?: string,
+  ) {
+    super(detail ? `${title}: ${detail}` : `${title} (HTTP ${status})`)
+    this.name = 'ProblemDetailsError'
+    Object.setPrototypeOf(this, new.target.prototype)
+  }
+}
+
+/** Thrown when Bridge AuthenticatedTenantPolicy rejects a cross-tenant request. */
+export class TenantBoundaryViolationError extends ProblemDetailsError {
+  constructor(status: number, detail?: string) {
+    super('tenant_boundary_violation', status, detail)
+    this.name = 'TenantBoundaryViolationError'
+    Object.setPrototypeOf(this, new.target.prototype)
+  }
+}
+
+/** Thrown when Bridge rejects a ChartId that does not belong to the tenant. */
+export class InvalidChartIdError extends ProblemDetailsError {
+  constructor(status: number, detail?: string) {
+    super('invalid_chart_id', status, detail)
+    this.name = 'InvalidChartIdError'
+    Object.setPrototypeOf(this, new.target.prototype)
+  }
+}
+
+/**
+ * Parses a non-OK response.
+ * If Content-Type is application/problem+json, reads body.title and throws
+ * the appropriate typed ProblemDetailsError subclass (or a generic
+ * ProblemDetailsError for unrecognised titles).
+ * Falls through to a generic Error for non-ProblemDetails error responses.
+ */
+async function throwFromResponse(resp: Response, genericMessage: string): Promise<never> {
+  const contentType = resp.headers.get('Content-Type') ?? ''
+  if (contentType.includes('application/problem+json')) {
+    const problem = (await resp.json()) as { title?: string; status?: number; detail?: string }
+    const title = problem.title ?? `HTTP ${resp.status}`
+    const status = problem.status ?? resp.status
+    const detail = problem.detail
+    switch (title) {
+      case 'tenant_boundary_violation':
+        throw new TenantBoundaryViolationError(status, detail)
+      case 'invalid_chart_id':
+        throw new InvalidChartIdError(status, detail)
+      default:
+        throw new ProblemDetailsError(title, status, detail)
+    }
+  }
+  throw new Error(`${genericMessage}: ${resp.status} ${resp.statusText}`)
+}
 
 // ChartId wire format: naked JSON string (opaque). Default value is Guid.ToString();
 // the demo tenant uses a human-readable key. Treat as opaque — do NOT assume GUID format.
@@ -230,7 +296,7 @@ async function runReport<TParams, TResult>(kind: string, params: TParams): Promi
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(params),
   })
-  if (!resp.ok) throw new Error(`Report run failed: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return await throwFromResponse(resp, 'Report run failed')
   return (await resp.json()) as ReportRunResult<TResult>
 }
 
@@ -269,7 +335,7 @@ async function exportReportCsv(kind: string, params: unknown): Promise<void> {
     },
     body: JSON.stringify(params),
   })
-  if (!resp.ok) throw new Error(`CSV export failed: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return await throwFromResponse(resp, 'CSV export failed')
   // Prefer server-supplied filename from Content-Disposition header
   const disposition = resp.headers.get('Content-Disposition') ?? ''
   const nameMatch = /filename="([^"]+)"/.exec(disposition)
@@ -309,6 +375,6 @@ export function exportRentRollCsv(params: RentRollParameters) {
 
 export async function getCharts(): Promise<ChartListResponse> {
   const resp = await fetch('/api/v1/charts', { credentials: 'include' })
-  if (!resp.ok) throw new Error(`Failed to load charts: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return await throwFromResponse(resp, 'Failed to load charts')
   return (await resp.json()) as ChartListResponse
 }
