@@ -6,8 +6,7 @@ import { useWorkOrders, useCreateWorkOrder } from '@/hooks/useMaintenance'
 import type { WorkOrderSummary } from '@/api/maintenance'  // rebound from @/api/erpnext — W#74 PR 3
 import { AuthRoleGate } from '@/components/AuthRoleGate'
 import { MaintenanceWorkOrderTimeline } from '@/components/MaintenanceWorkOrderTimeline'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 
 const STATUS_COLORS: Record<string, string> = {
   Draft:      'bg-blue-100 text-blue-700',

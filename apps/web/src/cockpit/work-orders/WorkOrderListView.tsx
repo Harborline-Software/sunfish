@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getCockpitWorkOrders } from '@/cockpit/api'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 
 /**
  * W#29 Phase 3 — work-orders list view.

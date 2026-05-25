@@ -1,8 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getCockpitVendors } from '@/cockpit/api'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 
 /**
  * W#29 Phase 4 — vendors list view.

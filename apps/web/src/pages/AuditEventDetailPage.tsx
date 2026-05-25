@@ -2,8 +2,7 @@ import { useParams, Link } from 'react-router-dom'
 import { useAuditEventDetail, TenantChangedError, type AuditEventDetail, type SignatureState } from '@/api/audit-events'
 import { useCompanyStore } from '@/stores/companyStore'
 import { Badge } from '@/components/ui/badge'
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 
 // Route: /audit-trail/:auditId
 
