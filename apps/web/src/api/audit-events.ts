@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 
 // ---------------------------------------------------------------------------
 // Signature verification state
@@ -16,16 +16,18 @@ export interface AuditEventSummary {
   event_type: string              // e.g. "Security.TenantBoundaryViolation"
   actor: string | null            // username or system identity
   correlation_id: string | null   // null for pre-retrofit events (Decision 3)
+  // Cohort-4 cycle 2 — substrate opaque TenantId.Value added by signal-bridge cohort-4 PR 2.
+  // Use for defense-in-depth tenant assertion in AuditEventDetailPage:
+  //   compare tenant_id !== activeTenantId (substrate-substrate; not ERPNext display name).
+  tenant_id: string
   payload_summary: Record<string, unknown>
   signature_state: SignatureState
 }
 
 // AuditEventDetail is the same wire shape as AuditEventSummary — the detail
-// endpoint returns the same AuditEventDto (6 fields). Payload fields are in
-// payload_summary (inherited from AuditEventSummary). No tenant_id, payload,
-// or signatures on the wire — see signal-bridge AuditEventsDtos.cs.
-// Forward-watch: signatures surface will be added when Engineer ships
-// IOperationVerifier; tenant_id will surface when whoami exposes tenant mapping.
+// endpoint returns the same AuditEventDto (7 fields as of cohort-4 PR 2).
+// See signal-bridge AuditEventsDtos.cs for the canonical field list.
+// Forward-watch: signatures surface will be added when Engineer ships IOperationVerifier.
 export type AuditEventDetail = AuditEventSummary
 
 // ---------------------------------------------------------------------------
@@ -78,6 +80,17 @@ export class TenantChangedError extends Error {
   }
 }
 
+// Cohort-4 cycle 2 — Bridge returns 400 invalid_severity when an unrecognised
+// severity is sent (added by signal-bridge cohort-4 PR 2). Callers should
+// render an inline error rather than a tenant-reload banner.
+export class InvalidSeverityError extends Error {
+  readonly cause = 'invalid_severity' as const
+  constructor(severity: string) {
+    super(`Unknown severity filter: ${severity}`)
+    this.name = 'InvalidSeverityError'
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Hooks
 // ---------------------------------------------------------------------------
@@ -91,10 +104,12 @@ export function useAuditEvents(filters: AuditEventFilters) {
       if (filters.to) params.append('to', filters.to)
       if (filters.eventType) params.append('event_type', filters.eventType)
       if (filters.correlationId) params.append('correlation_id', filters.correlationId)
-      // severity is a client-side filter only — the Bridge endpoint does not
-      // accept a severity param; sending it is silently ignored. Filter is
-      // applied post-fetch in AuditEventsPage. Forward-watch: Engineer to add
-      // server-side severity → event_type prefix mapping in cohort-5+.
+      // Cohort-4 cycle 2 — severity is now a server-side filter. Bridge accepts
+      // Security | Financial | Messaging | Authentication | Maintenance and returns
+      // 400 invalid_severity for any other value. Client re-validates against
+      // the AuditEventFilters type so unknown values shouldn't reach here; the 400
+      // handler below is a defense-in-depth backstop.
+      if (filters.severity) params.append('severity', filters.severity)
       // G1 — cursor passed verbatim; no URL re-encoding, no JSON-parse
       if (pageParam) params.append('cursor', pageParam)
 
@@ -103,12 +118,15 @@ export function useAuditEvents(filters: AuditEventFilters) {
         headers: { Accept: 'application/json' },
       })
 
-      // G1 — 400 tenant_changed: discard cursor; reset to page 1
-      // Bridge returns RFC 7807 ProblemDetails; the error code is in `title`.
+      // G1 — 400 handling: Bridge returns RFC 7807 ProblemDetails; error code is in `title`.
       if (response.status === 400) {
         const body = await response.json().catch(() => ({}))
         if (body.title === 'tenant_changed_reload_page') {
           throw new TenantChangedError()
+        }
+        // Cohort-4 cycle 2 — invalid_severity: render inline error, not a tenant reload.
+        if (body.title === 'invalid_severity') {
+          throw new InvalidSeverityError(filters.severity ?? '')
         }
       }
 

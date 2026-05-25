@@ -1,22 +1,32 @@
 import { useParams, Link } from 'react-router-dom'
-import { useAuditEventDetail, type AuditEventDetail, type SignatureState } from '@/api/audit-events'
+import { useAuditEventDetail, TenantChangedError, type AuditEventDetail, type SignatureState } from '@/api/audit-events'
+import { useCompanyStore } from '@/stores/companyStore'
 import { Badge } from '@/components/ui/badge'
 import { ErrorCard } from '@/components/ErrorCard'
 import { LoadingState } from '@/components/LoadingState'
 
 // Route: /audit-trail/:auditId
-// A1-NOTE: Client-side tenant assertion (defense-in-depth) is deferred until
-// /api/v1/whoami exposes a tenantId mapping. The server is the security
-// boundary (ADR 0092); the assertion requires substrate-to-substrate comparison
-// that is not yet available on the wire. Forward-watch filed with Admiral.
 
 export function AuditEventDetailPage() {
   const { auditId } = useParams<{ auditId: string }>()
   const { data: detail, error, isPending } = useAuditEventDetail(auditId!)
+  // A1-SEMANTIC — cohort-4 cycle 2: substrate-to-substrate tenant assertion.
+  // activeTenantId is set from whoami.tenantId (opaque substrate value, NOT the
+  // ERPNext defaultCompany display name). Empty string means no tenant bound
+  // (dev-stub / pre-bind); assertion is skipped in that case to avoid false-
+  // positive mismatch during development. Server is the primary security
+  // boundary (ADR 0092); this is a defense-in-depth client-side guard only.
+  const activeTenantId = useCompanyStore((s) => s.activeTenantId)
 
   if (isPending) return <LoadingState label="Loading audit event..." />
   if (error) return <ErrorCard title="Failed to load audit event" message={(error as Error).message} />
   if (!detail) return null
+
+  // A1-SEMANTIC: hard-halt on real cross-tenant mismatch. Skip when activeTenantId
+  // is empty (dev-stub / pre-bind state — don't surface false-positive).
+  if (activeTenantId !== '' && detail.tenant_id !== activeTenantId) {
+    throw new TenantChangedError()
+  }
 
   return (
     <div className="space-y-6">

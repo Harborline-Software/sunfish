@@ -4,6 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   useAuditEvents,
   TenantChangedError,
+  InvalidSeverityError,
   KNOWN_AUDIT_EVENT_TYPES,
   type AuditEventFilters,
   type AuditEventSummary,
@@ -32,6 +33,15 @@ export function AuditEventsPage() {
 
   if (isPending) return <LoadingState label="Loading audit events..." />
   if (error instanceof TenantChangedError) return <LoadingState label="Session changed. Reloading..." />
+  if (error instanceof InvalidSeverityError) {
+    return (
+      <ErrorCard
+        title="Invalid severity filter"
+        message="The selected severity is not recognised by the server. Please select a valid option."
+        onRetry={refetch}
+      />
+    )
+  }
   if (error) {
     return (
       <ErrorCard
@@ -42,13 +52,10 @@ export function AuditEventsPage() {
     )
   }
 
-  const allEvents = data?.pages.flatMap((page) => page.events) ?? []
-  // A2 — client-side severity filter. The Bridge endpoint does not accept a
-  // `severity` query param; filtering is applied post-fetch against the loaded
-  // pages. Forward-watch: Engineer to add server-side severity filter in cohort-5+.
-  const events = filters.severity
-    ? allEvents.filter((e) => e.event_type.startsWith(filters.severity + '.'))
-    : allEvents
+  // A2 — server-side severity filter (cohort-4 cycle 2). The `severity` filter
+  // is sent as a query param to the Bridge and applied server-side. No client-
+  // side post-fetch filter is needed; the server returns only matching events.
+  const events = data?.pages.flatMap((page) => page.events) ?? []
 
   return (
     <div>

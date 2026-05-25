@@ -5,9 +5,10 @@ import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { AuditEventDetailPage } from './AuditEventDetailPage'
 import * as auditEventsApi from '@/api/audit-events'
 import type { AuditEventDetail } from '@/api/audit-events'
-// NOTE: AuditEventDetail is now an alias for AuditEventSummary (6-field wire
-// contract matching signal-bridge AuditEventDto). No tenant_id, payload, or
-// signatures on the real wire — these are forward-watched substrate extensions.
+import * as companyStore from '@/stores/companyStore'
+// NOTE: AuditEventDetail is an alias for AuditEventSummary (7-field wire contract
+// matching signal-bridge AuditEventDto as of cohort-4 PR 2). tenant_id is the
+// substrate opaque TenantId.Value used for the A1 defense-in-depth assertion.
 
 vi.mock('@/components/ErrorCard', () => ({
   ErrorCard: ({ title, message }: { title: string; message?: string }) => (
@@ -20,6 +21,12 @@ vi.mock('@/components/ErrorCard', () => ({
 vi.mock('@/components/LoadingState', () => ({
   LoadingState: ({ label }: { label: string }) => <div data-testid="loading-state">{label}</div>,
 }))
+
+// Helper to set the activeTenantId that the component reads from useCompanyStore.
+// The real store is a Zustand singleton — mutate its state directly in tests.
+function setActiveTenantId(tenantId: string) {
+  companyStore.useCompanyStore.setState({ activeTenantId: tenantId })
+}
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -35,14 +42,15 @@ function wrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-// MOCK_TBV_DETAIL uses the real 6-field AuditEventDto wire contract.
-// TBV payload fields live in payload_summary (per signal-bridge AuditEventsDtos.cs).
+// MOCK_TBV_DETAIL uses the 7-field AuditEventDto wire contract (cohort-4 PR 2).
+// tenant_id is the substrate opaque TenantId.Value; TBV payload in payload_summary.
 const MOCK_TBV_DETAIL: AuditEventDetail = {
   audit_id: '01HZ4KW2P3RQNVT8X6J0M5LMNO',
   occurred_at: '2026-05-21T14:48:30Z',
   event_type: 'Security.TenantBoundaryViolation',
   actor: null,
   correlation_id: 'f9e8d7c6-b5a4-3210-fedc-ba9876543210',
+  tenant_id: 'tenant-foobar-id',
   payload_summary: {
     entity_type: 'Lease',
     entity_id: 'lease-ulid-0001',
@@ -66,6 +74,9 @@ function mockDetailSuccess(detail: AuditEventDetail) {
 describe('AuditEventDetailPage', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
+    // Default: activeTenantId matches fixture so A1 assertion passes in most tests.
+    // Individual tests override this via setActiveTenantId() as needed.
+    setActiveTenantId('tenant-foobar-id')
   })
 
   // Test 1 — A1
@@ -147,5 +158,29 @@ describe('AuditEventDetailPage', () => {
 
     expect(screen.getByText('Attesting signatures')).toBeInTheDocument()
     expect(screen.getByText(/Signature verification surface pending/)).toBeInTheDocument()
+  })
+
+  // Test 7 — A1-SEMANTIC cohort-4 cycle 2: tenant mismatch throws TenantChangedError
+  // (component renders an uncaught throw; tested by asserting the render throws).
+  it('AuditEventDetail_TenantMismatch_ThrowsOrHalts', () => {
+    // activeTenantId is 'tenant-B'; fixture has tenant_id 'tenant-A' — genuine mismatch.
+    setActiveTenantId('tenant-B')
+    mockDetailSuccess({ ...MOCK_TBV_DETAIL, tenant_id: 'tenant-A' })
+
+    // Suppress React's error console output for this expected throw.
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    expect(() => render(<AuditEventDetailPage />, { wrapper })).toThrow()
+    consoleSpy.mockRestore()
+  })
+
+  // Test 8 — A1-SEMANTIC cohort-4 cycle 2: empty activeTenantId skips the assertion;
+  // page renders normally (dev-stub / pre-bind state must not surface false positive).
+  it('AuditEventDetail_WhoamiEmptyTenant_AllowsRender', () => {
+    setActiveTenantId('')
+    mockDetailSuccess({ ...MOCK_TBV_DETAIL, tenant_id: 'tenant-A' })
+    render(<AuditEventDetailPage />, { wrapper })
+
+    // Page renders successfully; no throw, normal content visible.
+    expect(screen.getByText('Security.TenantBoundaryViolation')).toBeInTheDocument()
   })
 })

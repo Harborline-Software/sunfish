@@ -74,18 +74,29 @@ function AppLayout() {
   const setAvailableCompanies = useCompanyStore((s) => s.setAvailableCompanies)
   const setAuth = useAuthStore((s) => s.setAuth)
 
+  const setActiveTenantId = useCompanyStore((s) => s.setActiveTenantId)
+
   useEffect(() => {
     fetch('/api/v1/whoami', { credentials: 'include' })
       .then((r) => r.json())
-      .then((data: { user?: string; role?: string; defaultCompany?: string; availableCompanies?: string[] }) => {
+      .then((data: {
+        user?: string
+        role?: string
+        defaultCompany?: string
+        availableCompanies?: string[]
+        tenantId?: string
+      }) => {
         if (data.defaultCompany) setActiveCompany(data.defaultCompany)
         if (data.availableCompanies) setAvailableCompanies(data.availableCompanies)
+        // Cohort-4 cycle 2 — store substrate tenantId for A1 defense-in-depth assertion.
+        // Empty string means no tenant bound (dev-stub); assertion skips when empty.
+        setActiveTenantId(data.tenantId ?? '')
         setAuth(data.user ?? 'dev-user', data.role ?? 'owner')
       })
       .catch(() => {
         setAuth('dev-user', 'owner')
       })
-  }, [setActiveCompany, setAvailableCompanies, setAuth])
+  }, [setActiveCompany, setAvailableCompanies, setActiveTenantId, setAuth])
 
   return (
     <div className="min-h-screen bg-white">
