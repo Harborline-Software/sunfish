@@ -25,6 +25,8 @@ const WorkOrderDetailView = lazy(() => import('@/cockpit/work-orders/WorkOrderDe
 const VendorListView = lazy(() => import('@/cockpit/vendors/VendorListView').then(m => ({ default: m.VendorListView })))
 const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView').then(m => ({ default: m.VendorDetailView })))
 const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
+const AuditEventsPage = lazy(() => import('@/pages/AuditEventsPage').then(m => ({ default: m.AuditEventsPage })))
+const AuditEventDetailPage = lazy(() => import('@/pages/AuditEventDetailPage').then(m => ({ default: m.AuditEventDetailPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -72,18 +74,29 @@ function AppLayout() {
   const setAvailableCompanies = useCompanyStore((s) => s.setAvailableCompanies)
   const setAuth = useAuthStore((s) => s.setAuth)
 
+  const setActiveTenantId = useCompanyStore((s) => s.setActiveTenantId)
+
   useEffect(() => {
     fetch('/api/v1/whoami', { credentials: 'include' })
       .then((r) => r.json())
-      .then((data: { user?: string; role?: string; defaultCompany?: string; availableCompanies?: string[] }) => {
+      .then((data: {
+        user?: string
+        role?: string
+        defaultCompany?: string
+        availableCompanies?: string[]
+        tenantId?: string
+      }) => {
         if (data.defaultCompany) setActiveCompany(data.defaultCompany)
         if (data.availableCompanies) setAvailableCompanies(data.availableCompanies)
+        // Cohort-4 cycle 2 — store substrate tenantId for A1 defense-in-depth assertion.
+        // Empty string means no tenant bound (dev-stub); assertion skips when empty.
+        setActiveTenantId(data.tenantId ?? '')
         setAuth(data.user ?? 'dev-user', data.role ?? 'owner')
       })
       .catch(() => {
         setAuth('dev-user', 'owner')
       })
-  }, [setActiveCompany, setAvailableCompanies, setAuth])
+  }, [setActiveCompany, setAvailableCompanies, setActiveTenantId, setAuth])
 
   return (
     <div className="min-h-screen bg-white">
@@ -156,6 +169,14 @@ function AppLayout() {
             >
               Cockpit
             </NavLink>
+            <NavLink
+              to="/audit-trail"
+              className={({ isActive }) =>
+                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
+              }
+            >
+              Audit
+            </NavLink>
           </nav>
           <CompanySwitcher />
         </div>
@@ -174,6 +195,8 @@ function AppLayout() {
             <Route path="/reports" element={<Navigate to="/reports/rent-roll" replace />} />
             <Route path="/reports/rent-roll" element={<RentRoll />} />
             <Route path="/reports/profit-loss" element={<PLReport />} />
+            <Route path="/audit-trail" element={<AuditEventsPage />} />
+            <Route path="/audit-trail/:auditId" element={<AuditEventDetailPage />} />
             <Route path="/cockpit" element={<CockpitLayout />}>
               <Route index element={<PropertySelector />} />
               <Route path="work-orders" element={<WorkOrderListView />} />
