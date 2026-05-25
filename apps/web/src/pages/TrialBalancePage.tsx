@@ -363,7 +363,7 @@ export function TrialBalancePage() {
         setHasResult(true)
         setHasError(false)
       },
-      onError(err) {
+      onError(_err) {
         setHasError(true)
         setHasResult(false)
         setSubmittedResult(null)
