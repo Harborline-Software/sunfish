@@ -323,7 +323,6 @@ export function TrialBalancePage() {
   const [submittedResult, setSubmittedResult] = useState<TrialBalanceResult | null>(null)
   const [hasResult, setHasResult] = useState(false)
   const [hasError, setHasError] = useState(false)
-  const [lastError, setLastError] = useState<Error | null>(null)
   const [lastSubmittedParams, setLastSubmittedParams] = useState<FormParams | null>(null)
 
   const mutation = useTrialBalance()
@@ -368,7 +367,6 @@ export function TrialBalancePage() {
         setHasError(true)
         setHasResult(false)
         setSubmittedResult(null)
-        setLastError(err instanceof Error ? err : new Error(String(err)))
       },
     })
   }
@@ -376,7 +374,6 @@ export function TrialBalancePage() {
   function handleRetry() {
     if (!lastSubmittedParams) return
     setHasError(false)
-    setLastError(null)
     handleRun()
   }
 

@@ -24,6 +24,7 @@ import type { TrialBalanceResult } from '@/api/reports'
 const MOCK_TB_RESULT: TrialBalanceResult = {
   chartId: 'chart-abc',
   asOf: '2026-05-25T00:00:00Z',
+  periodId: null,
   isBalanced: true,
   totalDebit: 50000,
   totalCredit: 50000,
