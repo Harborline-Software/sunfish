@@ -391,14 +391,19 @@ export function TrialBalancePage() {
     await exportTrialBalanceCsv(params)
   }, [submittedResult, lastSubmittedParams])
 
+  // displayResult: prefer internally-tracked state (survives mutation reset); fall
+  // back to live mutation.data so that tests mocking mutation state directly work.
+  const displayResult: TrialBalanceResult | null =
+    submittedResult ?? (mutation.isSuccess ? (mutation.data?.result ?? null) : null)
+
   // Determine page state
   type PageState = 'IDLE' | 'READY_TO_RUN' | 'LOADING' | 'SUCCESS' | 'EMPTY' | 'ERROR'
   let pageState: PageState = 'IDLE'
   if (isRunning) {
     pageState = 'LOADING'
-  } else if (hasResult && submittedResult) {
-    pageState = submittedResult.rows.length === 0 ? 'EMPTY' : 'SUCCESS'
-  } else if (hasError) {
+  } else if (displayResult) {
+    pageState = displayResult.rows.length === 0 ? 'EMPTY' : 'SUCCESS'
+  } else if (hasError || mutation.isError) {
     pageState = 'ERROR'
   } else if (canRun) {
     pageState = 'READY_TO_RUN'
@@ -415,10 +420,10 @@ export function TrialBalancePage() {
       </div>
 
       {/* Provisionality banner — pattern-015; above filter bar; SUCCESS only */}
-      {pageState === 'SUCCESS' && submittedResult && (
+      {pageState === 'SUCCESS' && displayResult && (
         <ProvisionalityBanner
-          isProvisional={submittedResult.isProvisional}
-          warnings={submittedResult.warnings}
+          isProvisional={displayResult.isProvisional}
+          warnings={displayResult.warnings}
         />
       )}
 
@@ -512,11 +517,11 @@ export function TrialBalancePage() {
       )}
 
       {/* SUCCESS */}
-      {pageState === 'SUCCESS' && submittedResult && (
+      {pageState === 'SUCCESS' && displayResult && (
         <div className="space-y-3">
-          <TrialBalanceTable result={submittedResult} />
+          <TrialBalanceTable result={displayResult} />
           <div className="flex justify-end">
-            <BalanceBadge result={submittedResult} />
+            <BalanceBadge result={displayResult} />
           </div>
         </div>
       )}
