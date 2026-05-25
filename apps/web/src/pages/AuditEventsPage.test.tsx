@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { AuditEventsPage } from './AuditEventsPage'
@@ -156,7 +156,7 @@ describe('AuditEventsPage', () => {
 
   // Test 6b — A2: severity filter is now a server query param (cohort-4 cycle 2).
   // Verify the hook is called with severity in the filters object when the dropdown changes.
-  it('severity filter sends severity param to hook: Security filter passes severity to useAuditEvents', () => {
+  it('severity filter sends severity param to hook: Security filter passes severity to useAuditEvents', async () => {
     const hookSpy = vi.spyOn(auditEventsApi, 'useAuditEvents').mockImplementation((filters) => {
       const events = filters.severity === 'Security'
         ? [MOCK_SECURITY_EVENT]
@@ -185,11 +185,14 @@ describe('AuditEventsPage', () => {
     const severitySelect = screen.getByLabelText('Severity')
     fireEvent.change(severitySelect, { target: { value: 'Security' } })
 
-    // After filter change: hook is called with severity: 'Security' (server query param)
-    expect(hookSpy).toHaveBeenLastCalledWith(expect.objectContaining({ severity: 'Security' }))
-    // Server-filtered response shows only Security event
-    expect(screen.queryByText('Financial.InvoicePosted')).not.toBeInTheDocument()
-    expect(screen.getByText('Security.TenantBoundaryViolation')).toBeInTheDocument()
+    // After filter change: hook is called with severity: 'Security' and DOM reflects server-filtered response.
+    // Scope event-type assertions to the table body to avoid matching the static event-type filter dropdown.
+    await waitFor(() => {
+      expect(hookSpy).toHaveBeenLastCalledWith(expect.objectContaining({ severity: 'Security' }))
+      const tbody = screen.getByRole('table', { name: 'Audit events' }).querySelector('tbody')!
+      expect(within(tbody).queryByText('Financial.InvoicePosted')).not.toBeInTheDocument()
+      expect(within(tbody).getByText('Security.TenantBoundaryViolation')).toBeInTheDocument()
+    })
   })
 
   // Test 6c — A2 cohort-4 cycle 2: 400 invalid_severity renders inline error
