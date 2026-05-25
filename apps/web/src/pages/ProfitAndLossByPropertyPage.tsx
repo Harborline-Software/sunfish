@@ -126,7 +126,7 @@ function ToggleFilter({ id, label, checked, onChange }: ToggleFilterProps) {
 
 function formatPeriodRange(periodStart: string | null, periodEnd: string): string {
   const fmt = (iso: string) => {
-    const [year, month, day] = iso.split('-').map(Number)
+    const [year = 0, month = 1, day = 1] = iso.split('-').map(Number)
     return new Date(year, month - 1, day).toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
