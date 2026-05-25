@@ -39,7 +39,7 @@ export function ChartSelector({ value, onChange, required = true }: ChartSelecto
   if (charts.length === 1) {
     return (
       <p className="text-sm text-gray-700">
-        Chart: <span className="font-medium">{charts[0].displayName}</span>
+        Chart: <span className="font-medium">{charts[0].name}</span>
       </p>
     )
   }
@@ -59,7 +59,7 @@ export function ChartSelector({ value, onChange, required = true }: ChartSelecto
         <option value="">Select a chart…</option>
         {charts.map((c) => (
           <option key={c.chartId} value={c.chartId}>
-            {c.displayName}
+            {c.name}
           </option>
         ))}
       </select>

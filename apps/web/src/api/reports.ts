@@ -10,13 +10,17 @@
  * @candidate-pattern: pattern-017-csv-export-affordance
  */
 
-// forward-watch: engineer-contract-frozen — ChartId wire format (string UUID vs opaque string vs object)
+// ChartId wire format: naked JSON string (opaque). Default value is Guid.ToString();
+// the demo tenant uses a human-readable key. Treat as opaque — do NOT assume GUID format.
+// CONTRACT-FROZEN 2026-05-25 via engineer-status-2026-05-25T1458Z-cohort-3-contract-frozen-chartid-wire-format
 export type ChartId = string
 
-// forward-watch: engineer-contract-frozen — chart-list endpoint shape
+// chart-list endpoint wire shape — beacon 2/3 frozen contract.
+// CONTRACT-FROZEN 2026-05-25 via engineer-status-2026-05-25T1458Z-cohort-3-contract-frozen-chart-list-endpoint
 export interface ChartSummary {
   chartId: ChartId
-  displayName: string
+  name: string
+  baseCurrency: string
 }
 
 export interface ChartListResponse {
@@ -248,50 +252,63 @@ export function runRentRoll(params: RentRollParameters) {
 
 // -------------------------------------------------------------------------
 // CSV export functions — pattern-017-csv-export-affordance
-// forward-watch: engineer-contract-frozen — CSV export endpoint convention
-//   (Accept-header vs /export route suffix; placeholder uses /export route)
+// CONTRACT-FROZEN 2026-05-25 via engineer-status-2026-05-25T1458Z-cohort-3-contract-frozen-csv-export-convention
+//
+// CSV export uses Accept: text/csv content-negotiation on the SAME POST endpoint.
+// Body params are identical for JSON and CSV runs. No separate /export route.
+// Server returns Content-Disposition: attachment; filename="<kind>-<date>.csv".
 // -------------------------------------------------------------------------
 
-async function exportReportCsv(kind: string, params: unknown, filename: string): Promise<void> {
-  const resp = await fetch(`/api/v1/reports/${kind}/export`, {
+async function exportReportCsv(kind: string, params: unknown): Promise<void> {
+  const resp = await fetch(`/api/v1/reports/${kind}`, {
     method: 'POST',
     credentials: 'include',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'text/csv',
+    },
     body: JSON.stringify(params),
   })
   if (!resp.ok) throw new Error(`CSV export failed: ${resp.status} ${resp.statusText}`)
+  // Prefer server-supplied filename from Content-Disposition header
+  const disposition = resp.headers.get('Content-Disposition') ?? ''
+  const nameMatch = /filename="([^"]+)"/.exec(disposition)
+  const filename = nameMatch?.[1] ?? `${kind}.csv`
   const blob = await resp.blob()
   const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = filename
+  anchor.click()
   URL.revokeObjectURL(url)
 }
 
-export function exportTrialBalanceCsv(params: TrialBalanceParameters, filename: string) {
-  return exportReportCsv('trial-balance', params, filename)
+export function exportTrialBalanceCsv(params: TrialBalanceParameters) {
+  return exportReportCsv('trial-balance', params)
 }
 
-export function exportArAgingSummaryCsv(params: ArAgingSummaryParameters, filename: string) {
-  return exportReportCsv('ar-aging-summary', params, filename)
+export function exportArAgingSummaryCsv(params: ArAgingSummaryParameters) {
+  return exportReportCsv('ar-aging-summary', params)
 }
 
-export function exportProfitAndLossByPropertyCsv(params: ProfitAndLossByPropertyParameters, filename: string) {
-  return exportReportCsv('profit-and-loss-by-property', params, filename)
+export function exportProfitAndLossByPropertyCsv(params: ProfitAndLossByPropertyParameters) {
+  return exportReportCsv('profit-and-loss-by-property', params)
 }
 
-export function exportRentRollCsv(params: RentRollParameters, filename: string) {
-  return exportReportCsv('rent-roll', params, filename)
+export function exportRentRollCsv(params: RentRollParameters) {
+  return exportReportCsv('rent-roll', params)
 }
 
 // -------------------------------------------------------------------------
-// Chart list
-// forward-watch: engineer-contract-frozen — chart-list endpoint path
+// Chart list — GET /api/v1/charts
+// CONTRACT-FROZEN 2026-05-25 via engineer-status-2026-05-25T1458Z-cohort-3-contract-frozen-chart-list-endpoint
+// Tenant is server-derived from session (ADR 0092 §A3). No tenant param from client.
+// Returns { charts: [] } when no chart configured (do not differentiate "unknown tenant"
+// from "no chart" — ADR 0092 §A3 uniform empty surface).
 // -------------------------------------------------------------------------
 
 export async function getCharts(): Promise<ChartListResponse> {
-  const resp = await fetch('/api/v1/reports/charts', { credentials: 'include' })
+  const resp = await fetch('/api/v1/charts', { credentials: 'include' })
   if (!resp.ok) throw new Error(`Failed to load charts: ${resp.status} ${resp.statusText}`)
   return (await resp.json()) as ChartListResponse
 }

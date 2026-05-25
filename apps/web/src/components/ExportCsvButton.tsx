@@ -4,10 +4,9 @@ import { ArrowDownTrayIcon } from '@heroicons/react/20/solid'
 export interface ExportCsvButtonProps {
   enabled: boolean
   onExport: () => Promise<void>
-  filename: string
 }
 
-export function ExportCsvButton({ enabled, onExport, filename: _filename }: ExportCsvButtonProps) {
+export function ExportCsvButton({ enabled, onExport }: ExportCsvButtonProps) {
   const [status, setStatus] = useState<'idle' | 'exporting' | 'error'>('idle')
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
