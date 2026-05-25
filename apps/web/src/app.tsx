@@ -15,7 +15,7 @@ const RentCollectionPage = lazy(() => import('@/pages/RentCollectionPage').then(
 const AccountingPage = lazy(() => import('@/pages/AccountingPage').then(m => ({ default: m.AccountingPage })))
 const CrewCommsPage = lazy(() => import('@/pages/CrewCommsPage').then(m => ({ default: m.CrewCommsPage })))
 const MaintenancePage = lazy(() => import('@/pages/MaintenancePage').then(m => ({ default: m.MaintenancePage })))
-const RentRoll = lazy(() => import('@/pages/RentRoll').then(m => ({ default: m.RentRoll })))
+const RentRollPage = lazy(() => import('@/pages/RentRollPage').then(m => ({ default: m.RentRollPage })))
 const PLReport = lazy(() => import('@/pages/PLReport').then(m => ({ default: m.PLReport })))
 const TrialBalancePage = lazy(() => import('@/pages/TrialBalancePage').then(m => ({ default: m.TrialBalancePage })))
 const ArAgingPage = lazy(() => import('@/pages/ArAgingPage').then(m => ({ default: m.ArAgingPage })))
@@ -242,7 +242,8 @@ function AppLayout() {
             <Route path="/reports/trial-balance" element={<TrialBalancePage />} />
             <Route path="/reports/ar-aging" element={<ArAgingPage />} />
             <Route path="/reports/profit-and-loss-by-property" element={<PLReport />} />
-            <Route path="/reports/rent-roll" element={<RentRoll />} />
+            {/* /reports/rent-roll — rebound by cohort-3 PR 2 to RentRollPage */}
+            <Route path="/reports/rent-roll" element={<RentRollPage />} />
             <Route path="/reports/profit-loss" element={<Navigate to="/reports/profit-and-loss-by-property" replace />} />
             <Route path="/audit-trail" element={<AuditEventsPage />} />
             <Route path="/audit-trail/:auditId" element={<AuditEventDetailPage />} />
