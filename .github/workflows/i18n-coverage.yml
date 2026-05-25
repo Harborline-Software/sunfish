@@ -1,0 +1,46 @@
+name: i18n coverage
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/src/**'
+      - 'apps/web/public/locales/**'
+      - 'apps/web/scripts/check-i18n-coverage.mjs'
+      - '.github/workflows/i18n-coverage.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/src/**'
+      - 'apps/web/public/locales/**'
+
+# Warning-mode by default (exits 0 even with missing keys, and when no
+# catalog exists). Promote to --strict once the react-i18next PR merges and
+# the initial catalog is seeded.
+
+permissions:
+  contents: read
+
+jobs:
+  i18n-coverage:
+    name: i18n key coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: apps/web/package-lock.json
+
+      - name: npm ci
+        working-directory: apps/web
+        run: npm ci
+
+      - name: Check i18n coverage
+        working-directory: apps/web
+        run: node scripts/check-i18n-coverage.mjs
+        # To enforce coverage as a hard gate, change to:
+        # run: node scripts/check-i18n-coverage.mjs --strict
