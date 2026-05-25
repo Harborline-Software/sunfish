@@ -32,7 +32,10 @@
       "icons/128x128.png",
       "icons/icon.icns",
       "icons/icon.ico"
-    ]
+    ],
+    "macOS": {
+      "signingIdentity": "Apple Development: Christopher Wood (MCV34H888C)"
+    }
   },
   "plugins": {
     "updater": {
