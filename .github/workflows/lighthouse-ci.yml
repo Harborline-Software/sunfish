@@ -1,0 +1,82 @@
+name: Lighthouse CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/lighthouse-ci.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/web/**'
+      - '.github/workflows/lighthouse-ci.yml'
+
+# Builds sunfish/apps/web (production), serves it with a static SPA server,
+# and audits key routes with Lighthouse. Results upload as GitHub artifacts and
+# to temporary public storage for the step summary link.
+
+permissions:
+  contents: read
+
+jobs:
+  lighthouse:
+    name: Lighthouse audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+          persist-credentials: false
+
+      - name: Checkout sibling shipyard
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+          persist-credentials: false
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: sunfish/apps/web/package-lock.json
+
+      - name: Build @sunfish/ui-react (sibling shipyard)
+        working-directory: shipyard/packages/ui-react
+        run: |
+          if [ -f package.json ]; then
+            npm install
+            npm run build
+          else
+            echo "shipyard/packages/ui-react/package.json not found; skipping ui-react prebuild."
+          fi
+
+      - name: Install dependencies
+        working-directory: sunfish/apps/web
+        run: npm ci
+
+      - name: Build production bundle
+        working-directory: sunfish/apps/web
+        run: npm run build
+
+      - name: Serve production bundle
+        run: npx --yes serve@14 sunfish/apps/web/dist --single --listen 4173 &
+        # Background server; Lighthouse CI polls the URLs until they respond.
+
+      - name: Audit with Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v12
+        env:
+          LHCI_BUILD_CONTEXT__CURRENT_HASH: ${{ github.sha }}
+        with:
+          urls: |
+            http://localhost:4173/
+            http://localhost:4173/leases
+            http://localhost:4173/accounting
+            http://localhost:4173/rent-collection
+          uploadArtifacts: true
+          temporaryPublicStorage: true
