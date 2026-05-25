@@ -1,9 +1,8 @@
+import { ErrorCard, LoadingState } from '@sunfish/ui-react'
 import { Link } from 'react-router-dom'
 import { useLeases } from '@/hooks/useLeases'
 import { Badge } from '@/components/ui/badge'
 import type { LeaseSummary } from '@/api/leases'   // rebound from @/api/erpnext — W#74 PR 2
-import { ErrorCard } from '@/components/ErrorCard'
-import { LoadingState } from '@/components/LoadingState'
 
 function daysUntilExpiry(endDate: string): number {
   return Math.ceil((new Date(endDate).getTime() - Date.now()) / 86_400_000)
