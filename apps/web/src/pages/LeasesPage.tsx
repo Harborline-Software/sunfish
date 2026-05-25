@@ -53,7 +53,7 @@ export function LeasesPage() {
           <p className="font-semibold text-amber-800">
             {expiringLeases.length} lease{expiringLeases.length > 1 ? 's' : ''} expiring within 60 days
           </p>
-          <ul className="mt-1 list-disc pl-5 text-sm text-amber-700">
+          <ul className="mt-1 list-disc ps-5 text-sm text-amber-700">
             {expiringLeases.map((l) => (
               <li key={l.leaseId}>
                 {l.tenantDisplayName} — {l.propertyDisplayName ?? l.propertyId ?? '—'} ({daysUntilExpiry(l.endDate)} days)
@@ -91,7 +91,7 @@ export function LeasesPage() {
                   <td className="px-4 py-3 text-gray-600">
                     {l.endDate}
                     {expiringSoon && (
-                      <Badge variant="warning" className="ml-2 text-xs">
+                      <Badge variant="warning" className="ms-2 text-xs">
                         {days}d
                       </Badge>
                     )}

@@ -39,7 +39,9 @@ export function CrewCommsPage() {
         return conn.invoke('JoinThread', activeThread)
       })
       .catch((err) => {
-        console.warn('SignalR connection failed (Bridge may not be running):', err)
+        if (import.meta.env.DEV) {
+          console.warn('SignalR connection failed (Bridge may not be running):', err)
+        }
       })
 
     connectionRef.current = conn
