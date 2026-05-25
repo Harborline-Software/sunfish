@@ -496,11 +496,7 @@ export function TrialBalancePage() {
         <ErrorSurface
           variant="retryable"
           title="Couldn't load trial balance"
-          body={
-            lastError?.message?.includes('5')
-              ? 'The report service didn't respond. Try again in a moment.'
-              : 'The report service didn't respond. Try again in a moment.'
-          }
+          body="The report service didn't respond. Try again in a moment."
           onRetry={handleRetry}
         />
       )}

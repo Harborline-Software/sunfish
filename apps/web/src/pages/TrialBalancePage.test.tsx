@@ -10,12 +10,11 @@
  *  - filter change after result resets to IDLE (calls mutation.reset)
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { TrialBalancePage } from './TrialBalancePage'
 import * as useReportsHook from '@/hooks/useReports'
-import * as reportsApi from '@/api/reports'
 import type { TrialBalanceResult } from '@/api/reports'
 
 // ---------------------------------------------------------------------------
