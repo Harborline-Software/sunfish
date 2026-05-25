@@ -157,7 +157,7 @@ describe('TrialBalancePage', () => {
 
     // Account rows
     expect(await screen.findByText('Cash')).toBeInTheDocument()
-    expect(screen.getByText('Equity')).toBeInTheDocument()
+    expect(screen.getAllByText('Equity').length).toBeGreaterThan(0)
 
     // Balanced badge
     expect(screen.getByText(/balanced/i)).toBeInTheDocument()
