@@ -104,13 +104,13 @@ describe('LeaseDetailPage — a11y', () => {
       refetch: vi.fn(),
     } as ReturnType<typeof useLeaseHook.useLease>)
 
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
       isPending: true,
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.usePayments>)
+    } as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     const { container } = render(<LeaseDetailPage />, {
       wrapper: makeWrapper('/leases/lease-a11y-001', '/leases/:name'),
@@ -128,13 +128,13 @@ describe('LeaseDetailPage — a11y', () => {
       refetch: vi.fn(),
     } as ReturnType<typeof useLeaseHook.useLease>)
 
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
       isPending: false,
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.usePayments>)
+    } as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     const { container } = render(<LeaseDetailPage />, {
       wrapper: makeWrapper('/leases/lease-a11y-001', '/leases/:name'),
