@@ -96,6 +96,14 @@ export function SignupPage() {
     mutation.error instanceof Error &&
     mutation.error.message.includes('501')
 
+  const isKnownFieldError =
+    mutation.isError && (
+      mutation.error instanceof TenantSlugTakenError ||
+      mutation.error instanceof TenantSlugReservedError ||
+      mutation.error instanceof TenantSlugInvalidShapeError ||
+      mutation.error instanceof CaptchaFailedError
+    )
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
       <div className="w-full max-w-md space-y-8">
@@ -209,7 +217,7 @@ export function SignupPage() {
             )}
           </div>
 
-          {mutation.isError && !isServiceUnavailable && (
+          {mutation.isError && !isServiceUnavailable && !isKnownFieldError && (
             <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {mutation.error instanceof RateLimitedError
                 ? `Too many attempts — please wait ${mutation.error.retryAfterSeconds} seconds`
