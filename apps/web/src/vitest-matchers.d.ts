@@ -1,7 +1,7 @@
 export {}
 
 declare module '@vitest/expect' {
-  interface Assertion<T = unknown> {
+  interface Assertion {
     toHaveNoViolations(): void
   }
   interface AsymmetricMatchersContaining {
