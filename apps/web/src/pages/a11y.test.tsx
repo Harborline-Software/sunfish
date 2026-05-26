@@ -68,7 +68,7 @@ describe('RentCollectionPage — a11y', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.useLeases>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeases>)
 
     const { container } = render(<RentCollectionPage />, {
       wrapper: makeWrapper('/rent', '/rent'),
@@ -84,7 +84,7 @@ describe('RentCollectionPage — a11y', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.useLeases>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeases>)
 
     const { container } = render(<RentCollectionPage />, {
       wrapper: makeWrapper('/rent', '/rent'),
@@ -102,7 +102,7 @@ describe('LeaseDetailPage — a11y', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.useLease>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLease>)
 
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
@@ -110,7 +110,7 @@ describe('LeaseDetailPage — a11y', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     const { container } = render(<LeaseDetailPage />, {
       wrapper: makeWrapper('/leases/lease-a11y-001', '/leases/:name'),
@@ -126,7 +126,7 @@ describe('LeaseDetailPage — a11y', () => {
       isError: true,
       error: new Error('Not found'),
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.useLease>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLease>)
 
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
@@ -134,7 +134,7 @@ describe('LeaseDetailPage — a11y', () => {
       isError: false,
       error: null,
       refetch: vi.fn(),
-    } as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     const { container } = render(<LeaseDetailPage />, {
       wrapper: makeWrapper('/leases/lease-a11y-001', '/leases/:name'),
