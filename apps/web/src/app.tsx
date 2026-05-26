@@ -29,6 +29,10 @@ const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView')
 const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
 const AuditEventsPage = lazy(() => import('@/pages/AuditEventsPage').then(m => ({ default: m.AuditEventsPage })))
 const AuditEventDetailPage = lazy(() => import('@/pages/AuditEventDetailPage').then(m => ({ default: m.AuditEventDetailPage })))
+// W#79 auth pages — outside AppLayout (no nav header for pre-auth flows)
+const SignupPage = lazy(() => import('@/pages/auth/SignupPage').then(m => ({ default: m.SignupPage })))
+const VerifyEmailPage = lazy(() => import('@/pages/auth/VerifyEmailPage').then(m => ({ default: m.VerifyEmailPage })))
+const VerifyEmailPendingPage = lazy(() => import('@/pages/auth/VerifyEmailPendingPage').then(m => ({ default: m.VerifyEmailPendingPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -269,7 +273,16 @@ export function App() {
     <ErrorBoundary FallbackComponent={AppErrorFallback}>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AppLayout />
+          <Suspense fallback={null}>
+            <Routes>
+              {/* Auth flows — no nav header */}
+              <Route path="/auth/signup" element={<SignupPage />} />
+              <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/auth/verify-email/pending" element={<VerifyEmailPendingPage />} />
+              {/* Main app — with nav header */}
+              <Route path="/*" element={<AppLayout />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
