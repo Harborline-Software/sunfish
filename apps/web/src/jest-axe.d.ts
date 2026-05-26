@@ -1,3 +1,5 @@
+export {}
+
 declare module 'jest-axe' {
   interface JestAxeResults {
     violations: {
