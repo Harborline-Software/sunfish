@@ -6,6 +6,9 @@
  * throw on non-2xx. The Tauri shell resolves the base URL at startup.
  */
 
+import { throwFromResponse } from './problem-details'
+export { ProblemDetailsError } from './problem-details'
+
 export interface LeaseSummary {
   leaseId: string
   tenantDisplayName: string
@@ -37,15 +40,12 @@ export interface LeaseTenant {
 export async function getLeases(phase?: 'Active' | 'Expired' | 'All'): Promise<LeaseList> {
   const url = phase ? `/api/v1/leases?phase=${encodeURIComponent(phase)}` : '/api/v1/leases'
   const resp = await fetch(url, { credentials: 'include' })
-  if (!resp.ok) {
-    throw new Error(`Failed to load leases: ${resp.status} ${resp.statusText}`)
-  }
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to load leases')
   return (await resp.json()) as LeaseList
 }
 
 export async function getLease(leaseId: string): Promise<LeaseDetail> {
   const resp = await fetch(`/api/v1/leases/${encodeURIComponent(leaseId)}`, { credentials: 'include' })
-  if (resp.status === 404) throw new Error('Lease not found')
-  if (!resp.ok) throw new Error(`Failed to load lease: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to load lease')
   return (await resp.json()) as LeaseDetail
 }

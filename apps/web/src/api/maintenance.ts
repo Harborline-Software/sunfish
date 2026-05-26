@@ -1,3 +1,6 @@
+import { throwFromResponse } from './problem-details'
+export { ProblemDetailsError } from './problem-details'
+
 /**
  * Bridge client for the /api/v1/cockpit/work-orders endpoint family.
  * W#74 PR 3 — MaintenancePage rebind (cockpit extension, Halt H4 ruling).
@@ -73,9 +76,7 @@ export interface CreateWorkOrderResult {
 /** Fetches a fresh CSRF token from the cockpit antiforgery endpoint. */
 export async function getCsrfToken(): Promise<string> {
   const resp = await fetch('/api/v1/cockpit/antiforgery-token', { credentials: 'include' })
-  if (!resp.ok) {
-    throw new Error(`Failed to fetch CSRF token: ${resp.status} ${resp.statusText}`)
-  }
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to fetch CSRF token')
   const body = (await resp.json()) as { token: string }
   return body.token
 }
@@ -97,7 +98,7 @@ export async function getWorkOrders(params?: {
   if (params?.pageSize) qs.set('pageSize', String(params.pageSize))
   const url = `/api/v1/cockpit/work-orders${qs.size > 0 ? `?${qs}` : ''}`
   const resp = await fetch(url, { credentials: 'include' })
-  if (!resp.ok) throw new Error(`Failed to load work orders: ${resp.status} ${resp.statusText}`)
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to load work orders')
   return (await resp.json()) as WorkOrderList
 }
 
@@ -114,9 +115,6 @@ export async function createWorkOrder(
     },
     body: JSON.stringify(input),
   })
-  if (!resp.ok) {
-    const body = await resp.text()
-    throw new Error(`Failed to create work order: ${resp.status} ${body}`)
-  }
+  if (!resp.ok) return throwFromResponse(resp, 'Failed to create work order')
   return (await resp.json()) as CreateWorkOrderResult
 }
