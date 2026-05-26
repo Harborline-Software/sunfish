@@ -46,24 +46,24 @@ beforeEach(() => {
 
 describe('VerifyEmailPage', () => {
   it('reads token from URL query param and submits to /api/v1/auth/verify-email', async () => {
-    mockFetch.mockResolvedValue(make200({ tenant_display_name: 'Test Org', tenant_slug: 'test-org' }))
+    mockFetch.mockResolvedValue(make200({ email: 'test@example.com', tenant_display_name: 'Test Org', tenant_slug: 'test-org' }))
     renderPage('my-token-abc')
     await waitFor(() => expect(mockFetch).toHaveBeenCalledWith(
       '/api/v1/auth/verify-email',
       expect.objectContaining({
         method: 'POST',
-        body: JSON.stringify({ token: 'my-token-abc' }),
+        body: JSON.stringify({ verification_token: 'my-token-abc' }),
       }),
     ))
   })
 
   it('200 response surfaces verified tenant_display_name in welcome message via navigation', async () => {
-    mockFetch.mockResolvedValue(make200({ tenant_display_name: 'Acme Corp', tenant_slug: 'acme' }))
+    mockFetch.mockResolvedValue(make200({ email: 'acme@example.com', tenant_display_name: 'Acme Corp', tenant_slug: 'acme' }))
     renderPage()
     await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith(
       '/auth/verified',
       expect.objectContaining({
-        state: expect.objectContaining({ tenant_display_name: 'Acme Corp' }),
+        state: expect.objectContaining({ email: 'acme@example.com', tenant_display_name: 'Acme Corp' }),
       }),
     ))
   })
@@ -93,7 +93,7 @@ describe('VerifyEmailPage', () => {
 
   it('verification_token NEVER logged or rendered to DOM beyond the URL', async () => {
     const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {})
-    mockFetch.mockResolvedValue(make200({ tenant_display_name: 'Test', tenant_slug: 'test' }))
+    mockFetch.mockResolvedValue(make200({ email: 'test@example.com', tenant_display_name: 'Test', tenant_slug: 'test' }))
     const { container } = renderPage('super-secret-token')
     await waitFor(() => expect(mockFetch).toHaveBeenCalled())
     // Token must not appear in the rendered DOM

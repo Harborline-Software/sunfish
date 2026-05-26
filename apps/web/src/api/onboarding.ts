@@ -6,9 +6,27 @@ import type {
   VerifyEmailAcceptedResponse,
   ResendVerificationRequest,
   ResendVerificationAcceptedResponse,
-  CheckAvailabilityRequest,
-  CheckAvailabilityResponse,
 } from './onboarding.types'
+
+// Crockford base32 alphabet (ULID spec). Generates a 26-char ULID-shaped string
+// using 128 bits of cryptographic random — suitable for X-Idempotency-Key header.
+const CROCKFORD_CHARS = '0123456789ABCDEFGHJKMNPQRSTVWXYZ'
+function generateUlid(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(16))
+  let result = ''
+  let bits = 0
+  let accumulator = 0
+  for (const byte of bytes) {
+    accumulator = (accumulator << 8) | byte
+    bits += 8
+    while (bits >= 5) {
+      bits -= 5
+      result += CROCKFORD_CHARS[(accumulator >> bits) & 0x1f]
+    }
+  }
+  if (bits > 0) result += CROCKFORD_CHARS[(accumulator << (5 - bits)) & 0x1f]
+  return result
+}
 
 // ── Typed-error classes ───────────────────────────────────────────────────
 // Per ADR 0093 Amendment J: discriminator is body.title, NOT body.error.
@@ -84,10 +102,15 @@ export class VerificationTokenExpiredError extends Error {
 export function useSignup() {
   return useMutation<SignupAcceptedResponse, Error, SignupRequest>({
     mutationFn: async (request) => {
+      // X-Idempotency-Key header (ULID-shaped, ≤128 chars per spec §3.1 Amendment 5);
+      // generated client-side to enable safe resubmit on network failure.
       const response = await fetch('/api/v1/auth/signup', {
         method: 'POST',
         credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Idempotency-Key': generateUlid(),
+        },
         body: JSON.stringify(request),
       })
 
@@ -175,23 +198,4 @@ export function useResendVerification() {
   })
 }
 
-// ── Check availability ────────────────────────────────────────────────────
-
-export function useCheckAvailability() {
-  return useMutation<CheckAvailabilityResponse, Error, CheckAvailabilityRequest>({
-    mutationFn: async (request) => {
-      const response = await fetch('/api/v1/auth/check-availability', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
-      })
-
-      if (!response.ok) {
-        throw new Error(`check-availability failed: ${response.status}`)
-      }
-
-      return response.json() as Promise<CheckAvailabilityResponse>
-    },
-  })
-}
+// NOTE: useCheckAvailability REMOVED — endpoint removed per Admiral ruling D4 (W#79 §3.4)

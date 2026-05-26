@@ -21,11 +21,12 @@ export function VerifyEmailPage() {
   useEffect(() => {
     if (!token) return
     mutation.mutate(
-      { token },
+      { verification_token: token },
       {
         onSuccess: (result) => {
           navigate('/auth/verified', {
             state: {
+              email: result.email,
               tenant_display_name: result.tenant_display_name,
               tenant_slug: result.tenant_slug,
             },
@@ -60,8 +61,9 @@ export function VerifyEmailPage() {
   if (mutation.isError) {
     const err = mutation.error
 
-    // TODO(w79-pr1): remove 501 banner once handler bodies land
-    const isServiceUnavailable = err.message.includes('501')
+    // TODO(w79-pr1): remove once handler bodies land; handles 404 (middleware intercept, PR 0 window)
+    // and not_implemented (501, post-PR-1 window after UseWhen bootstrap branch ships)
+    const isServiceUnavailable = err.message.includes('not_implemented') || err.message === 'verify-email failed: 404'
     if (isServiceUnavailable) {
       return (
         <AuthShell>

@@ -69,7 +69,6 @@ export function SignupPage() {
         tenant_slug: data.tenant_slug,
         tenant_display_name: data.tenant_display_name,
         captcha_token: captchaToken,
-        idempotency_key: crypto.randomUUID(),
       },
       {
         onSuccess: (result) => {
@@ -91,10 +90,12 @@ export function SignupPage() {
     )
   }
 
+  // Handles both 501 (not_implemented; post-PR-1 window) and 404 (TenantSubdomainResolutionMiddleware
+  // intercepts apex-pipeline routes in PR 0 window before UseWhen bootstrap branch lands in PR 1).
   const isServiceUnavailable =
     mutation.isError &&
     mutation.error instanceof Error &&
-    mutation.error.message.includes('501')
+    (mutation.error.message.includes('not_implemented') || mutation.error.message === 'signup failed: 404')
 
   const isKnownFieldError =
     mutation.isError && (
