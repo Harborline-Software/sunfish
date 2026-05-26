@@ -1,5 +1,3 @@
-export {}
-
 declare module 'jest-axe' {
   interface JestAxeResults {
     violations: {
@@ -19,14 +17,5 @@ declare module 'jest-axe' {
 
   export const toHaveNoViolations: {
     toHaveNoViolations(results: JestAxeResults): { pass: boolean; message(): string }
-  }
-}
-
-declare module 'vitest' {
-  interface Assertion {
-    toHaveNoViolations(): void
-  }
-  interface AsymmetricMatchersContaining {
-    toHaveNoViolations(): void
   }
 }
