@@ -15,7 +15,7 @@ export function ChartSelector({ value, onChange, required = true }: ChartSelecto
   // Auto-select when exactly 1 chart — Q2 canonical behavior
   useEffect(() => {
     if (charts.length === 1 && value === null) {
-      onChange(charts[0].chartId)
+      onChange(charts[0]!.chartId)
     }
   }, [charts, value, onChange])
 
@@ -39,7 +39,7 @@ export function ChartSelector({ value, onChange, required = true }: ChartSelecto
   if (charts.length === 1) {
     return (
       <p className="text-sm text-gray-700">
-        Chart: <span className="font-medium">{charts[0].name}</span>
+        Chart: <span className="font-medium">{charts[0]!.name}</span>
       </p>
     )
   }

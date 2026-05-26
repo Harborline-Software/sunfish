@@ -15,7 +15,7 @@ const THREADS = [
 ]
 
 export function CrewCommsPage() {
-  const [activeThread, setActiveThread] = useState(THREADS[0].id)
+  const [activeThread, setActiveThread] = useState(THREADS[0]!.id)
   const [messages, setMessages] = useState<Message[]>([])
   const [draft, setDraft] = useState('')
   const [connected, setConnected] = useState(false)

@@ -296,7 +296,7 @@ function SkeletonRows() {
 // ---------------------------------------------------------------------------
 
 function todayIso(): string {
-  return new Date().toISOString().split('T')[0]
+  return new Date().toISOString().substring(0, 10)
 }
 
 interface FormParams {

@@ -84,7 +84,7 @@ describe('LeasesPage', () => {
 
   it('renders property fallback when propertyDisplayName is null', () => {
     const noName: LeaseSummary = {
-      ...MOCK_LEASES[0],
+      ...MOCK_LEASES[0]!,
       leaseId: 'L-X',
       propertyDisplayName: null,
       propertyId: 'prop-fallback',
