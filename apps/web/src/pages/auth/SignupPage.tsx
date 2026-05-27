@@ -1,11 +1,3 @@
-// W#79 PR 2 — SignupPage (Cycle-1 DRAFT / AMBER posture)
-// Pattern: pattern-009-w79-onboarding-signup-pair (standing instance)
-//
-// Cycle-1 posture per ADR 0093 Amendment L:
-// - Form is rendered and wired to /api/v1/auth/signup
-// - If Bridge handler not yet live (501), banner renders cleanly below form
-// - TODO(w79-pr1): remove SERVICE_NOT_YET_AVAILABLE banner once PR 1 handler bodies land
-
 import { useState, useId } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -90,13 +82,6 @@ export function SignupPage() {
     )
   }
 
-  // Handles both 501 (not_implemented; post-PR-1 window) and 404 (TenantSubdomainResolutionMiddleware
-  // intercepts apex-pipeline routes in PR 0 window before UseWhen bootstrap branch lands in PR 1).
-  const isServiceUnavailable =
-    mutation.isError &&
-    mutation.error instanceof Error &&
-    (mutation.error.message.includes('not_implemented') || mutation.error.message === 'signup failed: 404')
-
   const isKnownFieldError =
     mutation.isError && (
       mutation.error instanceof TenantSlugTakenError ||
@@ -117,16 +102,6 @@ export function SignupPage() {
             </a>
           </p>
         </div>
-
-        {/* TODO(w79-pr1): remove this banner once PR 1 handler bodies land and 501s stop */}
-        {isServiceUnavailable && (
-          <div
-            role="alert"
-            className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700"
-          >
-            Account creation isn't available yet — check back soon.
-          </div>
-        )}
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div className="space-y-1">
@@ -218,7 +193,7 @@ export function SignupPage() {
             )}
           </div>
 
-          {mutation.isError && !isServiceUnavailable && !isKnownFieldError && (
+          {mutation.isError && !isKnownFieldError && (
             <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {mutation.error instanceof RateLimitedError
                 ? `Too many attempts — please wait ${mutation.error.retryAfterSeconds} seconds`

@@ -1,7 +1,3 @@
-// W#79 PR 2 — VerifyEmailPage (Cycle-1 DRAFT / AMBER posture)
-// Reads ?token= query param; submits to POST /api/v1/auth/verify-email
-// TODO(w79-pr1): remove SERVICE_NOT_YET_AVAILABLE handling once PR 1 handler bodies land
-
 import { useEffect } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import {
@@ -60,19 +56,6 @@ export function VerifyEmailPage() {
 
   if (mutation.isError) {
     const err = mutation.error
-
-    // TODO(w79-pr1): remove once handler bodies land; handles 404 (middleware intercept, PR 0 window)
-    // and not_implemented (501, post-PR-1 window after UseWhen bootstrap branch ships)
-    const isServiceUnavailable = err.message.includes('not_implemented') || err.message === 'verify-email failed: 404'
-    if (isServiceUnavailable) {
-      return (
-        <AuthShell>
-          <div role="alert" className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
-            Email verification isn't available yet — check back soon.
-          </div>
-        </AuthShell>
-      )
-    }
 
     if (err instanceof VerificationTokenExpiredError) {
       return (
