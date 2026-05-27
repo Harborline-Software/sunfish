@@ -84,8 +84,10 @@ export const onboardingHandlers = [
     }
 
     // H2 always-202: fresh + unverified-existing + verified-existing all return identical envelope.
+    // correlation_id echoed per §3.1 SignupAcceptedResponse POSITIVE-MATCH row.
+    const correlationId = request.headers.get('x-correlation-id') ?? `mock-corr-${Date.now()}`
     return HttpResponse.json(
-      { email_dispatch_id: `mock-dispatch-${Date.now()}` },
+      { email_dispatch_id: `mock-dispatch-${Date.now()}`, correlation_id: correlationId },
       { status: 202 },
     )
   }),

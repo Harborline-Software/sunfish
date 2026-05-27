@@ -46,7 +46,7 @@ afterAll(() => server.close())
 
 describe('MSW onboarding handlers — contract conformance', () => {
   describe('POST /api/v1/auth/signup', () => {
-    it('returns 202 with email_dispatch_id for valid request (happy path)', async () => {
+    it('returns 202 with email_dispatch_id + correlation_id for valid request (happy path)', async () => {
       const res = await fetch('/api/v1/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Origin: 'https://sunfish.app' },
@@ -60,7 +60,9 @@ describe('MSW onboarding handlers — contract conformance', () => {
       })
       expect(res.status).toBe(202)
       const body = await res.json()
+      // §3.1 POSITIVE-MATCH: both fields required on 202 response.
       expect(body).toHaveProperty('email_dispatch_id')
+      expect(body).toHaveProperty('correlation_id')
       // Amendment I: must NOT expose tenant_id / verification_token / password_hash
       expect(body).not.toHaveProperty('tenant_id')
       expect(body).not.toHaveProperty('verification_token')
@@ -167,7 +169,7 @@ describe('MSW onboarding handlers — contract conformance', () => {
   })
 
   describe('POST /api/v1/auth/verify-email', () => {
-    it('returns 200 with tenant_slug + tenant_display_name for valid token', async () => {
+    it('returns 200 with email + tenant_slug + tenant_display_name for valid token', async () => {
       const res = await fetch('/api/v1/auth/verify-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Origin: 'https://sunfish.app' },
@@ -175,6 +177,8 @@ describe('MSW onboarding handlers — contract conformance', () => {
       })
       expect(res.status).toBe(200)
       const body = await res.json()
+      // §3.2 POSITIVE-MATCH: all three user-facing identifiers required on 200 response.
+      expect(body).toHaveProperty('email')
       expect(body).toHaveProperty('tenant_slug')
       expect(body).toHaveProperty('tenant_display_name')
       // Amendment I negative-match: must NOT expose tenant_id or session_token
