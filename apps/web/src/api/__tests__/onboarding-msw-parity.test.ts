@@ -100,7 +100,9 @@ beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))
 afterEach(() => server.resetHandlers())
 afterAll(() => server.close())
 
-// Parity suite: skipped until SUNFISH_BRIDGE_TEST_URL is set in CI.
+// Parity suite: activated post-signal-bridge#51 (W#80 PR 1.5, merged 2026-05-28).
+// Runs when SUNFISH_BRIDGE_TEST_URL is set. CI does not set this (no live Bridge in CI);
+// run locally: SUNFISH_BRIDGE_TEST_URL=http://localhost:5000 pnpm vitest run onboarding-msw-parity
 describeWithBridge('MSW handlers byte-for-byte match real Bridge (§4.4.4)', () => {
   for (const discriminator of Object.values(SignupDiscriminator)) {
     it(`${discriminator}: MSW response equals Bridge response`, async () => {

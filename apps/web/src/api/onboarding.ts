@@ -1,4 +1,5 @@
 import { useMutation } from '@tanstack/react-query'
+import { SignupDiscriminator } from './onboarding-discriminators'
 import type {
   SignupRequest,
   SignupAcceptedResponse,
@@ -34,7 +35,7 @@ function generateUlid(): string {
 // NOT emitted by server (always-202 posture); EmailAlreadyRegisteredError omitted.
 
 export class ValidationFailedError extends Error {
-  readonly cause = 'validation_failed' as const
+  readonly cause = SignupDiscriminator.VALIDATION_FAILED
   constructor(detail?: string) {
     super(detail ?? 'Validation failed')
     this.name = 'ValidationFailedError'
@@ -42,7 +43,7 @@ export class ValidationFailedError extends Error {
 }
 
 export class TenantSlugTakenError extends Error {
-  readonly cause = 'tenant_slug_taken' as const
+  readonly cause = SignupDiscriminator.TENANT_SLUG_TAKEN
   constructor() {
     super('That organization name is already taken')
     this.name = 'TenantSlugTakenError'
@@ -50,7 +51,7 @@ export class TenantSlugTakenError extends Error {
 }
 
 export class TenantSlugReservedError extends Error {
-  readonly cause = 'tenant_slug_reserved' as const
+  readonly cause = SignupDiscriminator.TENANT_SLUG_RESERVED
   constructor() {
     super('That organization name is reserved')
     this.name = 'TenantSlugReservedError'
@@ -58,7 +59,7 @@ export class TenantSlugReservedError extends Error {
 }
 
 export class TenantSlugInvalidShapeError extends Error {
-  readonly cause = 'tenant_slug_invalid_shape' as const
+  readonly cause = SignupDiscriminator.TENANT_SLUG_INVALID_SHAPE
   constructor() {
     super('Organization name must be 3–32 lowercase letters, numbers, or hyphens')
     this.name = 'TenantSlugInvalidShapeError'
@@ -66,7 +67,7 @@ export class TenantSlugInvalidShapeError extends Error {
 }
 
 export class CaptchaFailedError extends Error {
-  readonly cause = 'captcha_failed' as const
+  readonly cause = SignupDiscriminator.CAPTCHA_FAILED
   constructor() {
     super('Verification failed — please try again')
     this.name = 'CaptchaFailedError'
@@ -74,7 +75,7 @@ export class CaptchaFailedError extends Error {
 }
 
 export class RateLimitedError extends Error {
-  readonly cause = 'rate_limited' as const
+  readonly cause = SignupDiscriminator.RATE_LIMITED
   constructor(public readonly retryAfterSeconds: number) {
     super('Too many requests — please wait before trying again')
     this.name = 'RateLimitedError'
@@ -82,7 +83,7 @@ export class RateLimitedError extends Error {
 }
 
 export class VerificationTokenInvalidError extends Error {
-  readonly cause = 'verification_token_invalid' as const
+  readonly cause = SignupDiscriminator.VERIFICATION_TOKEN_INVALID
   constructor() {
     super('This verification link is invalid')
     this.name = 'VerificationTokenInvalidError'
@@ -90,7 +91,7 @@ export class VerificationTokenInvalidError extends Error {
 }
 
 export class VerificationTokenExpiredError extends Error {
-  readonly cause = 'verification_token_expired' as const
+  readonly cause = SignupDiscriminator.VERIFICATION_TOKEN_EXPIRED
   constructor() {
     super('This verification link has expired')
     this.name = 'VerificationTokenExpiredError'
@@ -126,11 +127,11 @@ export function useSignup() {
       if (!response.ok) {
         const body = await response.json().catch(() => ({})) as { title?: string; detail?: string }
         switch (body.title) {
-          case 'validation_failed':           throw new ValidationFailedError(body.detail)
-          case 'tenant_slug_taken':           throw new TenantSlugTakenError()
-          case 'tenant_slug_reserved':        throw new TenantSlugReservedError()
-          case 'tenant_slug_invalid_shape':   throw new TenantSlugInvalidShapeError()
-          case 'captcha_failed':              throw new CaptchaFailedError()
+          case SignupDiscriminator.VALIDATION_FAILED:         throw new ValidationFailedError(body.detail)
+          case SignupDiscriminator.TENANT_SLUG_TAKEN:         throw new TenantSlugTakenError()
+          case SignupDiscriminator.TENANT_SLUG_RESERVED:      throw new TenantSlugReservedError()
+          case SignupDiscriminator.TENANT_SLUG_INVALID_SHAPE: throw new TenantSlugInvalidShapeError()
+          case SignupDiscriminator.CAPTCHA_FAILED:            throw new CaptchaFailedError()
           default: throw new Error(`signup failed: ${body.title ?? response.status}`)
         }
       }
@@ -160,8 +161,8 @@ export function useVerifyEmail() {
       if (!response.ok) {
         const body = await response.json().catch(() => ({})) as { title?: string; detail?: string }
         switch (body.title) {
-          case 'verification_token_invalid': throw new VerificationTokenInvalidError()
-          case 'verification_token_expired': throw new VerificationTokenExpiredError()
+          case SignupDiscriminator.VERIFICATION_TOKEN_INVALID: throw new VerificationTokenInvalidError()
+          case SignupDiscriminator.VERIFICATION_TOKEN_EXPIRED: throw new VerificationTokenExpiredError()
           default: throw new Error(`verify-email failed: ${body.title ?? response.status}`)
         }
       }
@@ -189,8 +190,12 @@ export function useResendVerification() {
       }
 
       if (!response.ok) {
-        const body = await response.json().catch(() => ({})) as { title?: string }
-        throw new Error(`resend failed: ${body.title ?? response.status}`)
+        const body = await response.json().catch(() => ({})) as { title?: string; detail?: string }
+        switch (body.title) {
+          case SignupDiscriminator.VALIDATION_FAILED: throw new ValidationFailedError(body.detail)
+          case SignupDiscriminator.ORIGIN_INVALID:    throw new Error('origin_invalid')
+          default: throw new Error(`resend failed: ${body.title ?? response.status}`)
+        }
       }
 
       return response.json() as Promise<ResendVerificationAcceptedResponse>

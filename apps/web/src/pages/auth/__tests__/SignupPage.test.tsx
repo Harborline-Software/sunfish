@@ -211,4 +211,22 @@ describe('SignupPage', () => {
     consoleSpy.mockRestore()
     consolErrorSpy.mockRestore()
   })
+
+  // H2-RATIFY: server always returns 202 regardless of whether the email is already registered.
+  // The frontend MUST NOT branch on email existence — no EmailAlreadyRegisteredError, no disclosure.
+  it('H2-RATIFY: 202 always navigates to verify-email/pending — no email-existence disclosure branch', async () => {
+    // Simulate server returning 202 with an email_dispatch_id even for a duplicate email.
+    // Frontend must navigate regardless — no special handling for "already registered."
+    mockFetch.mockResolvedValue(make202({ email_dispatch_id: 'dup-disp-001' }))
+    renderPage()
+    fillForm({ email: 'already-registered@example.com' })
+    fireEvent.click(screen.getByRole('button', { name: /create account/i }))
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalled())
+    expect(mockNavigate).toHaveBeenCalledWith(
+      '/auth/verify-email/pending',
+      expect.objectContaining({ state: expect.objectContaining({ email_dispatch_id: 'dup-disp-001' }) }),
+    )
+    // No error banner — the page should NOT show any "email already registered" messaging.
+    expect(screen.queryByRole('alert')).toBeNull()
+  })
 })
