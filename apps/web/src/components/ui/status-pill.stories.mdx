@@ -1,0 +1,64 @@
+import { Canvas, Controls, Meta, Story } from '@storybook/blocks'
+import * as StatusPillStories from './status-pill.stories'
+
+<Meta of={StatusPillStories} />
+
+# StatusPill
+
+Compact inline label for numeric or categorical status signals. Use when the status needs visual
+weight but doesn't warrant a full `Badge` — typically in table cells, data grids, or alongside
+a value that the pill annotates (e.g. "42 days" in an aging column).
+
+`StatusPill` uses a pill (rounded-full) background for `warning`, `alert`, and `critical`
+variants, and plain text for `neutral` and `success` to avoid visual overload when many pills
+appear together.
+
+## When to use
+
+| Variant | Use for |
+|---|---|
+| `neutral` | Default/within-tolerance values; no urgency |
+| `success` | Positive signals: paid, current, on-track |
+| `warning` | Approaching threshold: 31–60 day aging |
+| `alert` | Escalated threshold: 61–90 day aging |
+| `critical` | Urgent: >90 day aging, overdue, blocked |
+
+## Anti-patterns
+
+- **Don't use `StatusPill` as a primary action button.** It carries no `onClick` semantics.
+- **Don't stack pills next to each other for unrelated statuses.** Use `Badge` for categorical
+  classification; `StatusPill` is for ordinal/threshold-based signals.
+- **Don't hardcode aging thresholds in the call site.** Encapsulate threshold logic in the
+  parent component (see `DaysDuePill` in `AccountingPage.tsx` for the canonical threshold
+  pattern until it migrates to use `StatusPill`).
+- **Don't omit the parent context.** A standalone pill without adjacent text can be ambiguous
+  — always pair with the underlying value it annotates.
+
+## Accessibility
+
+- `StatusPill` renders a `<span>` — it is inline and does not interrupt tab order.
+- The colour + shape alone is not sufficient for screen readers; the **text content must
+  convey the status** (e.g. "42 days" not just "42" — the "days" provides context).
+- Do not use `aria-label` to replace visible text — keep the text content descriptive.
+- All four coloured variants meet WCAG 2.2 AA colour contrast (4.5:1) against white and
+  `gray-50` backgrounds. Verify when used on non-white surfaces.
+
+## Variants
+
+<Canvas of={StatusPillStories.AllVariants} />
+<Controls of={StatusPillStories.AllVariants} />
+
+## Aging column usage (AccountingPage pattern)
+
+<Canvas of={StatusPillStories.AgingColumn} />
+
+This pattern mirrors the `DaysDuePill` component in `AccountingPage.tsx`. Once `AccountingPage`
+migrates to `StatusPill`, `DaysDuePill` can be removed.
+
+## Dark mode
+
+<Canvas of={StatusPillStories.DarkMode} />
+
+All variants use semantic colour tokens that invert correctly in dark mode. The `neutral` variant
+uses `text-gray-600` which maps to a lighter grey in dark mode via the `dark:` prefix in
+Tailwind v4.
