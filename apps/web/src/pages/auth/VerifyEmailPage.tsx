@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useSearchParams, useNavigate } from 'react-router-dom'
+import { useSearchParams, useNavigate, Link } from 'react-router-dom'
 import {
   useVerifyEmail,
   VerificationTokenInvalidError,
@@ -63,12 +63,12 @@ export function VerifyEmailPage() {
           <div role="alert" className="space-y-4 text-center">
             <h1 className="text-2xl font-bold text-gray-900">Link expired</h1>
             <p className="text-sm text-gray-600">This verification link has expired.</p>
-            <a
-              href="/auth/resend-verification"
+            <Link
+              to="/auth/resend-verification"
               className="inline-block rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               Send a new link
-            </a>
+            </Link>
           </div>
         </AuthShell>
       )

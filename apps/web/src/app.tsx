@@ -1,30 +1,40 @@
-import { BrowserRouter, Routes, Route, Navigate, NavLink } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, NavLink, useMatch } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ErrorBoundary } from 'react-error-boundary'
-import { useEffect, useMemo } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import { generateErrorId, reportError } from '@/lib/reportError'
 import { RouteErrorBoundary } from '@/components/RouteErrorBoundary'
-import { PropertiesPage } from '@/pages/PropertiesPage'
-import { LeasesPage } from '@/pages/LeasesPage'
-import { LeaseDetailPage } from '@/pages/LeaseDetailPage'
-import { RentCollectionPage } from '@/pages/RentCollectionPage'
-import { AccountingPage } from '@/pages/AccountingPage'
-import { CrewCommsPage } from '@/pages/CrewCommsPage'
-import { MaintenancePage } from '@/pages/MaintenancePage'
-import { RentRoll } from '@/pages/RentRoll'
-import { PLReport } from '@/pages/PLReport'
-import { CockpitLayout } from '@/cockpit/CockpitLayout'
-import { PropertySelector } from '@/cockpit/PropertySelector'
-import { PropertyDetailView } from '@/cockpit/properties/PropertyDetailView'
-import { WorkOrderListView } from '@/cockpit/work-orders/WorkOrderListView'
-import { WorkOrderDetailView } from '@/cockpit/work-orders/WorkOrderDetailView'
-import { VendorListView } from '@/cockpit/vendors/VendorListView'
-import { VendorDetailView } from '@/cockpit/vendors/VendorDetailView'
-import { DashboardView } from '@/cockpit/DashboardView'
 import { OfflineBanner } from '@/components/OfflineBanner'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useAuthStore } from '@/stores/authStore'
+
+const PropertiesPage = lazy(() => import('@/pages/PropertiesPage').then(m => ({ default: m.PropertiesPage })))
+const LeasesPage = lazy(() => import('@/pages/LeasesPage').then(m => ({ default: m.LeasesPage })))
+const LeaseDetailPage = lazy(() => import('@/pages/LeaseDetailPage').then(m => ({ default: m.LeaseDetailPage })))
+const RentCollectionPage = lazy(() => import('@/pages/RentCollectionPage').then(m => ({ default: m.RentCollectionPage })))
+const AccountingPage = lazy(() => import('@/pages/AccountingPage').then(m => ({ default: m.AccountingPage })))
+const CrewCommsPage = lazy(() => import('@/pages/CrewCommsPage').then(m => ({ default: m.CrewCommsPage })))
+const MaintenancePage = lazy(() => import('@/pages/MaintenancePage').then(m => ({ default: m.MaintenancePage })))
+const RentRollPage = lazy(() => import('@/pages/RentRollPage').then(m => ({ default: m.RentRollPage })))
+const ProfitAndLossByPropertyPage = lazy(() => import('@/pages/ProfitAndLossByPropertyPage').then(m => ({ default: m.ProfitAndLossByPropertyPage })))
+const TrialBalancePage = lazy(() => import('@/pages/TrialBalancePage').then(m => ({ default: m.TrialBalancePage })))
+const ArAgingPage = lazy(() => import('@/pages/ArAgingPage').then(m => ({ default: m.ArAgingPage })))
+const CockpitLayout = lazy(() => import('@/cockpit/CockpitLayout').then(m => ({ default: m.CockpitLayout })))
+const PropertySelector = lazy(() => import('@/cockpit/PropertySelector').then(m => ({ default: m.PropertySelector })))
+const PropertyDetailView = lazy(() => import('@/cockpit/properties/PropertyDetailView').then(m => ({ default: m.PropertyDetailView })))
+const WorkOrderListView = lazy(() => import('@/cockpit/work-orders/WorkOrderListView').then(m => ({ default: m.WorkOrderListView })))
+const WorkOrderDetailView = lazy(() => import('@/cockpit/work-orders/WorkOrderDetailView').then(m => ({ default: m.WorkOrderDetailView })))
+const VendorListView = lazy(() => import('@/cockpit/vendors/VendorListView').then(m => ({ default: m.VendorListView })))
+const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView').then(m => ({ default: m.VendorDetailView })))
+const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
+const AuditEventsPage = lazy(() => import('@/pages/AuditEventsPage').then(m => ({ default: m.AuditEventsPage })))
+const AuditEventDetailPage = lazy(() => import('@/pages/AuditEventDetailPage').then(m => ({ default: m.AuditEventDetailPage })))
+// W#79 auth pages — outside AppLayout (no nav header for pre-auth flows)
+const SignupPage = lazy(() => import('@/pages/auth/SignupPage').then(m => ({ default: m.SignupPage })))
+const VerifyEmailPage = lazy(() => import('@/pages/auth/VerifyEmailPage').then(m => ({ default: m.VerifyEmailPage })))
+const VerifyEmailPendingPage = lazy(() => import('@/pages/auth/VerifyEmailPendingPage').then(m => ({ default: m.VerifyEmailPendingPage })))
+const ResendVerificationPage = lazy(() => import('@/pages/auth/ResendVerificationPage').then(m => ({ default: m.ResendVerificationPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -62,23 +72,84 @@ function AppErrorFallback({ error, resetErrorBoundary }: { error: Error; resetEr
   )
 }
 
+const REPORT_LINKS = [
+  { to: '/reports/trial-balance', label: 'Trial Balance' },
+  { to: '/reports/ar-aging', label: 'AR Aging' },
+  { to: '/reports/profit-and-loss-by-property', label: 'P&L by Property' },
+  { to: '/reports/rent-roll', label: 'Rent Roll' },
+]
+
+function ReportsNavGroup() {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+  const isActive = Boolean(useMatch('/reports/*'))
+
+  useEffect(() => {
+    function onClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-haspopup="true"
+        className={isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'}
+      >
+        Reports
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full z-20 mt-1 w-48 rounded-md border border-gray-200 bg-white py-1 shadow-lg">
+          {REPORT_LINKS.map(({ to, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              onClick={() => setOpen(false)}
+              className={({ isActive: a }) =>
+                `block px-4 py-2 text-sm ${a ? 'bg-gray-50 font-medium text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`
+            }
+            >
+              {label}
+            </NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function AppLayout() {
   const setActiveCompany = useCompanyStore((s) => s.setActiveCompany)
   const setAvailableCompanies = useCompanyStore((s) => s.setAvailableCompanies)
   const setAuth = useAuthStore((s) => s.setAuth)
+  const setActiveTenantId = useCompanyStore((s) => s.setActiveTenantId)
 
   useEffect(() => {
     fetch('/api/v1/whoami', { credentials: 'include' })
       .then((r) => r.json())
-      .then((data: { user?: string; role?: string; defaultCompany?: string; availableCompanies?: string[] }) => {
+      .then((data: {
+        user?: string
+        role?: string
+        defaultCompany?: string
+        availableCompanies?: string[]
+        tenantId?: string
+      }) => {
         if (data.defaultCompany) setActiveCompany(data.defaultCompany)
         if (data.availableCompanies) setAvailableCompanies(data.availableCompanies)
+        // Cohort-4 cycle 2 — store substrate tenantId for A1 defense-in-depth assertion.
+        // Empty string means no tenant bound (dev-stub); assertion skips when empty.
+        setActiveTenantId(data.tenantId ?? '')
         setAuth(data.user ?? 'dev-user', data.role ?? 'owner')
       })
       .catch(() => {
         setAuth('dev-user', 'owner')
       })
-  }, [setActiveCompany, setAvailableCompanies, setAuth])
+  }, [setActiveCompany, setAvailableCompanies, setActiveTenantId, setAuth])
 
   return (
     <div className="min-h-screen bg-white">
@@ -135,14 +206,7 @@ function AppLayout() {
             >
               Maintenance
             </NavLink>
-            <NavLink
-              to="/reports/rent-roll"
-              className={({ isActive }) =>
-                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
-              }
-            >
-              Reports
-            </NavLink>
+            <ReportsNavGroup />
             <NavLink
               to="/cockpit"
               className={({ isActive }) =>
@@ -151,34 +215,49 @@ function AppLayout() {
             >
               Cockpit
             </NavLink>
+            <NavLink
+              to="/audit-trail"
+              className={({ isActive }) =>
+                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
+              }
+            >
+              Audit
+            </NavLink>
           </nav>
           <CompanySwitcher />
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">
         <RouteErrorBoundary>
-        <Routes>
-          <Route path="/" element={<Navigate to="/properties" replace />} />
-          <Route path="/properties" element={<PropertiesPage />} />
-          <Route path="/leases" element={<LeasesPage />} />
-          <Route path="/leases/:name" element={<LeaseDetailPage />} />
-          <Route path="/rent" element={<RentCollectionPage />} />
-          <Route path="/accounting" element={<AccountingPage />} />
-          <Route path="/comms" element={<CrewCommsPage />} />
-          <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/reports" element={<Navigate to="/reports/rent-roll" replace />} />
-          <Route path="/reports/rent-roll" element={<RentRoll />} />
-          <Route path="/reports/profit-loss" element={<PLReport />} />
-          <Route path="/cockpit" element={<CockpitLayout />}>
-            <Route index element={<PropertySelector />} />
-            <Route path="work-orders" element={<WorkOrderListView />} />
-            <Route path="work-orders/:workOrderId" element={<WorkOrderDetailView />} />
-            <Route path="vendors" element={<VendorListView />} />
-            <Route path="vendors/:vendorId" element={<VendorDetailView />} />
-            <Route path=":propertyId/dashboard" element={<DashboardView />} />
-            <Route path=":propertyId" element={<PropertyDetailView />} />
-          </Route>
-        </Routes>
+          <Suspense fallback={<div className="flex items-center justify-center h-48 text-gray-500">Loading…</div>}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/properties" replace />} />
+              <Route path="/properties" element={<PropertiesPage />} />
+              <Route path="/leases" element={<LeasesPage />} />
+              <Route path="/leases/:name" element={<LeaseDetailPage />} />
+              <Route path="/rent" element={<RentCollectionPage />} />
+              <Route path="/accounting" element={<AccountingPage />} />
+              <Route path="/comms" element={<CrewCommsPage />} />
+              <Route path="/maintenance" element={<MaintenancePage />} />
+              <Route path="/reports" element={<Navigate to="/reports/trial-balance" replace />} />
+              <Route path="/reports/trial-balance" element={<TrialBalancePage />} />
+              <Route path="/reports/ar-aging" element={<ArAgingPage />} />
+              <Route path="/reports/profit-and-loss-by-property" element={<ProfitAndLossByPropertyPage />} />
+              <Route path="/reports/rent-roll" element={<RentRollPage />} />
+              <Route path="/reports/profit-loss" element={<Navigate to="/reports/profit-and-loss-by-property" replace />} />
+              <Route path="/audit-trail" element={<AuditEventsPage />} />
+              <Route path="/audit-trail/:auditId" element={<AuditEventDetailPage />} />
+              <Route path="/cockpit" element={<CockpitLayout />}>
+                <Route index element={<PropertySelector />} />
+                <Route path="work-orders" element={<WorkOrderListView />} />
+                <Route path="work-orders/:workOrderId" element={<WorkOrderDetailView />} />
+                <Route path="vendors" element={<VendorListView />} />
+                <Route path="vendors/:vendorId" element={<VendorDetailView />} />
+                <Route path=":propertyId/dashboard" element={<DashboardView />} />
+                <Route path=":propertyId" element={<PropertyDetailView />} />
+              </Route>
+            </Routes>
+          </Suspense>
         </RouteErrorBoundary>
       </main>
     </div>
@@ -190,7 +269,17 @@ export function App() {
     <ErrorBoundary FallbackComponent={AppErrorFallback}>
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
-          <AppLayout />
+          <Suspense fallback={null}>
+            <Routes>
+              {/* Auth flows — no nav header */}
+              <Route path="/auth/signup" element={<SignupPage />} />
+              <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
+              <Route path="/auth/verify-email/pending" element={<VerifyEmailPendingPage />} />
+              <Route path="/auth/resend-verification" element={<ResendVerificationPage />} />
+              {/* Main app — with nav header */}
+              <Route path="/*" element={<AppLayout />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </QueryClientProvider>
     </ErrorBoundary>
