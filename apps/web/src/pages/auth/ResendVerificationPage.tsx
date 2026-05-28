@@ -1,15 +1,23 @@
 import { useState, useId, type ReactNode, type FormEvent } from 'react'
 import { useResendVerification, RateLimitedError, ValidationFailedError } from '@/api/onboarding'
+import { CaptchaWidget } from '@/components/CaptchaWidget'
 
 export function ResendVerificationPage() {
   const mutation = useResendVerification()
   const [email, setEmail] = useState('')
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const [captchaError, setCaptchaError] = useState<string | null>(null)
   const emailId = useId()
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (!email) return
-    mutation.mutate({ email })
+    if (!captchaToken) {
+      setCaptchaError('Please complete the verification')
+      return
+    }
+    setCaptchaError(null)
+    mutation.mutate({ email, captcha_token: captchaToken })
   }
 
   if (mutation.isSuccess) {
@@ -63,6 +71,18 @@ export function ResendVerificationPage() {
             )}
           </div>
 
+          <div className="space-y-1">
+            <CaptchaWidget
+              onToken={(token) => {
+                setCaptchaToken(token)
+                setCaptchaError(null)
+              }}
+            />
+            {captchaError && (
+              <p role="alert" className="text-xs text-red-600">{captchaError}</p>
+            )}
+          </div>
+
           {mutation.isError && !validationErr && (
             <div role="alert" className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {rateLimitErr
@@ -73,7 +93,7 @@ export function ResendVerificationPage() {
 
           <button
             type="submit"
-            disabled={mutation.isPending || !email}
+            disabled={mutation.isPending || !email || !captchaToken}
             aria-busy={mutation.isPending}
             className="w-full rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
           >

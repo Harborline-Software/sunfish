@@ -32,7 +32,8 @@ function make403(): Response {
   return new Response('Forbidden', { status: 403 })
 }
 
-const mockFetch = global.fetch = vi.fn() as ReturnType<typeof vi.fn>
+const mockFetch = vi.fn()
+global.fetch = mockFetch as unknown as typeof fetch
 
 function makeWrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
@@ -140,7 +141,7 @@ describe('useResendVerification discriminator routing', () => {
   it(`${SignupDiscriminator.VALIDATION_FAILED} → ValidationFailedError`, async () => {
     mockFetch.mockResolvedValue(make400(SignupDiscriminator.VALIDATION_FAILED, 'Invalid email'))
     const { result } = renderHook(() => useResendVerification(), { wrapper: makeWrapper() })
-    result.current.mutate({ email: 'not-an-email' })
+    result.current.mutate({ email: 'not-an-email', captcha_token: 'mock-pass' })
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.error).toBeInstanceOf(ValidationFailedError)
   })
@@ -148,7 +149,7 @@ describe('useResendVerification discriminator routing', () => {
   it(`${SignupDiscriminator.RATE_LIMITED} (429) → RateLimitedError`, async () => {
     mockFetch.mockResolvedValue(make429('60'))
     const { result } = renderHook(() => useResendVerification(), { wrapper: makeWrapper() })
-    result.current.mutate({ email: 'a@b.com' })
+    result.current.mutate({ email: 'a@b.com', captcha_token: 'mock-pass' })
     await waitFor(() => expect(result.current.isError).toBe(true))
     expect(result.current.error).toBeInstanceOf(RateLimitedError)
     expect((result.current.error as RateLimitedError).retryAfterSeconds).toBe(60)

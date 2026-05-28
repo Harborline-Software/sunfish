@@ -29,7 +29,7 @@ function parseCsDiscriminators(src: string): Record<string, string> {
   const pattern = /public\s+const\s+string\s+(\w+)\s*=\s*"([^"]+)"\s*;/g
   let m: RegExpExecArray | null
   while ((m = pattern.exec(src)) !== null) {
-    result[m[1]] = m[2]
+    result[m[1]!] = m[2]!
   }
   return result
 }

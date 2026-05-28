@@ -1,9 +1,8 @@
-// MSW-vs-real-Bridge parity test scaffold.
+// MSW-vs-real-Bridge parity test.
 // Per spec §4.4.4 + test-eng T6 B2.
 //
-// This suite requires a running test-env Bridge.
-// Skip in CI unless SUNFISH_BRIDGE_TEST_URL is set.
-// When Engineer's PR 1 merges and Bridge is running, remove the skip guard.
+// This suite requires a running test-env Bridge (SUNFISH_BRIDGE_TEST_URL set).
+// Skip guard is intentional: CI doesn't run Bridge; run locally with Bridge live.
 
 import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
 import { server } from '../../../msw/server'
@@ -17,7 +16,7 @@ const describeWithBridge = BRIDGE_URL ? describe : describe.skip
 // Helper: fire an MSW handler down a specific error path by temporarily
 // overriding the handler's response to match the discriminator path.
 async function fireMswErrorPath(discriminator: string): Promise<Response> {
-  const { onboardingHandlers, resetSignupCallCount } = await import('../../../msw/onboarding-handlers')
+  const { resetSignupCallCount } = await import('../../../msw/onboarding-handlers')
 
   if (discriminator === SignupDiscriminator.RATE_LIMITED) {
     // Trigger rate-limit by overriding call count
@@ -87,13 +86,123 @@ async function fireMswErrorPath(discriminator: string): Promise<Response> {
 }
 
 // Helper: fire the real Bridge down the matching error path.
+// Activated in Cycle-2b: signal-bridge#51 (W#80 PR 1.5 dev endpoints) merged.
 async function fireBridgeErrorPath(discriminator: string): Promise<Response> {
   if (!BRIDGE_URL) throw new Error('SUNFISH_BRIDGE_TEST_URL not set')
 
-  // TODO(w79-pr1): flesh out Bridge-side crafted requests once PR 1 handler bodies land.
-  // The real Bridge needs test-fixture state (seeded slugs for taken/reserved tests).
-  // For now, stub with a placeholder that will be implemented in PR 3 Cycle 2.
-  throw new Error(`fireBridgeErrorPath(${discriminator}) not yet implemented — awaiting Engineer PR 1`)
+  const signupUrl = `${BRIDGE_URL}/api/v1/auth/signup`
+  const verifyUrl = `${BRIDGE_URL}/api/v1/auth/verify-email`
+  const seedUrl   = `${BRIDGE_URL}/api/v1/dev/seed-test-fixture`
+  const devOrigin = 'http://localhost:5173'
+
+  const baseBody = {
+    email: `parity-${discriminator.replace(/_/g, '-')}-${Date.now()}@example.com`,
+    password: 'test-password-12345',
+    tenant_slug: `parity-${Date.now()}`,
+    tenant_display_name: 'Parity Test Org',
+    captcha_token: 'mock-pass',
+  }
+
+  switch (discriminator) {
+    case SignupDiscriminator.VALIDATION_FAILED:
+      // Missing required fields → Bridge validation returns 400 validation_failed
+      return fetch(signupUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ email: 'test@example.com' }),
+      })
+
+    case SignupDiscriminator.TENANT_SLUG_INVALID_SHAPE:
+      // Uppercase slug fails slug-shape validation
+      return fetch(signupUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ ...baseBody, tenant_slug: 'INVALID-UPPER' }),
+      })
+
+    case SignupDiscriminator.TENANT_SLUG_RESERVED:
+      // 'admin' is in Bridge's reserved keyword list
+      return fetch(signupUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ ...baseBody, tenant_slug: 'admin' }),
+      })
+
+    case SignupDiscriminator.TENANT_SLUG_TAKEN: {
+      // Seed a tenant with a known slug, then attempt to register with same slug
+      const takenSlug = `taken-p-${Date.now()}`
+      await fetch(seedUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({
+          email: `seed-taken-${Date.now()}@example.com`,
+          tenantSlug: takenSlug,
+        }),
+      })
+      return fetch(signupUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ ...baseBody, tenant_slug: takenSlug }),
+      })
+    }
+
+    case SignupDiscriminator.CAPTCHA_FAILED:
+      // MockCaptchaVerifier treats 'captcha-fail' as a failing token
+      return fetch(signupUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ ...baseBody, captcha_token: 'captcha-fail' }),
+      })
+
+    case SignupDiscriminator.ORIGIN_INVALID:
+      // Absent Origin header → Bridge CORS-origin check returns 403 origin_invalid
+      return fetch(signupUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(baseBody),
+      })
+
+    case SignupDiscriminator.RATE_LIMITED: {
+      // Exhaust the 5-req/min/IP floor then the 6th returns 429 rate_limited
+      const rateBase = { ...baseBody, email: `rate-p-${Date.now()}@example.com` }
+      for (let i = 0; i < 5; i++) {
+        await fetch(signupUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+          body: JSON.stringify({ ...rateBase, tenant_slug: `rate-p-${Date.now()}-${i}` }),
+        })
+      }
+      return fetch(signupUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ ...rateBase, tenant_slug: `rate-p-sixth-${Date.now()}` }),
+      })
+    }
+
+    case SignupDiscriminator.VERIFICATION_TOKEN_INVALID:
+      // Syntactically invalid token → Bridge returns 400 verification_token_invalid
+      return fetch(verifyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ verification_token: 'not-a-valid-token-abc123' }),
+      })
+
+    case SignupDiscriminator.VERIFICATION_TOKEN_EXPIRED: {
+      // Bridge distinguishes invalid vs expired via DB lookup; expired tokens require
+      // a token that was issued and whose TTL has lapsed. Seed-fixture doesn't yet
+      // support seeding expired-token state, so we issue a real token and trigger
+      // invalid path — status codes match (both 400); discriminator string differs
+      // until 'expired_token' seed type is added. Parity check documents this gap.
+      return fetch(verifyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Origin: devOrigin },
+        body: JSON.stringify({ verification_token: 'expired-sentinel-parity' }),
+      })
+    }
+
+    default:
+      throw new Error(`Unknown discriminator for Bridge parity path: ${discriminator}`)
+  }
 }
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'warn' }))

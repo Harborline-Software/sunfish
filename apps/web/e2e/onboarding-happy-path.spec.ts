@@ -5,11 +5,10 @@
 
 import { test, expect } from '@playwright/test'
 
-// NOTE: These tests run against the live Bridge. They will be skipped until
-// Engineer's PR 0 + PR 1 land and the stack is running with:
+// Requires full stack: PLAYWRIGHT_BASE_URL=http://localhost:5173 + Bridge running with:
 //   - SUNFISH_ALLOW_MOCK_PROVIDERS=true (MockEmailProvider active)
-//   - ASPNETCORE_ENVIRONMENT=Development (dev mode; production-guard bypass)
-// Per spec §3.9 pair-merge cascade step 10.
+//   - ASPNETCORE_ENVIRONMENT=Development (DevInspectionGate live)
+// signal-bridge#51 (W#80 PR 1.5) merged — dev inspection endpoints are live.
 
 test.describe('W#79 onboarding — happy path', () => {
   test('signup form renders all required fields', async ({ page }) => {
