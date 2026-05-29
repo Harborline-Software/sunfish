@@ -67,13 +67,13 @@ export function LeasesPage() {
         <table className="min-w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Tenant</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Property / Unit</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Start</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">End</th>
-              <th className="px-4 py-3 text-right font-medium text-gray-500">Monthly Rent</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
-              <th className="px-4 py-3" />
+              <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Tenant</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Property / Unit</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Start</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">End</th>
+              <th scope="col" className="px-4 py-3 text-right font-medium text-gray-500">Monthly Rent</th>
+              <th scope="col" className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
+              <th scope="col" className="px-4 py-3"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 bg-white">

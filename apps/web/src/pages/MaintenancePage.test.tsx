@@ -1,4 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
@@ -57,6 +58,8 @@ const PENDING_QUERY = {
 } as unknown as ReturnType<typeof useMaintenanceHook.useWorkOrders>
 
 describe('MaintenancePage', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
+
   beforeEach(() => {
     vi.restoreAllMocks()
     vi.spyOn(useMaintenanceHook, 'useCreateWorkOrder').mockReturnValue({
@@ -104,6 +107,19 @@ describe('MaintenancePage', () => {
     render(<MaintenancePage />, { wrapper })
     expect(screen.getByText(/bridge unreachable/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
+  })
+
+  it('has no a11y violations in loaded state', async () => {
+    vi.spyOn(useMaintenanceHook, 'useWorkOrders').mockReturnValue({
+      data: MOCK_LIST,
+      isPending: false,
+      isError: false,
+      error: null,
+      refetch: vi.fn(),
+    } as unknown as ReturnType<typeof useMaintenanceHook.useWorkOrders>)
+
+    const { container } = render(<MaintenancePage />, { wrapper })
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('renders accessible form labels', () => {

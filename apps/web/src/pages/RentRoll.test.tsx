@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react'
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import { RentRoll } from './RentRoll'
@@ -57,6 +58,7 @@ function wrapper({ children }: { children: React.ReactNode }) {
 }
 
 describe('RentRoll page', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
   beforeEach(() => vi.clearAllMocks())
 
   it('renders the page heading', async () => {
@@ -71,6 +73,13 @@ describe('RentRoll page', () => {
     expect(await screen.findByText('150 Lexington Ct')).toBeInTheDocument()
     expect(screen.getByText('John Doe')).toBeInTheDocument()
     expect(screen.getByText('22 Harbor View')).toBeInTheDocument()
+  })
+
+  it('has no a11y violations in loaded state', async () => {
+    mockGetRentRoll.mockResolvedValue(MOCK_ROWS)
+    const { container } = render(<RentRoll />, { wrapper })
+    await screen.findByText('150 Lexington Ct')
+    expect(await axe(container)).toHaveNoViolations()
   })
 
   it('sorts Overdue rows before Current rows', async () => {

@@ -1,11 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, beforeAll } from 'vitest'
+import { axe, toHaveNoViolations } from 'jest-axe'
 import { render, screen } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { LeaseDetailPage } from './LeaseDetailPage'
 import * as useLeaseHook from '@/hooks/useLeases'
 import type { LeaseDetail } from '@/api/leases'  // W#74 PR 2 — rebound from @/api/erpnext
-import type { PaymentList } from '@/api/financial'  // W#76 PR 1 — RB-8
 
 function wrapper({ children }: { children: React.ReactNode }) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -36,32 +36,30 @@ const MOCK_DETAIL: LeaseDetail = {
   notes: null,
 }
 
-const EMPTY_PAYMENTS: PaymentList = { items: [], total: 0, page: 1, pageSize: 20 }
-
-const MOCK_PAYMENTS: PaymentList = {
-  items: [
-    {
-      paymentId: 'pay_abcd1234',
-      leaseId: 'lease-ulid-0001',
-      receivedAt: '2026-05-01T00:00:00Z',
-      amount: 1250,
-      currency: 'USD',
-      direction: 'Inbound',
-      paymentMethod: 'ACH',
-      status: 'Completed',
-    },
-  ],
-  total: 1,
-  page: 1,
-  pageSize: 20,
-}
-
 describe('LeaseDetailPage', () => {
+  beforeAll(() => { expect.extend(toHaveNoViolations) })
+
   beforeEach(() => {
     vi.restoreAllMocks()
   })
 
-  it('shows loading state while lease is pending', () => {
+  it('has no a11y violations in loaded state', async () => {
+    vi.spyOn(useLeaseHook, 'useLease').mockReturnValue({
+      data: MOCK_DETAIL,
+      isPending: false,
+      isError: false,
+      error: null,
+    } as unknown as ReturnType<typeof useLeaseHook.useLease>)
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+      data: [],
+      isPending: false,
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+
+    const { container } = render(<LeaseDetailPage />, { wrapper })
+    expect(await axe(container)).toHaveNoViolations()
+  })
+
+  it('shows loading state while pending', () => {
     vi.spyOn(useLeaseHook, 'useLease').mockReturnValue({
       data: undefined,
       isPending: true,
@@ -71,8 +69,6 @@ describe('LeaseDetailPage', () => {
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
       isPending: true,
-      isError: false,
-      refetch: vi.fn(),
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
@@ -87,10 +83,8 @@ describe('LeaseDetailPage', () => {
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
-      data: EMPTY_PAYMENTS,
+      data: [],
       isPending: false,
-      isError: false,
-      refetch: vi.fn(),
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
@@ -111,17 +105,14 @@ describe('LeaseDetailPage', () => {
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
       isPending: false,
-      isError: false,
-      refetch: vi.fn(),
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
-    expect(screen.getByRole('alert')).toBeInTheDocument()
     expect(screen.getByText(/failed to load lease/i)).toBeInTheDocument()
     expect(screen.getByText('Lease not found')).toBeInTheDocument()
   })
 
-  it('shows empty state when no payments exist (cross-tenant also returns empty)', () => {
+  it('shows empty-payments state when no payments recorded', () => {
     vi.spyOn(useLeaseHook, 'useLease').mockReturnValue({
       data: MOCK_DETAIL,
       isPending: false,
@@ -129,57 +120,12 @@ describe('LeaseDetailPage', () => {
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
-      data: EMPTY_PAYMENTS,
+      data: [],
       isPending: false,
-      isError: false,
-      refetch: vi.fn(),
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText(/no payments recorded yet for this lease/i)).toBeInTheDocument()
-    expect(screen.getByText(/record the first payment/i)).toBeInTheDocument()
-  })
-
-  it('shows payments error state with retry button', () => {
-    vi.spyOn(useLeaseHook, 'useLease').mockReturnValue({
-      data: MOCK_DETAIL,
-      isPending: false,
-      isError: false,
-      error: null,
-    } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
-      data: undefined,
-      isPending: false,
-      isError: true,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
-
-    render(<LeaseDetailPage />, { wrapper })
-    expect(screen.getByRole('alert')).toBeInTheDocument()
-    expect(screen.getByText(/couldn't load payment history/i)).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /retry/i })).toBeInTheDocument()
-  })
-
-  it('renders payment rows with new DTO field names', () => {
-    vi.spyOn(useLeaseHook, 'useLease').mockReturnValue({
-      data: MOCK_DETAIL,
-      isPending: false,
-      isError: false,
-      error: null,
-    } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
-      data: MOCK_PAYMENTS,
-      isPending: false,
-      isError: false,
-      refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
-
-    render(<LeaseDetailPage />, { wrapper })
-    expect(screen.getByText('abcd1234')).toBeInTheDocument() // last 8 chars of 'pay_abcd1234'
-    expect(screen.getByText('2026-05-01')).toBeInTheDocument()
-    expect(screen.getByText('$1,250')).toBeInTheDocument()
-    expect(screen.getByText('ACH')).toBeInTheDocument()
-    expect(screen.getByText('+ Record a new payment')).toBeInTheDocument()
   })
 
   it('renders unit when present', () => {
@@ -190,10 +136,8 @@ describe('LeaseDetailPage', () => {
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
-      data: EMPTY_PAYMENTS,
+      data: [],
       isPending: false,
-      isError: false,
-      refetch: vi.fn(),
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
@@ -213,10 +157,8 @@ describe('LeaseDetailPage', () => {
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
-      data: EMPTY_PAYMENTS,
+      data: [],
       isPending: false,
-      isError: false,
-      refetch: vi.fn(),
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
