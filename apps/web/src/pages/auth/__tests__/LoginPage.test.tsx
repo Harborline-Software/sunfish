@@ -111,6 +111,22 @@ describe('LoginPage', () => {
     )
   })
 
+  it('shows email-unverified message with resend link on 403 email_unverified', async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeOk({ token: 'csrf-pre', headerName: 'X-XSRF-TOKEN' }))
+      .mockResolvedValueOnce(makeProblem(403, 'email_unverified'))
+
+    render(<LoginPage />, { wrapper })
+    fillAndSubmit('unverified@example.com', 'password')
+
+    await waitFor(() => {
+      const alert = screen.getByRole('alert')
+      expect(alert).toHaveTextContent('not been verified')
+      expect(alert.querySelector('a')).toBeInTheDocument()
+    })
+    expect(mockNavigate).not.toHaveBeenCalled()
+  })
+
   it('submit button shows aria-busy while pending', async () => {
     let resolveLogin!: (v: Response) => void
     mockFetch

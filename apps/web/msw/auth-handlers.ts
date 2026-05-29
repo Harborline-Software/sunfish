@@ -22,6 +22,12 @@ export const authHandlers = [
         { status: 400, headers: { 'Content-Type': 'application/problem+json' } },
       )
     }
+    if (body.email === 'unverified@example.com') {
+      return HttpResponse.json(
+        { title: 'email_unverified', status: 403, detail: 'Email address has not been verified' },
+        { status: 403, headers: { 'Content-Type': 'application/problem+json' } },
+      )
+    }
     return HttpResponse.json(
       { title: 'invalid_credentials', status: 401, detail: 'Invalid email or password' },
       { status: 401, headers: { 'Content-Type': 'application/problem+json' } },

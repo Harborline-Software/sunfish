@@ -1,7 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useLogin } from '@/hooks/useAuth'
-import { InvalidCredentialsError, TenantUnresolvedError, RateLimitedError } from '@/api/auth'
+import {
+  InvalidCredentialsError,
+  TenantUnresolvedError,
+  RateLimitedError,
+  EmailUnverifiedError,
+} from '@/api/auth'
 
 export function LoginPage() {
   const [email, setEmail] = useState('')
@@ -17,14 +22,26 @@ export function LoginPage() {
     )
   }
 
-  function errorMessage(): string | null {
+  function errorBlock(): { message: string; resendLink: boolean } | null {
     if (!login.isError) return null
     const err = login.error
-    if (err instanceof InvalidCredentialsError) return 'Invalid email or password.'
-    if (err instanceof TenantUnresolvedError) return 'This workspace could not be found. Check the URL and try again.'
-    if (err instanceof RateLimitedError) return 'Too many attempts — please wait a moment and try again.'
-    return 'Something went wrong. Please try again.'
+    if (err instanceof InvalidCredentialsError) return { message: 'Invalid email or password.', resendLink: false }
+    if (err instanceof EmailUnverifiedError) return {
+      message: 'Your email address has not been verified. Check your inbox or',
+      resendLink: true,
+    }
+    if (err instanceof TenantUnresolvedError) return {
+      message: 'This workspace could not be found. Check the URL and try again.',
+      resendLink: false,
+    }
+    if (err instanceof RateLimitedError) return {
+      message: 'Too many attempts — please wait a moment and try again.',
+      resendLink: false,
+    }
+    return { message: 'Something went wrong. Please try again.', resendLink: false }
   }
+
+  const errBlock = errorBlock()
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
@@ -62,9 +79,18 @@ export function LoginPage() {
               className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
-          {errorMessage() && (
+          {errBlock && (
             <p role="alert" className="text-sm text-red-600">
-              {errorMessage()}
+              {errBlock.message}
+              {errBlock.resendLink && (
+                <>
+                  {' '}
+                  <Link to="/auth/resend-verification" className="underline">
+                    request a new verification link
+                  </Link>
+                  .
+                </>
+              )}
             </p>
           )}
           <button

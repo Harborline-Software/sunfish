@@ -39,6 +39,7 @@ const SignupPage = lazy(() => import('@/pages/auth/SignupPage').then(m => ({ def
 const VerifyEmailPage = lazy(() => import('@/pages/auth/VerifyEmailPage').then(m => ({ default: m.VerifyEmailPage })))
 const VerifyEmailPendingPage = lazy(() => import('@/pages/auth/VerifyEmailPendingPage').then(m => ({ default: m.VerifyEmailPendingPage })))
 const ResendVerificationPage = lazy(() => import('@/pages/auth/ResendVerificationPage').then(m => ({ default: m.ResendVerificationPage })))
+const EmailVerifiedPage = lazy(() => import('@/pages/auth/EmailVerifiedPage').then(m => ({ default: m.EmailVerifiedPage })))
 // Cohort-5 — property unit detail + vacancy admin
 const VacanciesPage = lazy(() => import('@/pages/VacanciesPage').then(m => ({ default: m.VacanciesPage })))
 const UnitDetailPage = lazy(() => import('@/pages/UnitDetailPage').then(m => ({ default: m.UnitDetailPage })))
@@ -336,6 +337,7 @@ export function App() {
               <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
               <Route path="/auth/verify-email/pending" element={<VerifyEmailPendingPage />} />
               <Route path="/auth/resend-verification" element={<ResendVerificationPage />} />
+              <Route path="/auth/verified" element={<EmailVerifiedPage />} />
               {/* Main app — with nav header */}
               <Route path="/*" element={<AppLayout />} />
             </Routes>

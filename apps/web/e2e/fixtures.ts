@@ -148,5 +148,100 @@ export async function mockCohort1Apis(page: Page, overrides: ApiMocks = {}) {
   )
 }
 
+// ── Auth mock helpers ─────────────────────────────────────────────────────────
+
+/**
+ * mockAuthApis — wire MSW-style page.route intercepts for the auth endpoints.
+ * Mirrors the MSW handlers in msw/auth-handlers.ts so the same test logic
+ * works against both the mock layer (CI) and the real Bridge (stack-required runs).
+ *
+ * Seeded user: admin@example.com / password
+ * Unverified:  unverified@example.com / password  (403 with email_unverified discriminator)
+ * Rate-limited: rate-limited@example.com
+ */
+export async function mockAuthApis(page: Page) {
+  // GET /api/v1/cockpit/auth/antiforgery-token
+  await page.route('**/api/v1/cockpit/auth/antiforgery-token', (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ token: 'e2e-csrf-token', headerName: 'X-XSRF-TOKEN' }),
+    }),
+  )
+
+  // POST /api/v1/cockpit/auth/login
+  await page.route('**/api/v1/cockpit/auth/login', async (route: Route) => {
+    const req = route.request()
+    const body = await req.postDataJSON().catch(() => ({})) as Record<string, unknown>
+    const { email, password } = body as { email?: string; password?: string }
+
+    if (email === 'rate-limited@example.com') {
+      return route.fulfill({ status: 429, body: '' })
+    }
+    if (email === 'unverified@example.com') {
+      return route.fulfill({
+        status: 403,
+        contentType: 'application/problem+json',
+        body: JSON.stringify({
+          title: 'email_unverified',
+          status: 403,
+          detail: 'Email address has not been verified',
+        }),
+      })
+    }
+    if (email === 'admin@example.com' && password === 'password') {
+      return route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          antiforgeryToken: 'e2e-post-auth-csrf',
+          antiforgeryHeaderName: 'X-XSRF-TOKEN',
+        }),
+      })
+    }
+    // Default: invalid credentials
+    return route.fulfill({
+      status: 401,
+      contentType: 'application/problem+json',
+      body: JSON.stringify({
+        title: 'invalid_credentials',
+        status: 401,
+        detail: 'Invalid email or password',
+      }),
+    })
+  })
+
+  // POST /api/v1/cockpit/auth/logout
+  await page.route('**/api/v1/cockpit/auth/logout', (route: Route) =>
+    route.fulfill({ status: 204, body: '' }),
+  )
+
+  // GET /api/v1/whoami — authenticated state after login
+  await page.route('**/api/v1/whoami', (route: Route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        user: 'admin@example.com',
+        role: 'owner',
+        defaultCompany: 'e2e-co',
+        availableCompanies: ['e2e-co'],
+        activeTenantId: 'e2e-tenant',
+      }),
+    }),
+  )
+}
+
+/**
+ * mockUnauthenticated — whoami returns 401 so AppLayout redirects to /auth/login.
+ * Call BEFORE mockAuthApis to establish the pre-login state; mockAuthApis will
+ * then override whoami with an authenticated response for the post-login check.
+ */
+export async function mockUnauthenticated(page: Page) {
+  await page.route('**/api/v1/whoami', (route: Route) =>
+    route.fulfill({ status: 401, body: '' }),
+  )
+}
+
 export const test = base
 export { expect } from '@playwright/test'
