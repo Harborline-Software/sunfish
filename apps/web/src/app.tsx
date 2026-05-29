@@ -35,6 +35,9 @@ const SignupPage = lazy(() => import('@/pages/auth/SignupPage').then(m => ({ def
 const VerifyEmailPage = lazy(() => import('@/pages/auth/VerifyEmailPage').then(m => ({ default: m.VerifyEmailPage })))
 const VerifyEmailPendingPage = lazy(() => import('@/pages/auth/VerifyEmailPendingPage').then(m => ({ default: m.VerifyEmailPendingPage })))
 const ResendVerificationPage = lazy(() => import('@/pages/auth/ResendVerificationPage').then(m => ({ default: m.ResendVerificationPage })))
+// Cohort-5 — property unit detail + vacancy admin
+const VacanciesPage = lazy(() => import('@/pages/VacanciesPage').then(m => ({ default: m.VacanciesPage })))
+const UnitDetailPage = lazy(() => import('@/pages/UnitDetailPage').then(m => ({ default: m.UnitDetailPage })))
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -167,6 +170,14 @@ function AppLayout() {
               Properties
             </NavLink>
             <NavLink
+              to="/vacancies"
+              className={({ isActive }) =>
+                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
+              }
+            >
+              Vacancies
+            </NavLink>
+            <NavLink
               to="/leases"
               className={({ isActive }) =>
                 isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
@@ -245,6 +256,8 @@ function AppLayout() {
               <Route path="/reports/profit-and-loss-by-property" element={<ProfitAndLossByPropertyPage />} />
               <Route path="/reports/rent-roll" element={<RentRollPage />} />
               <Route path="/reports/profit-loss" element={<Navigate to="/reports/profit-and-loss-by-property" replace />} />
+              <Route path="/vacancies" element={<VacanciesPage />} />
+              <Route path="/units/:unitId" element={<UnitDetailPage />} />
               <Route path="/audit-trail" element={<AuditEventsPage />} />
               <Route path="/audit-trail/:auditId" element={<AuditEventDetailPage />} />
               <Route path="/cockpit" element={<CockpitLayout />}>
