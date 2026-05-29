@@ -2,6 +2,7 @@ import { Link, useParams } from 'react-router-dom'
 import { useUnit } from '@/hooks/useUnits'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { LoadingState } from '@sunfish/ui-react'
 import type { UnitDetail } from '@/api/units'
 
 function statusVariant(status: UnitDetail['occupancyStatus']) {
@@ -25,7 +26,7 @@ export function UnitDetailPage() {
   const { data: unit, isPending, isError, error } = useUnit(unitId ?? '')
 
   if (isPending) {
-    return <div className="flex items-center justify-center h-48 text-gray-500">Loading unit…</div>
+    return <LoadingState label="Loading unit…" variant="inline" />
   }
 
   if (isError) {

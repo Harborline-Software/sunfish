@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 import { useVacancies } from '@/hooks/useUnits'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { LoadingState } from '@sunfish/ui-react'
 import type { UnitSummary } from '@/api/units'
 
 function unitBedBathLabel(unit: UnitSummary): string {
@@ -18,9 +19,7 @@ export function VacanciesPage() {
 
   if (isPending) {
     return (
-      <div className="flex items-center justify-center h-48 text-gray-500">
-        Loading vacancies…
-      </div>
+      <LoadingState label="Loading vacancies…" variant="inline" />
     )
   }
 
@@ -51,9 +50,7 @@ export function VacanciesPage() {
       </div>
 
       {!vacancies?.length ? (
-        <div className="flex items-center justify-center h-48 text-gray-500">
-          No vacant units found.
-        </div>
+        <p className="text-gray-500">No vacant units found.</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {vacancies.map((unit) => (
