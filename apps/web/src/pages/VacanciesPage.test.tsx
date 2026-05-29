@@ -117,7 +117,7 @@ describe('VacanciesPage', () => {
     const links = screen.getAllByRole('link')
     const unitLinks = links.filter((l) => l.getAttribute('href')?.startsWith('/units/'))
     expect(unitLinks.length).toBe(2)
-    expect(unitLinks[0].getAttribute('href')).toBe(
+    expect(unitLinks[0]!.getAttribute('href')).toBe(
       `/units/${encodeURIComponent('unit:dev-tenant/unit-001')}`,
     )
   })
