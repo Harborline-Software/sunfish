@@ -72,7 +72,7 @@ const VACANT_UNIT: UnitDetail = {
   ...OCCUPIED_UNIT,
   unitId: 'unit-202',
   unitNumber: '202',
-  occupancyStatus: 'Vacant',
+  occupancyStatus: 'Available',
   activeLease: null,
   lastInspectionDate: null,
   lastInspectionResult: null,
@@ -164,7 +164,7 @@ describe('UnitDetailPage', () => {
     } as ReturnType<typeof useUnitsHooks.useUnitDetail>)
 
     render(<UnitDetailPage />, { wrapper })
-    expect(screen.getByText('Vacant')).toBeInTheDocument()
+    expect(screen.getByText('Available')).toBeInTheDocument()
     expect(screen.getByText('No active lease')).toBeInTheDocument()
     expect(screen.getByText('No inspections on record')).toBeInTheDocument()
     // 0 work orders — no "View maintenance" link

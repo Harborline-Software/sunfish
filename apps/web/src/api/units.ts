@@ -61,7 +61,7 @@ export interface UnitDetail {
   bedrooms: number | null
   bathrooms: number | null
   squareFeet: number | null
-  occupancyStatus: 'Occupied' | 'Vacant' | 'Reserved'
+  occupancyStatus: 'Available' | 'Occupied' | 'MaintenanceHold'
   activeLease: ActiveLeaseDetail | null
   lastInspectionDate: string | null
   lastInspectionResult: string | null
@@ -98,7 +98,7 @@ export interface UnitSummary {
   bedrooms: number | null
   bathrooms: number | null
   squareFeet: number | null
-  occupancyStatus: 'Occupied' | 'Vacant' | 'Reserved'
+  occupancyStatus: 'Available' | 'Occupied' | 'MaintenanceHold'
   activeLease: {
     leaseId: string
     tenantDisplayName: string

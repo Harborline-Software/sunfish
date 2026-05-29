@@ -169,8 +169,8 @@ export function UnitDetailPage() {
   )
 }
 
-function OccupancyBadge({ status }: { status: 'Occupied' | 'Vacant' | 'Reserved' }) {
+function OccupancyBadge({ status }: { status: 'Available' | 'Occupied' | 'MaintenanceHold' }) {
   if (status === 'Occupied') return <Badge variant="success">Occupied</Badge>
-  if (status === 'Reserved') return <Badge variant="secondary">Reserved</Badge>
-  return <Badge variant="warning">Vacant</Badge>
+  if (status === 'MaintenanceHold') return <Badge variant="secondary">Maintenance Hold</Badge>
+  return <Badge variant="warning">Available</Badge>
 }
