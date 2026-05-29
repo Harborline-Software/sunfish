@@ -72,9 +72,10 @@ export default defineConfig(({ command }) => ({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-error-boundary'],
           'vendor-query': ['@tanstack/react-query'],
           'vendor-signalr': ['@microsoft/signalr'],
+          'vendor-state': ['zustand'],
         },
       },
     },
