@@ -41,7 +41,7 @@ describe('EmailVerifiedPage', () => {
 
   it('shows generic message when tenant_display_name is absent', () => {
     renderWithState({ email: 'test@example.com' })
-    expect(screen.getByText(/verified/i)).toBeInTheDocument()
+    expect(screen.getByText(/has been verified/i)).toBeInTheDocument()
     expect(screen.queryByText(/Welcome to/)).not.toBeInTheDocument()
   })
 
