@@ -22,6 +22,7 @@ const RentRollPage = lazy(() => import('@/pages/RentRollPage').then(m => ({ defa
 const ProfitAndLossByPropertyPage = lazy(() => import('@/pages/ProfitAndLossByPropertyPage').then(m => ({ default: m.ProfitAndLossByPropertyPage })))
 const TrialBalancePage = lazy(() => import('@/pages/TrialBalancePage').then(m => ({ default: m.TrialBalancePage })))
 const ArAgingPage = lazy(() => import('@/pages/ArAgingPage').then(m => ({ default: m.ArAgingPage })))
+const ApAgingPage = lazy(() => import('@/pages/ApAgingPage').then(m => ({ default: m.ApAgingPage })))
 const CockpitLayout = lazy(() => import('@/cockpit/CockpitLayout').then(m => ({ default: m.CockpitLayout })))
 const PropertySelector = lazy(() => import('@/cockpit/PropertySelector').then(m => ({ default: m.PropertySelector })))
 const PropertyDetailView = lazy(() => import('@/cockpit/properties/PropertyDetailView').then(m => ({ default: m.PropertyDetailView })))
@@ -81,6 +82,7 @@ function AppErrorFallback({ error, resetErrorBoundary }: { error: Error; resetEr
 const REPORT_LINKS = [
   { to: '/reports/trial-balance', label: 'Trial Balance' },
   { to: '/reports/ar-aging', label: 'AR Aging' },
+  { to: '/reports/ap-aging', label: 'AP Aging' },
   { to: '/reports/profit-and-loss-by-property', label: 'P&L by Property' },
   { to: '/reports/rent-roll', label: 'Rent Roll' },
 ]
@@ -296,6 +298,7 @@ function AppLayout() {
               <Route path="/reports" element={<Navigate to="/reports/trial-balance" replace />} />
               <Route path="/reports/trial-balance" element={<TrialBalancePage />} />
               <Route path="/reports/ar-aging" element={<ArAgingPage />} />
+              <Route path="/reports/ap-aging" element={<ApAgingPage />} />
               <Route path="/reports/profit-and-loss-by-property" element={<ProfitAndLossByPropertyPage />} />
               <Route path="/reports/rent-roll" element={<RentRollPage />} />
               <Route path="/reports/profit-loss" element={<Navigate to="/reports/profit-and-loss-by-property" replace />} />

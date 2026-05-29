@@ -2,11 +2,13 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import {
   runTrialBalance,
   runArAgingSummary,
+  runApAgingSummary,
   runProfitAndLossByProperty,
   runRentRoll,
   getCharts,
   type TrialBalanceParameters,
   type ArAgingSummaryParameters,
+  type ApAgingSummaryParameters,
   type ProfitAndLossByPropertyParameters,
   type RentRollParameters,
 } from '@/api/reports'
@@ -20,6 +22,12 @@ export function useTrialBalance() {
 export function useArAgingSummary() {
   return useMutation({
     mutationFn: (params: ArAgingSummaryParameters) => runArAgingSummary(params),
+  })
+}
+
+export function useApAgingSummary() {
+  return useMutation({
+    mutationFn: (params: ApAgingSummaryParameters) => runApAgingSummary(params),
   })
 }
 
