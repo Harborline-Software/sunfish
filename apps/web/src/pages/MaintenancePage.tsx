@@ -231,11 +231,11 @@ export function MaintenancePage() {
           <table className="w-full text-start">
             <thead className="bg-gray-50 text-xs font-medium uppercase tracking-wide text-gray-500">
               <tr>
-                <th className="py-3 px-4">ID</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Scheduled</th>
-                <th className="py-3 px-4">Completed</th>
-                <th className="py-3 px-4">Vendor</th>
+                <th scope="col" className="py-3 px-4">ID</th>
+                <th scope="col" className="py-3 px-4">Status</th>
+                <th scope="col" className="py-3 px-4">Scheduled</th>
+                <th scope="col" className="py-3 px-4">Completed</th>
+                <th scope="col" className="py-3 px-4">Vendor</th>
               </tr>
             </thead>
             <tbody>

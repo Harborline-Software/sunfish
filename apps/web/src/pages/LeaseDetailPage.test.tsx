@@ -87,12 +87,12 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: undefined,
       isPending: true,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText(/loading lease/i)).toBeInTheDocument()
@@ -105,12 +105,12 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: EMPTY_PAYMENTS,
       isPending: false,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText('Jane Smith')).toBeInTheDocument()
@@ -127,12 +127,12 @@ describe('LeaseDetailPage', () => {
       isError: true,
       error: new Error('Lease not found'),
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: undefined,
       isPending: false,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -147,12 +147,12 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: EMPTY_PAYMENTS,
       isPending: false,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText(/no payments recorded yet for this lease/i)).toBeInTheDocument()
@@ -166,12 +166,12 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: undefined,
       isPending: false,
       isError: true,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByRole('alert')).toBeInTheDocument()
@@ -186,12 +186,12 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: MOCK_PAYMENTS,
       isPending: false,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText('abcd1234')).toBeInTheDocument() // last 8 chars of 'pay_abcd1234'
@@ -208,12 +208,12 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: EMPTY_PAYMENTS,
       isPending: false,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText('unit-1')).toBeInTheDocument()
@@ -231,12 +231,12 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
       data: EMPTY_PAYMENTS,
       isPending: false,
       isError: false,
       refetch: vi.fn(),
-    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText('prop-raw-id')).toBeInTheDocument()
