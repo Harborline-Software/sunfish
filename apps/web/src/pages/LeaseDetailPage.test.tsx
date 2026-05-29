@@ -112,21 +112,20 @@ describe('LeaseDetailPage', () => {
     expect(screen.getByText('Lease not found')).toBeInTheDocument()
   })
 
-  it('shows payments regression banner when no payments match (known Cohort 2 gap)', () => {
+  it('shows empty-payments state when no payments recorded', () => {
     vi.spyOn(useLeaseHook, 'useLease').mockReturnValue({
       data: MOCK_DETAIL,
       isPending: false,
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    // No payments for this lease in ERPNext format — expected gap until Cohort 2 RB-8
     vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: [],
       isPending: false,
     } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
-    expect(screen.getByText(/payment history will appear after the next migration step/i)).toBeInTheDocument()
+    expect(screen.getByText(/no payments recorded yet for this lease/i)).toBeInTheDocument()
   })
 
   it('renders unit when present', () => {
