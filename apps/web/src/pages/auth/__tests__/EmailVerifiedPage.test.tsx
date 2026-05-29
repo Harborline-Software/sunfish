@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, afterEach } from 'vitest'
+import { render, screen, cleanup } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { EmailVerifiedPage } from '../EmailVerifiedPage'
 
@@ -15,6 +15,8 @@ function renderWithState(state: object | null, route = '/auth/verified') {
 }
 
 describe('EmailVerifiedPage', () => {
+  afterEach(() => { cleanup() })
+
   it('redirects to /auth/login when no location state is present', () => {
     const { container } = renderWithState(null)
     // MemoryRouter renders nothing when redirected; the Navigate component
