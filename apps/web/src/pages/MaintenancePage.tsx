@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useWorkOrders, useCreateWorkOrder } from '@/hooks/useMaintenance'
-import type { WorkOrderSummary } from '@/api/maintenance'  // rebound from @/api/erpnext — W#74 PR 3
+import type { WorkOrderSummary, WorkOrderPriority } from '@/api/maintenance'  // rebound from @/api/erpnext — W#74 PR 3
 import { AuthRoleGate } from '@/components/AuthRoleGate'
 import { MaintenanceWorkOrderTimeline } from '@/components/MaintenanceWorkOrderTimeline'
 
@@ -36,7 +36,7 @@ function WorkOrderRow({ wo }: { wo: WorkOrderSummary }) {
 function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
   const [subject,       setSubject]       = useState('')
   const [vendorId,      setVendorId]      = useState('')
-  const [priority,      setPriority]      = useState('Normal')
+  const [priority,      setPriority]      = useState<WorkOrderPriority>('Normal')
   const [scheduledDate, setScheduledDate] = useState('')
 
   const mutation = useCreateWorkOrder()
@@ -88,7 +88,7 @@ function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
         <select
           aria-label="Priority"
           value={priority}
-          onChange={(e) => setPriority(e.target.value)}
+          onChange={(e) => setPriority(e.target.value as WorkOrderPriority)}
           className="rounded border border-gray-300 px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="Low">Low</option>
