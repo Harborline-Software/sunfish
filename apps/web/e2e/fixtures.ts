@@ -156,7 +156,6 @@ export async function mockCohort1Apis(page: Page, overrides: ApiMocks = {}) {
  * works against both the mock layer (CI) and the real Bridge (stack-required runs).
  *
  * Seeded user: admin@example.com / password
- * Unverified:  unverified@example.com / password  (403 with email_unverified discriminator)
  * Rate-limited: rate-limited@example.com
  */
 export async function mockAuthApis(page: Page) {
@@ -177,17 +176,6 @@ export async function mockAuthApis(page: Page) {
 
     if (email === 'rate-limited@example.com') {
       return route.fulfill({ status: 429, body: '' })
-    }
-    if (email === 'unverified@example.com') {
-      return route.fulfill({
-        status: 403,
-        contentType: 'application/problem+json',
-        body: JSON.stringify({
-          title: 'email_unverified',
-          status: 403,
-          detail: 'Email address has not been verified',
-        }),
-      })
     }
     if (email === 'admin@example.com' && password === 'password') {
       return route.fulfill({

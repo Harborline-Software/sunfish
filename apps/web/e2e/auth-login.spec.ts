@@ -3,7 +3,7 @@
 // Coverage:
 //   (a) Direct login — seeded user, valid creds → authenticated landing
 //   (b) Self-service signup → verify-email → login chain (UI navigation)
-//   (c) Failure cases: bad credentials, unverified email, rate-limited
+//   (c) Failure cases: bad credentials, rate-limited
 //
 // All tests run against MSW-style page.route() intercepts so they pass in CI
 // without a real Bridge. Tests are structured so swapping mockAuthApis() for
@@ -15,7 +15,6 @@
 //   - GET /api/v1/cockpit/auth/antiforgery-token → { token, headerName }
 //   - POST /api/v1/cockpit/auth/login → { antiforgeryToken, antiforgeryHeaderName } on 200
 //   - POST /api/v1/cockpit/auth/login → 401 { title: 'invalid_credentials' } on bad creds
-//   - POST /api/v1/cockpit/auth/login → 403 { title: 'email_unverified' } for unverified accounts
 //   - POST /api/v1/cockpit/auth/login → 429 for rate-limit
 //   - GET /api/v1/whoami → { user, role } on authenticated session (reads cookie)
 //   - POST /api/v1/cockpit/auth/logout → 204 (cookie cleared)
@@ -146,19 +145,6 @@ test.describe('Login failure cases', () => {
     await page.getByRole('button', { name: /sign in/i }).click()
 
     await expect(page.getByRole('alert')).toContainText(/invalid email or password/i)
-    await expect(page).toHaveURL(/\/auth\/login/)
-  })
-
-  test('unverified email → shows error with resend link', async ({ page }) => {
-    await mockAuthApis(page)
-    await page.goto('/auth/login')
-    await page.getByLabel(/email/i).fill('unverified@example.com')
-    await page.getByLabel(/password/i).fill('password')
-    await page.getByRole('button', { name: /sign in/i }).click()
-
-    const alert = page.getByRole('alert')
-    await expect(alert).toContainText(/not been verified/i)
-    await expect(alert.getByRole('link')).toBeVisible()
     await expect(page).toHaveURL(/\/auth\/login/)
   })
 

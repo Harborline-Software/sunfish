@@ -28,14 +28,6 @@ export class CsrfInvalidError extends ProblemDetailsError {
   }
 }
 
-export class EmailUnverifiedError extends ProblemDetailsError {
-  constructor(status: number, detail?: string) {
-    super('email_unverified', status, detail)
-    this.name = 'EmailUnverifiedError'
-    Object.setPrototypeOf(this, new.target.prototype)
-  }
-}
-
 export class RateLimitedError extends Error {
   constructor() {
     super('Too many login attempts')
@@ -48,7 +40,6 @@ const LOGIN_DISCRIMINATORS: Partial<Record<string, (s: number, d?: string) => ne
   'invalid_credentials': (s, d) => { throw new InvalidCredentialsError(s, d) },
   'tenant_unresolved':   (s, d) => { throw new TenantUnresolvedError(s, d) },
   'csrf_invalid':        (s, d) => { throw new CsrfInvalidError(s, d) },
-  'email_unverified':    (s, d) => { throw new EmailUnverifiedError(s, d) },
 }
 
 export async function getAntiforgeryToken(): Promise<AntiforgeryTokenResponse> {
