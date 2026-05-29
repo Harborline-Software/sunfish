@@ -2,21 +2,21 @@ import { Link, useParams } from 'react-router-dom'
 import { useUnit } from '@/hooks/useUnits'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import type { UnitSummary } from '@/api/units'
+import type { UnitDetail } from '@/api/units'
 
-function statusVariant(status: UnitSummary['status']) {
+function statusVariant(status: UnitDetail['occupancyStatus']) {
   switch (status) {
-    case 'Available': return 'success' as const
+    case 'Vacant': return 'success' as const
     case 'Occupied': return 'default' as const
-    case 'MaintenanceHold': return 'secondary' as const
+    case 'Reserved': return 'secondary' as const
   }
 }
 
-function statusLabel(status: UnitSummary['status']) {
+function statusLabel(status: UnitDetail['occupancyStatus']) {
   switch (status) {
-    case 'Available': return 'Available'
+    case 'Vacant': return 'Vacant'
     case 'Occupied': return 'Occupied'
-    case 'MaintenanceHold': return 'Maintenance Hold'
+    case 'Reserved': return 'Maintenance Hold'
   }
 }
 
@@ -49,7 +49,7 @@ export function UnitDetailPage() {
           ← Vacancies
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Unit {unit.unitNumber}</h1>
-        <Badge variant={statusVariant(unit.status)}>{statusLabel(unit.status)}</Badge>
+        <Badge variant={statusVariant(unit.occupancyStatus)}>{statusLabel(unit.occupancyStatus)}</Badge>
       </div>
 
       <Card className="mb-6">
@@ -60,7 +60,7 @@ export function UnitDetailPage() {
           <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
             <div>
               <dt className="text-gray-500">Property</dt>
-              <dd className="font-medium text-gray-900">{unit.propertyDisplayName}</dd>
+              <dd className="font-medium text-gray-900">{unit.propertyId}</dd>
             </div>
             <div>
               <dt className="text-gray-500">Unit Number</dt>
@@ -78,23 +78,21 @@ export function UnitDetailPage() {
                 <dd className="font-medium text-gray-900">{unit.bathrooms}</dd>
               </div>
             )}
-            {unit.squareFootage != null && (
+            {unit.squareFeet != null && (
               <div>
                 <dt className="text-gray-500">Square Footage</dt>
-                <dd className="font-medium text-gray-900">{unit.squareFootage.toLocaleString()} sqft</dd>
+                <dd className="font-medium text-gray-900">{unit.squareFeet.toLocaleString()} sqft</dd>
               </div>
             )}
             <div>
               <dt className="text-gray-500">Status</dt>
               <dd>
-                <Badge variant={statusVariant(unit.status)}>{statusLabel(unit.status)}</Badge>
+                <Badge variant={statusVariant(unit.occupancyStatus)}>{statusLabel(unit.occupancyStatus)}</Badge>
               </dd>
             </div>
             <div>
-              <dt className="text-gray-500">Added</dt>
-              <dd className="font-medium text-gray-900">
-                {new Date(unit.createdAt).toLocaleDateString()}
-              </dd>
+              <dt className="text-gray-500">Open Work Orders</dt>
+              <dd className="font-medium text-gray-900">{unit.openWorkOrders}</dd>
             </div>
           </dl>
           {unit.notes && (
@@ -105,6 +103,56 @@ export function UnitDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {unit.activeLease && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="text-base">Active Lease</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <div>
+                <dt className="text-gray-500">Lease ID</dt>
+                <dd className="font-medium text-gray-900 font-mono text-xs">{unit.activeLease.leaseId}</dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">End Date</dt>
+                <dd className="font-medium text-gray-900">
+                  {new Date(unit.activeLease.endDate).toLocaleDateString()}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Monthly Rent</dt>
+                <dd className="font-medium text-gray-900">
+                  ${unit.activeLease.monthlyRent.toLocaleString()}
+                </dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+      )}
+
+      {unit.lastInspection && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Last Inspection</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
+              <div>
+                <dt className="text-gray-500">Scheduled Date</dt>
+                <dd className="font-medium text-gray-900">
+                  {new Date(unit.lastInspection.scheduledDate).toLocaleDateString()}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-gray-500">Phase</dt>
+                <dd className="font-medium text-gray-900">{unit.lastInspection.phase}</dd>
+              </div>
+            </dl>
+          </CardContent>
+        </Card>
+      )}
     </div>
   )
 }

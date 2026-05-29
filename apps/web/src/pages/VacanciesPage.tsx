@@ -8,7 +8,7 @@ function unitBedBathLabel(unit: UnitSummary): string {
   const parts: string[] = []
   if (unit.bedrooms != null) parts.push(`${unit.bedrooms} bd`)
   if (unit.bathrooms != null) parts.push(`${unit.bathrooms} ba`)
-  if (unit.squareFootage != null) parts.push(`${unit.squareFootage.toLocaleString()} sqft`)
+  if (unit.squareFeet != null) parts.push(`${unit.squareFeet.toLocaleString()} sqft`)
   return parts.join(' · ') || 'No size info'
 }
 
@@ -64,7 +64,7 @@ export function VacanciesPage() {
                     <CardTitle className="text-base">
                       Unit {unit.unitNumber}
                     </CardTitle>
-                    <p className="mt-0.5 text-xs text-gray-500">{unit.propertyDisplayName}</p>
+                    <p className="mt-0.5 text-xs text-gray-500">{unit.propertyId}</p>
                   </div>
                   <Badge variant="success">Available</Badge>
                 </div>
