@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 jobs:
   lint-test:
@@ -72,3 +73,109 @@ jobs:
       - name: Build
         working-directory: sunfish/apps/web
         run: npm run build
+
+      - name: Compute bundle stats
+        working-directory: sunfish/apps/web
+        run: |
+          node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const zlib = require('zlib');
+          const dir = 'dist/assets';
+          const files = fs.existsSync(dir)
+            ? fs.readdirSync(dir).filter(f => f.endsWith('.js'))
+            : [];
+          let totalRaw = 0, totalGz = 0;
+          for (const f of files) {
+            const buf = fs.readFileSync(path.join(dir, f));
+            totalRaw += buf.length;
+            totalGz += zlib.gzipSync(buf, { level: 9 }).length;
+          }
+          const stats = { raw: totalRaw, gzip: totalGz };
+          fs.writeFileSync('dist/bundle-stats.json', JSON.stringify(stats));
+          console.log('Bundle: ' + (totalRaw/1024).toFixed(1) + ' kB raw, ' + (totalGz/1024).toFixed(1) + ' kB gz');
+          "
+
+      - name: Upload bundle report
+        uses: actions/upload-artifact@v7
+        with:
+          name: bundle-report
+          path: |
+            sunfish/apps/web/dist/bundle-report.html
+            sunfish/apps/web/dist/bundle-stats.json
+          retention-days: 30
+
+      - name: Download baseline bundle stats (main)
+        if: github.event_name == 'pull_request'
+        id: baseline
+        uses: dawidd6/action-download-artifact@v21
+        with:
+          workflow: web-ci.yml
+          branch: main
+          name: bundle-report
+          path: baseline-bundle
+          if_no_artifact_found: warn
+
+      - name: Post bundle delta comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            const fs = require('fs');
+            const fmt = (b) => (b / 1024).toFixed(1) + ' kB';
+            const sign = (n) => n >= 0 ? '+' : '';
+
+            const current = JSON.parse(
+              fs.readFileSync('sunfish/apps/web/dist/bundle-stats.json', 'utf8')
+            );
+
+            let tableRows = '';
+            const baselinePath = 'baseline-bundle/bundle-stats.json';
+            if (fs.existsSync(baselinePath)) {
+              const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+              const rawDelta = current.raw - baseline.raw;
+              const gzDelta = current.gzip - baseline.gzip;
+              tableRows = [
+                `| Baseline (main) | ${fmt(baseline.raw)} | ${fmt(baseline.gzip)} |`,
+                `| **This PR** | **${fmt(current.raw)}** | **${fmt(current.gzip)}** |`,
+                `| Delta | ${sign(rawDelta)}${fmt(rawDelta)} | ${sign(gzDelta)}${fmt(gzDelta)} |`,
+              ].join('\n');
+            } else {
+              tableRows = [
+                `| **This PR** | **${fmt(current.raw)}** | **${fmt(current.gzip)}** |`,
+                `| Baseline | _no prior artifact on main_ | — |`,
+              ].join('\n');
+            }
+
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            const marker = '<!-- bundle-delta -->';
+            const body = [
+              marker,
+              '## Bundle size',
+              '',
+              '| | Raw | Gzip |',
+              '|---|---|---|',
+              tableRows,
+              '',
+              `[View treemap report](${runUrl}) — download artifact \`bundle-report\``,
+            ].join('\n');
+
+            const allComments = await github.paginate(github.rest.issues.listComments, {
+              ...context.repo,
+              issue_number: context.issue.number,
+              per_page: 100,
+            });
+            const existing = allComments.find(c => c.body && c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                ...context.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                ...context.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }

@@ -3,8 +3,9 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { fileURLToPath, URL } from 'node:url'
 import { VitePWA } from 'vite-plugin-pwa'
+import { visualizer } from 'rollup-plugin-visualizer'
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     react(),
     tailwindcss(),
@@ -54,6 +55,13 @@ export default defineConfig({
         ],
       },
     }),
+    command === 'build' &&
+      visualizer({
+        filename: 'dist/bundle-report.html',
+        gzipSize: true,
+        brotliSize: true,
+        open: false,
+      }),
   ],
   resolve: {
     alias: {
@@ -80,4 +88,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))
