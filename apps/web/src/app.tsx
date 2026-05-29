@@ -8,6 +8,8 @@ import { OfflineBanner } from '@/components/OfflineBanner'
 import { CompanySwitcher } from '@/components/CompanySwitcher'
 import { useCompanyStore } from '@/stores/companyStore'
 import { useAuthStore } from '@/stores/authStore'
+import { useLogout } from '@/hooks/useAuth'
+import { getAntiforgeryToken } from '@/api/auth'
 
 const PropertiesPage = lazy(() => import('@/pages/PropertiesPage').then(m => ({ default: m.PropertiesPage })))
 const LeasesPage = lazy(() => import('@/pages/LeasesPage').then(m => ({ default: m.LeasesPage })))
@@ -30,7 +32,8 @@ const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView')
 const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
 const AuditEventsPage = lazy(() => import('@/pages/AuditEventsPage').then(m => ({ default: m.AuditEventsPage })))
 const AuditEventDetailPage = lazy(() => import('@/pages/AuditEventDetailPage').then(m => ({ default: m.AuditEventDetailPage })))
-// W#79 auth pages — outside AppLayout (no nav header for pre-auth flows)
+// W#79 + ADR 0099 auth pages — outside AppLayout (no nav header for pre-auth flows)
+const LoginPage = lazy(() => import('@/pages/auth/LoginPage').then(m => ({ default: m.LoginPage })))
 const SignupPage = lazy(() => import('@/pages/auth/SignupPage').then(m => ({ default: m.SignupPage })))
 const VerifyEmailPage = lazy(() => import('@/pages/auth/VerifyEmailPage').then(m => ({ default: m.VerifyEmailPage })))
 const VerifyEmailPendingPage = lazy(() => import('@/pages/auth/VerifyEmailPendingPage').then(m => ({ default: m.VerifyEmailPendingPage })))
@@ -126,33 +129,70 @@ function ReportsNavGroup() {
   )
 }
 
+function LogoutButton() {
+  const logout = useLogout()
+  return (
+    <button
+      type="button"
+      onClick={() => logout.mutate()}
+      disabled={logout.isPending}
+      className="text-sm text-gray-500 hover:text-gray-900 disabled:opacity-50"
+    >
+      Sign out
+    </button>
+  )
+}
+
 function AppLayout() {
   const setActiveCompany = useCompanyStore((s) => s.setActiveCompany)
   const setAvailableCompanies = useCompanyStore((s) => s.setAvailableCompanies)
   const setAuth = useAuthStore((s) => s.setAuth)
+  const setUnauthenticated = useAuthStore((s) => s.setUnauthenticated)
+  const setCsrfToken = useAuthStore((s) => s.setCsrfToken)
   const setActiveTenantId = useCompanyStore((s) => s.setActiveTenantId)
+  const loaded = useAuthStore((s) => s.loaded)
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
 
   useEffect(() => {
     fetch('/api/v1/whoami', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data: {
-        user?: string
-        role?: string
-        defaultCompany?: string
-        availableCompanies?: string[]
-        tenantId?: string
-      }) => {
-        if (data.defaultCompany) setActiveCompany(data.defaultCompany)
-        if (data.availableCompanies) setAvailableCompanies(data.availableCompanies)
-        // Cohort-4 cycle 2 — store substrate tenantId for A1 defense-in-depth assertion.
-        // Empty string means no tenant bound (dev-stub); assertion skips when empty.
-        setActiveTenantId(data.tenantId ?? '')
-        setAuth(data.user ?? 'dev-user', data.role ?? 'owner')
+      .then((r) => {
+        if (r.status === 401) { setUnauthenticated(); return }
+        return r.json().then((data: {
+          user?: string
+          role?: string
+          defaultCompany?: string
+          availableCompanies?: string[]
+          tenantId?: string
+        }) => {
+          if (data.defaultCompany) setActiveCompany(data.defaultCompany)
+          if (data.availableCompanies) setAvailableCompanies(data.availableCompanies)
+          // Cohort-4 cycle 2 — store substrate tenantId for A1 defense-in-depth assertion.
+          // Empty string means no tenant bound (dev-stub); assertion skips when empty.
+          setActiveTenantId(data.tenantId ?? '')
+          setAuth(data.user ?? 'dev-user', data.role ?? 'owner')
+          // Fetch CSRF token for this authenticated session (needed for mutations after refresh).
+          getAntiforgeryToken()
+            .then(({ token }) => setCsrfToken(token))
+            .catch(() => {})
+        })
       })
       .catch(() => {
+        // Network error — dev mode without backend; treat as dev user.
         setAuth('dev-user', 'owner')
       })
-  }, [setActiveCompany, setAvailableCompanies, setActiveTenantId, setAuth])
+  }, [setActiveCompany, setAvailableCompanies, setActiveTenantId, setAuth, setUnauthenticated, setCsrfToken])
+
+  if (!loaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center text-sm text-gray-500">
+        Loading…
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/auth/login" replace />
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -235,7 +275,10 @@ function AppLayout() {
               Audit
             </NavLink>
           </nav>
-          <CompanySwitcher />
+          <div className="flex items-center gap-4">
+            <CompanySwitcher />
+            <LogoutButton />
+          </div>
         </div>
       </header>
       <main className="mx-auto max-w-7xl px-4 py-8">
@@ -285,6 +328,7 @@ export function App() {
           <Suspense fallback={null}>
             <Routes>
               {/* Auth flows — no nav header */}
+              <Route path="/auth/login" element={<LoginPage />} />
               <Route path="/auth/signup" element={<SignupPage />} />
               <Route path="/auth/verify-email" element={<VerifyEmailPage />} />
               <Route path="/auth/verify-email/pending" element={<VerifyEmailPendingPage />} />
