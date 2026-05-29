@@ -34,7 +34,7 @@ const OCCUPIED_UNIT: UnitDetail = {
   },
   notes: 'Corner unit.',
   lastInspection: { scheduledDate: '2024-03-15', phase: 'Move-out' },
-  openWorkOrders: 2,
+  openWorkOrders: 5,
 }
 
 const VACANT_UNIT: UnitDetail = {
@@ -95,7 +95,7 @@ describe('UnitDetailPage', () => {
     expect(screen.getByTestId('occupancy-status')).toHaveTextContent('Occupied')
     expect(screen.getByText('$1,400')).toBeInTheDocument()
     expect(screen.getByText('Move-out')).toBeInTheDocument()
-    expect(screen.getByText('2')).toBeInTheDocument()
+    expect(screen.getByText('5')).toBeInTheDocument()
     expect(screen.getByText('Corner unit.')).toBeInTheDocument()
   })
 
