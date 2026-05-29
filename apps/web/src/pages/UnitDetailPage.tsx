@@ -49,7 +49,7 @@ export function UnitDetailPage() {
           ← Vacancies
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">Unit {unit.unitNumber}</h1>
-        <Badge variant={statusVariant(unit.occupancyStatus)}>{statusLabel(unit.occupancyStatus)}</Badge>
+        <Badge data-testid="occupancy-status" variant={statusVariant(unit.occupancyStatus)}>{statusLabel(unit.occupancyStatus)}</Badge>
       </div>
 
       <Card className="mb-6">

@@ -92,7 +92,7 @@ describe('UnitDetailPage', () => {
 
     render(<UnitDetailPage />, { wrapper })
     expect(screen.getByText('Unit 1A')).toBeInTheDocument()
-    expect(screen.getByText('Occupied')).toBeInTheDocument()
+    expect(screen.getByTestId('occupancy-status')).toHaveTextContent('Occupied')
     expect(screen.getByText('$1,400')).toBeInTheDocument()
     expect(screen.getByText('Move-out')).toBeInTheDocument()
     expect(screen.getByText('2')).toBeInTheDocument()
@@ -109,7 +109,7 @@ describe('UnitDetailPage', () => {
 
     render(<UnitDetailPage />, { wrapper })
     expect(screen.getByText('Unit 2B')).toBeInTheDocument()
-    expect(screen.getByText('Vacant')).toBeInTheDocument()
+    expect(screen.getByTestId('occupancy-status')).toHaveTextContent('Vacant')
     expect(screen.queryByText('Active Lease')).not.toBeInTheDocument()
     expect(screen.queryByText('Last Inspection')).not.toBeInTheDocument()
   })
@@ -127,6 +127,7 @@ describe('UnitDetailPage', () => {
     } as unknown as ReturnType<typeof useUnitsHooks.useUnit>)
 
     render(<UnitDetailPage />, { wrapper })
-    expect(screen.getByText('Maintenance Hold')).toBeInTheDocument()
+    // occupancyStatus 'Reserved' maps to label 'Maintenance Hold' per statusLabel()
+    expect(screen.getByTestId('occupancy-status')).toHaveTextContent('Maintenance Hold')
   })
 })
