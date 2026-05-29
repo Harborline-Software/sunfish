@@ -1,0 +1,82 @@
+name: CodeQL (javascript-typescript)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly scan every Monday at 04:30 UTC — runs regardless of paths filter.
+    - cron: "30 4 * * 1"
+
+# `Analyze (javascript-typescript)` is a ruleset-required check, so the job
+# must run (and post its result) on every PR — a path-filtered workflow would
+# never post the required check on non-JS/TS PRs and would block them forever.
+#
+# Instead the job always runs but the expensive init + analyze STEPS are gated
+# on a JS/TS path filter: C#-only / docs-only PRs complete the job in seconds
+# (filter step only) while still satisfying the required check. Pushes to main
+# and the weekly cron always analyze unconditionally.
+
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+
+      - name: Detect JS/TS changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          working-directory: sunfish
+          filters: |
+            jsts:
+              - "**/*.ts"
+              - "**/*.tsx"
+              - "**/*.js"
+              - "**/*.jsx"
+              - "**/package.json"
+              - "**/pnpm-lock.yaml"
+              - "**/package-lock.json"
+              - "**/vite.config.*"
+              - "**/tsconfig*.json"
+
+      - name: Checkout sibling shipyard
+        if: github.event_name != 'pull_request' || steps.changes.outputs.jsts == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+
+      - uses: actions/setup-node@v6
+        if: github.event_name != 'pull_request' || steps.changes.outputs.jsts == 'true'
+        with:
+          node-version: "22"
+
+      - name: Initialize CodeQL
+        if: github.event_name != 'pull_request' || steps.changes.outputs.jsts == 'true'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
+          build-mode: none
+
+      - name: Perform CodeQL Analysis
+        if: github.event_name != 'pull_request' || steps.changes.outputs.jsts == 'true'
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:javascript-typescript
+
+      - name: No JS/TS changes — analysis skipped
+        if: github.event_name == 'pull_request' && steps.changes.outputs.jsts != 'true'
+        run: echo "No JavaScript/TypeScript changes in this PR; CodeQL analysis skipped (required check satisfied)."

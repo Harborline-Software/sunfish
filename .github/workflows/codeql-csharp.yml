@@ -1,0 +1,92 @@
+name: CodeQL (csharp)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Weekly scan every Monday at 04:30 UTC — runs regardless of paths filter.
+    - cron: "30 4 * * 1"
+
+# `Analyze (csharp)` is a ruleset-required check, so the job must run (and
+# post its result) on every PR — a path-filtered workflow would never post
+# the required check on non-C# PRs and would block the PR forever.
+#
+# Instead the job always runs but the expensive build + analyze STEPS are
+# gated on a C# path filter: frontend-only / docs-only PRs complete the job
+# in seconds (filter step only), saving ~35 min of Windows runner time while
+# still satisfying the required check. Pushes to main and the weekly cron
+# always analyze unconditionally.
+
+jobs:
+  analyze:
+    name: Analyze (csharp)
+    runs-on: windows-latest
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout sunfish
+        uses: actions/checkout@v6
+        with:
+          path: sunfish
+
+      - name: Detect C# changes
+        id: changes
+        if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@v3
+        with:
+          working-directory: sunfish
+          filters: |
+            csharp:
+              - "**/*.cs"
+              - "**/*.csproj"
+              - "**/*.slnx"
+              - "**/global.json"
+              - "**/Directory.Packages.props"
+              - "**/Directory.Build.props"
+              - "**/Directory.Build.targets"
+
+      - name: Checkout sibling shipyard
+        if: github.event_name != 'pull_request' || steps.changes.outputs.csharp == 'true'
+        uses: actions/checkout@v6
+        with:
+          repository: Harborline-Software/shipyard
+          path: shipyard
+          ref: main
+
+      - name: Setup .NET
+        if: github.event_name != 'pull_request' || steps.changes.outputs.csharp == 'true'
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: sunfish/global.json
+
+      - name: Initialize CodeQL
+        if: github.event_name != 'pull_request' || steps.changes.outputs.csharp == 'true'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: csharp
+          build-mode: manual
+
+      - name: Build (csharp)
+        if: github.event_name != 'pull_request' || steps.changes.outputs.csharp == 'true'
+        working-directory: sunfish
+        shell: bash
+        run: |
+          dotnet workload restore Sunfish.slnx
+          dotnet restore Sunfish.slnx
+          dotnet build Sunfish.slnx --no-restore
+
+      - name: Perform CodeQL Analysis
+        if: github.event_name != 'pull_request' || steps.changes.outputs.csharp == 'true'
+        uses: github/codeql-action/analyze@v4
+        with:
+          category: /language:csharp
+
+      - name: No C# changes — analysis skipped
+        if: github.event_name == 'pull_request' && steps.changes.outputs.csharp != 'true'
+        shell: bash
+        run: echo "No C# source or project changes in this PR; CodeQL analysis skipped (required check satisfied)."
