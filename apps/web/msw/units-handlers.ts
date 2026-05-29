@@ -79,8 +79,9 @@ export const unitsHandlers = [
     return HttpResponse.json(unit satisfies UnitDetail)
   }),
 
-  http.get('/api/v1/vacancies', () => {
-    const vacancies = MOCK_UNITS.filter((u) => u.occupancyStatus === 'Vacant').map(toSummary)
-    return HttpResponse.json({ vacancies } satisfies VacancyList)
+  // Trailing slash matches BE MapGroup("/api/v1/vacancies").MapGet("/") registration
+  http.get('/api/v1/vacancies/', () => {
+    const units = MOCK_UNITS.filter((u) => u.occupancyStatus === 'Vacant').map(toSummary)
+    return HttpResponse.json({ units } satisfies VacancyList)
   }),
 ]

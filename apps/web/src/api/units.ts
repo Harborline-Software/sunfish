@@ -17,7 +17,7 @@ export interface ActiveLease {
 
 export interface LastInspection {
   scheduledDate: string
-  phase: string
+  phase: string | null
 }
 
 export interface UnitSummary {
@@ -41,9 +41,8 @@ export interface UnitList {
   units: UnitSummary[]
 }
 
-export interface VacancyList {
-  vacancies: UnitSummary[]
-}
+// BE returns UnitListDto (key: units) for both the property-units list and the vacancies route.
+export type VacancyList = UnitList
 
 export async function getUnits(propertyId: string): Promise<UnitList> {
   const resp = await fetch(`/api/v1/properties/${encodeURIComponent(propertyId)}/units`, { credentials: 'include' })
@@ -58,7 +57,7 @@ export async function getUnit(unitId: string): Promise<UnitDetail> {
 }
 
 export async function getVacancies(): Promise<VacancyList> {
-  const resp = await fetch('/api/v1/vacancies', { credentials: 'include' })
+  const resp = await fetch('/api/v1/vacancies/', { credentials: 'include' })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to load vacancies')
   return (await resp.json()) as VacancyList
 }

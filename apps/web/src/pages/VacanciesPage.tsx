@@ -14,7 +14,7 @@ function unitBedBathLabel(unit: UnitSummary): string {
 
 export function VacanciesPage() {
   const { data, isPending, isError, error, refetch } = useVacancies()
-  const vacancies = data?.vacancies
+  const vacancies = data?.units
 
   if (isPending) {
     return (
