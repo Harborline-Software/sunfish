@@ -30,6 +30,9 @@ const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView')
 const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
 const AuditEventsPage = lazy(() => import('@/pages/AuditEventsPage').then(m => ({ default: m.AuditEventsPage })))
 const AuditEventDetailPage = lazy(() => import('@/pages/AuditEventDetailPage').then(m => ({ default: m.AuditEventDetailPage })))
+// Cohort-5 — vacancy admin + unit detail pages
+const VacanciesPage = lazy(() => import('@/pages/VacanciesPage').then(m => ({ default: m.VacanciesPage })))
+const UnitDetailPage = lazy(() => import('@/pages/UnitDetailPage').then(m => ({ default: m.UnitDetailPage })))
 // W#79 auth pages — outside AppLayout (no nav header for pre-auth flows)
 const SignupPage = lazy(() => import('@/pages/auth/SignupPage').then(m => ({ default: m.SignupPage })))
 const VerifyEmailPage = lazy(() => import('@/pages/auth/VerifyEmailPage').then(m => ({ default: m.VerifyEmailPage })))
@@ -216,6 +219,14 @@ function AppLayout() {
               Cockpit
             </NavLink>
             <NavLink
+              to="/vacancies"
+              className={({ isActive }) =>
+                isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
+              }
+            >
+              Vacancies
+            </NavLink>
+            <NavLink
               to="/audit-trail"
               className={({ isActive }) =>
                 isActive ? 'text-gray-900 font-medium' : 'text-gray-500 hover:text-gray-900'
@@ -247,6 +258,9 @@ function AppLayout() {
               <Route path="/reports/profit-loss" element={<Navigate to="/reports/profit-and-loss-by-property" replace />} />
               <Route path="/audit-trail" element={<AuditEventsPage />} />
               <Route path="/audit-trail/:auditId" element={<AuditEventDetailPage />} />
+              {/* Cohort-5 — vacancy admin + unit detail (pattern-009 pair; Bridge endpoints pending Engineer) */}
+              <Route path="/vacancies" element={<VacanciesPage />} />
+              <Route path="/units/:unitId" element={<UnitDetailPage />} />
               <Route path="/cockpit" element={<CockpitLayout />}>
                 <Route index element={<PropertySelector />} />
                 <Route path="work-orders" element={<WorkOrderListView />} />
