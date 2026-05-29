@@ -50,10 +50,10 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: [],
       isPending: false,
-    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     const { container } = render(<LeaseDetailPage />, { wrapper })
     expect(await axe(container)).toHaveNoViolations()
@@ -66,10 +66,10 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
       isPending: true,
-    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText(/loading lease/i)).toBeInTheDocument()
@@ -82,10 +82,10 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: [],
       isPending: false,
-    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText('Jane Smith')).toBeInTheDocument()
@@ -102,10 +102,10 @@ describe('LeaseDetailPage', () => {
       isError: true,
       error: new Error('Lease not found'),
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: undefined,
       isPending: false,
-    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText(/failed to load lease/i)).toBeInTheDocument()
@@ -120,10 +120,10 @@ describe('LeaseDetailPage', () => {
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
     // No payments for this lease in ERPNext format — expected gap until Cohort 2 RB-8
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: [],
       isPending: false,
-    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText(/payment history will appear after the next migration step/i)).toBeInTheDocument()
@@ -136,10 +136,10 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: [],
       isPending: false,
-    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText('unit-1')).toBeInTheDocument()
@@ -157,10 +157,10 @@ describe('LeaseDetailPage', () => {
       isError: false,
       error: null,
     } as unknown as ReturnType<typeof useLeaseHook.useLease>)
-    vi.spyOn(useLeaseHook, 'usePayments').mockReturnValue({
+    vi.spyOn(useLeaseHook, 'useLeasePayments').mockReturnValue({
       data: [],
       isPending: false,
-    } as unknown as ReturnType<typeof useLeaseHook.usePayments>)
+    } as unknown as ReturnType<typeof useLeaseHook.useLeasePayments>)
 
     render(<LeaseDetailPage />, { wrapper })
     expect(screen.getByText('prop-raw-id')).toBeInTheDocument()

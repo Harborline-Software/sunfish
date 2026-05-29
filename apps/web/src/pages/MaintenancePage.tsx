@@ -67,7 +67,7 @@ function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
       onSubmit={handleSubmit}
       className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3"
     >
-      <h3 className="text-sm font-semibold text-gray-700">New Work Order</h3>
+      <h2 className="text-sm font-semibold text-gray-700">New Work Order</h2>
       <div className="grid grid-cols-2 gap-3">
         <input
           aria-label="Subject / description"
@@ -108,6 +108,7 @@ function CreateWorkOrderForm({ onSuccess }: { onSuccess: () => void }) {
       <button
         type="submit"
         disabled={mutation.isPending}
+        aria-busy={mutation.isPending || undefined}
         className="rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
       >
         {mutation.isPending ? 'Submitting…' : 'Create Work Order'}
