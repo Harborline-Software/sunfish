@@ -154,6 +154,45 @@ export interface ArAgingSummaryResult {
 }
 
 // -------------------------------------------------------------------------
+// AP Aging Summary
+// -------------------------------------------------------------------------
+
+export interface ApAgingSummaryParameters {
+  chartId: ChartId
+  asOfDate?: string | null
+  vendorIds?: string[] | null
+  propertyIds?: string[] | null
+  topOverdueN?: number
+}
+
+export interface ApAgingSummaryRow {
+  groupKey: string
+  groupLabel: string
+  current: number
+  days0To30: number
+  days31To60: number
+  days61To90: number
+  days90Plus: number
+  totalOpen: number
+}
+
+export interface TopOverdueVendor {
+  vendorId: string
+  vendorName: string
+  days90PlusBalance: number
+  totalOpenBalance: number
+}
+
+export interface ApAgingSummaryResult {
+  chartId: ChartId
+  asOf: string
+  byVendor: ApAgingSummaryRow[]
+  byProperty: ApAgingSummaryRow[]
+  totals: ApAgingSummaryRow
+  topOverdue: TopOverdueVendor[]
+}
+
+// -------------------------------------------------------------------------
 // Profit and Loss by Property
 // -------------------------------------------------------------------------
 
@@ -283,6 +322,10 @@ export function runArAgingSummary(params: ArAgingSummaryParameters) {
   return runReport<ArAgingSummaryParameters, ArAgingSummaryResult>('ar-aging-summary', params)
 }
 
+export function runApAgingSummary(params: ApAgingSummaryParameters) {
+  return runReport<ApAgingSummaryParameters, ApAgingSummaryResult>('ap-aging-summary', params)
+}
+
 export function runProfitAndLossByProperty(params: ProfitAndLossByPropertyParameters) {
   return runReport<ProfitAndLossByPropertyParameters, ProfitAndLossByPropertyResult>('profit-and-loss-by-property', params)
 }
@@ -330,6 +373,10 @@ export function exportTrialBalanceCsv(params: TrialBalanceParameters) {
 
 export function exportArAgingSummaryCsv(params: ArAgingSummaryParameters) {
   return exportReportCsv('ar-aging-summary', params)
+}
+
+export function exportApAgingSummaryCsv(params: ApAgingSummaryParameters) {
+  return exportReportCsv('ap-aging-summary', params)
 }
 
 export function exportProfitAndLossByPropertyCsv(params: ProfitAndLossByPropertyParameters) {
