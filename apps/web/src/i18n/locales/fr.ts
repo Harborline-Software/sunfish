@@ -23,7 +23,7 @@ const fr: Partial<TranslationKeys> = {
     cancel: 'Annuler',
     submit: 'Envoyer',
     clear: 'Effacer',
-    units: '{{count}} unité',
+    units_one: '{{count}} unité',
     units_other: '{{count}} unités',
     pages: {
       previous: 'Précédent',
