@@ -86,7 +86,6 @@ export function ProjectBudgetPanel({ projectId }: Props) {
           <button
             onClick={() => setShowForm(true)}
             className="rounded border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-            aria-label="Add budget revision"
           >
             Add revision
           </button>
