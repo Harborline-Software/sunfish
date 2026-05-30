@@ -73,11 +73,11 @@ export function CrewCommsPage() {
   return (
     <div className="flex h-[calc(100vh-10rem)] gap-0 overflow-hidden rounded-lg border border-gray-200">
       {/* Thread list */}
-      <aside className="w-48 flex-none border-r border-gray-200 bg-gray-50">
+      <aside aria-label="Threads" className="w-48 flex-none border-r border-gray-200 bg-gray-50">
         <div className="px-3 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500">
           Threads
         </div>
-        <nav className="space-y-0.5 px-2">
+        <nav aria-label="Message threads" className="space-y-0.5 px-2">
           {THREADS.map((t) => (
             <button
               key={t.id}
@@ -151,9 +151,10 @@ export function CrewCommsPage() {
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               onKeyDown={handleKeyDown}
+              aria-label={`Message ${THREADS.find((t) => t.id === activeThread)?.label ?? activeThread} thread`}
               placeholder={`Message #${THREADS.find((t) => t.id === activeThread)?.label ?? activeThread}`}
               rows={2}
-              className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
             />
             <button
               onClick={() => { handleSend().catch(() => {}) }}

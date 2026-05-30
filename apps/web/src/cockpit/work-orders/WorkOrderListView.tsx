@@ -76,11 +76,11 @@ export function WorkOrderListView() {
           <table className="w-full overflow-hidden rounded border border-gray-200 bg-white text-sm">
             <thead className="bg-gray-50 text-left text-xs uppercase tracking-wider text-gray-500">
               <tr>
-                <th className="px-3 py-2">Work Order</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Vendor</th>
-                <th className="px-3 py-2">Scheduled</th>
-                <th className="px-3 py-2">Appointment</th>
+                <th scope="col" className="px-3 py-2">Work Order</th>
+                <th scope="col" className="px-3 py-2">Status</th>
+                <th scope="col" className="px-3 py-2">Vendor</th>
+                <th scope="col" className="px-3 py-2">Scheduled</th>
+                <th scope="col" className="px-3 py-2">Appointment</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
