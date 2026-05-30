@@ -31,6 +31,8 @@ const WorkOrderDetailView = lazy(() => import('@/cockpit/work-orders/WorkOrderDe
 const VendorListView = lazy(() => import('@/cockpit/vendors/VendorListView').then(m => ({ default: m.VendorListView })))
 const VendorDetailView = lazy(() => import('@/cockpit/vendors/VendorDetailView').then(m => ({ default: m.VendorDetailView })))
 const DashboardView = lazy(() => import('@/cockpit/DashboardView').then(m => ({ default: m.DashboardView })))
+const ProjectListView = lazy(() => import('@/cockpit/projects/ProjectListView').then(m => ({ default: m.ProjectListView })))
+const ProjectDetailView = lazy(() => import('@/cockpit/projects/ProjectDetailView').then(m => ({ default: m.ProjectDetailView })))
 const AuditEventsPage = lazy(() => import('@/pages/AuditEventsPage').then(m => ({ default: m.AuditEventsPage })))
 const AuditEventDetailPage = lazy(() => import('@/pages/AuditEventDetailPage').then(m => ({ default: m.AuditEventDetailPage })))
 // W#79 + ADR 0099 auth pages — outside AppLayout (no nav header for pre-auth flows)
@@ -313,6 +315,9 @@ function AppLayout() {
                 <Route path="work-orders/:workOrderId" element={<WorkOrderDetailView />} />
                 <Route path="vendors" element={<VendorListView />} />
                 <Route path="vendors/:vendorId" element={<VendorDetailView />} />
+                {/* projects routes MUST precede :propertyId catch-all — React Router v7 param-match */}
+                <Route path="projects" element={<ProjectListView />} />
+                <Route path="projects/:projectId" element={<ProjectDetailView />} />
                 <Route path=":propertyId/dashboard" element={<DashboardView />} />
                 <Route path=":propertyId" element={<PropertyDetailView />} />
               </Route>
