@@ -49,11 +49,9 @@ elif [ -n "$MAIN_REPO_ROOT" ] && [ -x "$MAIN_REPO_ROOT/node_modules/.bin/commitl
   COMMITLINT_BIN="$MAIN_REPO_ROOT/node_modules/.bin/commitlint"
 elif command -v commitlint >/dev/null 2>&1; then
   COMMITLINT_BIN="commitlint"
-elif command -v npx >/dev/null 2>&1; then
-  COMMITLINT_BIN="npx --no commitlint"
 else
-  echo "[commit-msg hook] commitlint not found; skipping local validation."
-  echo "[commit-msg hook] CI will still validate. Install via 'npm i -D @commitlint/cli @commitlint/config-conventional' to enable local checks."
+  echo "[commit-msg hook] commitlint not installed locally; skipping local validation."
+  echo "[commit-msg hook] CI wagoid gate is authoritative. Install via 'npm i -D @commitlint/cli @commitlint/config-conventional' to enable local checks."
   exit 0
 fi
 
