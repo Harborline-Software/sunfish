@@ -23,7 +23,10 @@ import type {
   AddMilestoneInput,
   AchieveMilestoneInput,
   InsertBudgetRevisionInput,
-  StopTimeInput,
+  OpenTimeEntryInput,
+  StopTimeEntryInput,
+  ApproveTimeEntryInput,
+  RejectTimeEntryInput,
 } from '@/api/projects'
 
 const PROJECTS_KEY = ['projects'] as const
@@ -129,7 +132,7 @@ export function useInsertBudgetRevision(projectId: string) {
 export function useOpenTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: () => openTimeEntry(projectId),
+    mutationFn: (input: OpenTimeEntryInput) => openTimeEntry(projectId, input),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
@@ -138,8 +141,7 @@ export function useOpenTimeEntry(projectId: string) {
 export function useStopTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ entryId, input }: { entryId: string; input: StopTimeInput }) =>
-      stopTimeEntry(entryId, input),
+    mutationFn: (input: StopTimeEntryInput) => stopTimeEntry(projectId, input),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
@@ -148,7 +150,7 @@ export function useStopTimeEntry(projectId: string) {
 export function useSubmitTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (entryId: string) => submitTimeEntry(entryId),
+    mutationFn: (entryId: string) => submitTimeEntry(projectId, entryId),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
@@ -157,7 +159,8 @@ export function useSubmitTimeEntry(projectId: string) {
 export function useApproveTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (entryId: string) => approveTimeEntry(entryId),
+    mutationFn: ({ entryId, input }: { entryId: string; input?: ApproveTimeEntryInput }) =>
+      approveTimeEntry(projectId, entryId, input),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
@@ -166,7 +169,8 @@ export function useApproveTimeEntry(projectId: string) {
 export function useRejectTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (entryId: string) => rejectTimeEntry(entryId),
+    mutationFn: ({ entryId, input }: { entryId: string; input: RejectTimeEntryInput }) =>
+      rejectTimeEntry(projectId, entryId, input),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })

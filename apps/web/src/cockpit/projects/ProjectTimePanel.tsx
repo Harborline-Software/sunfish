@@ -18,6 +18,7 @@
  *   → 403). The UI cannot enforce this directly (FED has no WorkerPartyId in the
  *   TimeEntry shape — negative-match discipline). Trust Bridge enforcement for self-approval.
  */
+import { useState } from 'react'
 import { useAuthStore } from '@/stores/authStore'
 import { useProjectTimeEntries, useApproveTimeEntry, useRejectTimeEntry } from '@/hooks/useProjects'
 import type { TimeEntryStatus } from '@/api/projects'
@@ -37,6 +38,9 @@ interface Props {
 export function ProjectTimePanel({ projectId }: Props) {
   const role = useAuthStore((s) => s.role)
   const canApprove = role === 'approver'
+
+  const [rejectingId, setRejectingId] = useState<string | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
 
   const { data, isPending, isError, error } = useProjectTimeEntries(projectId)
   const approveMutation = useApproveTimeEntry(projectId)
@@ -88,23 +92,53 @@ export function ProjectTimePanel({ projectId }: Props) {
               </td>
               {canApprove && (
                 <td className="py-2">
-                  {entry.status === 'Submitted' ? (
+                  {entry.status === 'Submitted' && rejectingId !== entry.id ? (
                     <div className="flex gap-2">
                       <button
-                        onClick={() => approveMutation.mutate(entry.id)}
+                        onClick={() => approveMutation.mutate({ entryId: entry.id })}
                         disabled={approveMutation.isPending}
                         className="rounded bg-green-600 px-2 py-1 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                        aria-label={`Approve time entry`}
+                        aria-label="Approve time entry"
                       >
                         Approve
                       </button>
                       <button
-                        onClick={() => rejectMutation.mutate(entry.id)}
+                        onClick={() => { setRejectingId(entry.id); setRejectReason('') }}
                         disabled={rejectMutation.isPending}
                         className="rounded border border-red-300 px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 disabled:opacity-50"
-                        aria-label={`Reject time entry`}
+                        aria-label="Reject time entry"
                       >
                         Reject
+                      </button>
+                    </div>
+                  ) : rejectingId === entry.id ? (
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="text"
+                        value={rejectReason}
+                        onChange={(e) => setRejectReason(e.target.value)}
+                        placeholder="Reason for rejection"
+                        className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-red-400 focus:outline-none"
+                        aria-label="Rejection reason"
+                      />
+                      <button
+                        onClick={() => {
+                          if (!rejectReason.trim()) return
+                          rejectMutation.mutate(
+                            { entryId: entry.id, input: { reason: rejectReason.trim() } },
+                            { onSettled: () => { setRejectingId(null); setRejectReason('') } },
+                          )
+                        }}
+                        disabled={rejectMutation.isPending || !rejectReason.trim()}
+                        className="rounded bg-red-600 px-2 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                      >
+                        Confirm
+                      </button>
+                      <button
+                        onClick={() => { setRejectingId(null); setRejectReason('') }}
+                        className="text-xs text-gray-400 hover:text-gray-600"
+                      >
+                        Cancel
                       </button>
                     </div>
                   ) : null}
