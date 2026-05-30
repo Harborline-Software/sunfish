@@ -165,17 +165,28 @@ export interface TimeEntryList {
 }
 
 // ── write request DTOs ────────────────────────────────────────────────────────
-// sec-eng A2: ALL actingPartyId / approverPartyId / rejecterPartyId / partyId
-// are server-derived from the authenticated session. NEVER sent in request body.
+// sec-eng A2: actingPartyId / approverPartyId / rejecterPartyId / createdBy /
+// updatedBy are ALL server-derived from the authenticated session principal via
+// IPartyContext. NEVER sent in request body.
+//
+// NOTE: ownerPartyId on CreateProjectInput IS body-supplied — it is the PROJECT
+// OWNER (a business relationship), not the session actor. The Bridge contracts
+// file explicitly marks it as "deliberately NOT in the forbidden set." The actor
+// (createdBy) is still server-derived and carries no wire field.
 
 /** Endpoint #7 — POST /api/v1/projects */
 export interface CreateProjectInput {
-  code: string
   name: string
   kind: string
-  plannedStart?: string         // ISO date yyyy-MM-dd
-  plannedEnd?: string
-  // NEGATIVE MATCH: NO ownerPartyId — server-derives from session principal
+  priority: string
+  ownerPartyId: string          // project owner (BUSINESS field, NOT the session actor)
+  description?: string
+  propertyId?: string
+  customerPartyId?: string
+  parentProjectId?: string
+  plannedStartDate?: string     // ISO date yyyy-MM-dd
+  plannedEndDate?: string
+  // NEGATIVE MATCH: NO code (server-generated), NO actingPartyId/createdBy
 }
 
 export interface ProjectCreated {
@@ -184,8 +195,14 @@ export interface ProjectCreated {
 
 /** Endpoint #8 — POST /api/v1/projects/{id}/transition */
 export interface TransitionProjectInput {
-  targetStatus: ProjectStatus
+  newStatus: string             // ProjectStatus value
+  notes?: string
   // NEGATIVE MATCH: NO actingPartyId — server-derives from session principal
+}
+
+export interface ProjectStatusResponse {
+  id: string
+  status: string
 }
 
 /** Endpoint #9 — POST /api/v1/projects/{id}/milestones */
@@ -193,40 +210,97 @@ export interface AddMilestoneInput {
   code: string
   name: string
   kind: string
-  plannedDate?: string          // ISO date yyyy-MM-dd
-  predecessorMilestoneId?: string
+  plannedDate: string           // ISO date yyyy-MM-dd (required)
+  weight?: number
+  paymentAmount?: number
+  paymentCurrency?: string      // ISO-4217
+  triggersInvoice?: boolean
+  customerPartyId?: string
+  // NEGATIVE MATCH: NO predecessorMilestoneId (read-only), NO actingPartyId
 }
 
 export interface MilestoneAdded {
   id: string
 }
 
+export interface MilestoneStatusResponse {
+  id: string
+  status: string
+}
+
 /** Endpoint #10 — POST /api/v1/projects/{id}/milestones/{mid}/achieve */
 export interface AchieveMilestoneInput {
   actualDate?: string           // ISO date yyyy-MM-dd; defaults to today server-side
+  notes?: string
 }
 
-/** Endpoint #11 — POST /api/v1/projects/{id}/budget-revisions */
+/** Endpoint #11 — POST /api/v1/projects/{id}/budget */
 export interface InsertBudgetRevisionInput {
-  effectiveDate: string         // ISO date yyyy-MM-dd
-  description?: string
-  lines: { category: string; amount: number }[]
+  effectiveFrom: string         // ISO date yyyy-MM-dd
+  notes?: string
+  lines: BudgetLineInput[]
   // NEGATIVE MATCH: NO actingPartyId
 }
 
+export interface BudgetLineInput {
+  category: string
+  budgetedAmount: number
+  currency: string              // ISO-4217 (required per Bridge contracts)
+  glAccountId?: string
+  notes?: string
+}
+
 export interface BudgetRevisionInserted {
-  revisionId: string
+  id: string                    // was revisionId in scaffold; Bridge returns CreateBudgetRevisionResponse.Id
 }
 
-/** Endpoints #12a–#12c — POST /api/v1/time-entries/{id}/open|stop|submit */
-export interface StopTimeInput {
-  billableRate: number          // rate-authority verified server-side per §5a
+/** Endpoint #12 — POST /api/v1/projects/{id}/time-entries (action discriminator) */
+export interface OpenTimeEntryInput {
+  activityKind: string
+  startedAt: string             // ISO-8601 datetime (Instant)
+  billable?: boolean
+  description?: string
+  glAccountId?: string
 }
 
-/** Endpoint #13 — POST /api/v1/time-entries/{id}/approve */
-// Body is empty — approverPartyId is server-derived from session
-/** Endpoint #14 — POST /api/v1/time-entries/{id}/reject */
-// Body is empty — rejecterPartyId is server-derived from session
+export interface StopTimeEntryInput {
+  entryId: string
+  endedAt: string               // ISO-8601 datetime (Instant)
+  hourlyRate?: number
+  hourlyRateCurrency?: string   // ISO-4217
+}
+
+export interface SubmitTimeEntryInput {
+  entryId: string
+}
+
+export interface TimeEntryStatusResponse {
+  id: string
+  status: string
+}
+
+/** Endpoint #13 — POST /api/v1/projects/{id}/time-entries/{tid}/approve */
+export interface ApproveTimeEntryInput {
+  notes?: string
+  // approverPartyId is server-derived from session — NOT on this DTO
+}
+
+export interface TimeEntryApprovalResponse {
+  id: string
+  approvedByPartyId: string
+}
+
+/** Endpoint #14 — POST /api/v1/projects/{id}/time-entries/{tid}/reject */
+export interface RejectTimeEntryInput {
+  reason: string                // required by Bridge
+  notes?: string
+  // rejecterPartyId is server-derived from session — NOT on this DTO
+}
+
+export interface TimeEntryRejectionResponse {
+  id: string
+  rejectedByPartyId: string
+}
 
 // ── error discriminators (§2.4 + council amendments) ─────────────────────────
 
@@ -260,6 +334,18 @@ export class DuplicateProjectCodeError extends Error {
 export class MilestoneNotFoundError extends Error {
   constructor() { super('milestone-not-found'); this.name = 'MilestoneNotFoundError' }
 }
+export class TimeEntryNotFoundError extends Error {
+  constructor() { super('time-entry-not-found'); this.name = 'TimeEntryNotFoundError' }
+}
+export class ApprovalAuthorityDeniedError extends Error {
+  constructor() { super('approval-authority-denied'); this.name = 'ApprovalAuthorityDeniedError' }
+}
+export class SelfRejectionDeniedError extends Error {
+  constructor() { super('self-rejection-denied'); this.name = 'SelfRejectionDeniedError' }
+}
+export class PartyUnresolvedError extends Error {
+  constructor() { super('party-unresolved'); this.name = 'PartyUnresolvedError' }
+}
 
 const PROJECT_DISCRIMINATORS: Partial<
   Record<string, (status: number, detail?: string) => never>
@@ -274,6 +360,10 @@ const PROJECT_DISCRIMINATORS: Partial<
   'invalid-project-payload':    () => { throw new InvalidProjectPayloadError() },
   'duplicate-project-code':     () => { throw new DuplicateProjectCodeError() },
   'milestone-not-found':        () => { throw new MilestoneNotFoundError() },
+  'time-entry-not-found':       () => { throw new TimeEntryNotFoundError() },
+  'approval-authority-denied':  () => { throw new ApprovalAuthorityDeniedError() },
+  'self-rejection-denied':      () => { throw new SelfRejectionDeniedError() },
+  'party-unresolved':           () => { throw new PartyUnresolvedError() },
 }
 
 // ── API client helpers ────────────────────────────────────────────────────────
@@ -402,7 +492,7 @@ export async function insertBudgetRevision(
   input: InsertBudgetRevisionInput,
 ): Promise<BudgetRevisionInserted> {
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(id)}/budget-revisions`, {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(id)}/budget`, {
     method: 'POST',
     credentials: 'include',
     headers,
@@ -412,62 +502,89 @@ export async function insertBudgetRevision(
   return (await resp.json()) as BudgetRevisionInserted
 }
 
-export async function openTimeEntry(projectId: string): Promise<TimeEntry> {
+// ── Time-entry lifecycle (#12) — single project-scoped endpoint with action discriminator
+
+export async function openTimeEntry(
+  projectId: string,
+  input: OpenTimeEntryInput,
+): Promise<TimeEntryStatusResponse> {
   const headers = await csrfHeaders()
-  const resp = await fetch('/api/v1/time-entries/open', {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/time-entries`, {
     method: 'POST',
     credentials: 'include',
     headers,
-    body: JSON.stringify({ projectId }),
+    body: JSON.stringify({ action: 'open', ...input }),
   })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to open time entry', PROJECT_DISCRIMINATORS)
-  return (await resp.json()) as TimeEntry
+  return (await resp.json()) as TimeEntryStatusResponse
 }
 
-export async function stopTimeEntry(entryId: string, input: StopTimeInput): Promise<TimeEntry> {
+export async function stopTimeEntry(
+  projectId: string,
+  input: StopTimeEntryInput,
+): Promise<TimeEntryStatusResponse> {
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/stop`, {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/time-entries`, {
     method: 'POST',
     credentials: 'include',
     headers,
-    body: JSON.stringify(input),
+    body: JSON.stringify({ action: 'stop', timeEntryId: input.entryId, endedAt: input.endedAt, hourlyRate: input.hourlyRate, hourlyRateCurrency: input.hourlyRateCurrency }),
   })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to stop time entry', PROJECT_DISCRIMINATORS)
-  return (await resp.json()) as TimeEntry
+  return (await resp.json()) as TimeEntryStatusResponse
 }
 
-export async function submitTimeEntry(entryId: string): Promise<TimeEntry> {
+export async function submitTimeEntry(
+  projectId: string,
+  entryId: string,
+): Promise<TimeEntryStatusResponse> {
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/submit`, {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/time-entries`, {
     method: 'POST',
     credentials: 'include',
     headers,
-    body: JSON.stringify({}),
+    body: JSON.stringify({ action: 'submit', timeEntryId: entryId }),
   })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to submit time entry', PROJECT_DISCRIMINATORS)
-  return (await resp.json()) as TimeEntry
+  return (await resp.json()) as TimeEntryStatusResponse
 }
 
-export async function approveTimeEntry(entryId: string): Promise<void> {
-  // Body is intentionally empty — approverPartyId is server-derived from session
+export async function approveTimeEntry(
+  projectId: string,
+  entryId: string,
+  input?: ApproveTimeEntryInput,
+): Promise<TimeEntryApprovalResponse> {
+  // approverPartyId is server-derived from session — NOT in the body
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/approve`, {
-    method: 'POST',
-    credentials: 'include',
-    headers,
-    body: JSON.stringify({}),
-  })
+  const resp = await fetch(
+    `/api/v1/projects/${encodeURIComponent(projectId)}/time-entries/${encodeURIComponent(entryId)}/approve`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify(input ?? {}),
+    },
+  )
   if (!resp.ok) return throwFromResponse(resp, 'Failed to approve time entry', PROJECT_DISCRIMINATORS)
+  return (await resp.json()) as TimeEntryApprovalResponse
 }
 
-export async function rejectTimeEntry(entryId: string): Promise<void> {
-  // Body is intentionally empty — rejecterPartyId is server-derived from session
+export async function rejectTimeEntry(
+  projectId: string,
+  entryId: string,
+  input: RejectTimeEntryInput,
+): Promise<TimeEntryRejectionResponse> {
+  // rejecterPartyId is server-derived from session — NOT in the body
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/reject`, {
-    method: 'POST',
-    credentials: 'include',
-    headers,
-    body: JSON.stringify({}),
-  })
+  const resp = await fetch(
+    `/api/v1/projects/${encodeURIComponent(projectId)}/time-entries/${encodeURIComponent(entryId)}/reject`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers,
+      body: JSON.stringify(input),
+    },
+  )
   if (!resp.ok) return throwFromResponse(resp, 'Failed to reject time entry', PROJECT_DISCRIMINATORS)
+  return (await resp.json()) as TimeEntryRejectionResponse
 }

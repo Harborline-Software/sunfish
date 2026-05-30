@@ -10,7 +10,7 @@
  * UI-layer suppression only, NOT the Bridge gate.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Routes, Route } from 'react-router-dom'
 import { ProjectTimePanel } from '../ProjectTimePanel'
@@ -76,8 +76,8 @@ describe('ProjectTimePanel — role-gated approval UI (test-eng F10)', () => {
 
     render(<ProjectTimePanel projectId="proj:dev-tenant/proj-001" />, { wrapper })
 
-    expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: /reject/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /approve time entry/i })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /reject time entry/i })).not.toBeInTheDocument()
   })
 
   it('approver role: approve and reject buttons are present for submitted entries', () => {
@@ -85,8 +85,20 @@ describe('ProjectTimePanel — role-gated approval UI (test-eng F10)', () => {
 
     render(<ProjectTimePanel projectId="proj:dev-tenant/proj-001" />, { wrapper })
 
-    expect(screen.getByRole('button', { name: /approve/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /reject/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /approve time entry/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reject time entry/i })).toBeInTheDocument()
+  })
+
+  it('approver role: clicking reject shows inline reason input with confirm and cancel', () => {
+    useAuthStore.setState({ role: 'approver', user: 'approver-user', loaded: true, isAuthenticated: true })
+    render(<ProjectTimePanel projectId="proj:dev-tenant/proj-001" />, { wrapper })
+
+    fireEvent.click(screen.getByRole('button', { name: /reject time entry/i }))
+
+    expect(screen.getByLabelText(/rejection reason/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /confirm/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /approve time entry/i })).not.toBeInTheDocument()
   })
 
   it('shows loading state while pending', () => {
