@@ -35,7 +35,6 @@ export function CockpitLayout() {
           <CockpitNavLink to="/cockpit/projects">
             Projects
           </CockpitNavLink>
-          <CockpitNavLink to="/cockpit/dashboard" disabled>
           <CockpitNavLink to="/cockpit/dashboard" disabled={!dashboardEnabled}>
             Dashboard
           </CockpitNavLink>
