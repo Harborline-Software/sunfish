@@ -1,15 +1,11 @@
 /**
  * Budget panel — PM pilot.
  *
- * DTO shapes partially deferred to Engineer PR 1 reconciliation (test-eng F9).
- * The mock fixtures in tests use provisional shapes; update to match PR 1's
- * actual ProjectBudget / ProjectBudgetLine models before PR 4 is opened.
- *
  * Named render invariants (test-eng F11):
  *   (a) current revision lines render with correct category names + amounts
  *   (b) budget-vs-actual rollup row is present and displays the actuals figure
  *   (c) "Add revision" affordance is present
- * Negative: if actuals data is absent, rollup renders as zero (not a crash).
+ * Negative: if rollup is empty, actuals total renders as zero (not a crash).
  */
 import { useProjectBudget } from '@/hooks/useProjects'
 
@@ -35,6 +31,7 @@ export function ProjectBudgetPanel({ projectId }: Props) {
   if (!data) return null
 
   const revision = data.currentRevision
+  const totalActual = data.rollup.reduce((sum, r) => sum + r.actualAmount, 0)
 
   return (
     <div>
@@ -54,7 +51,7 @@ export function ProjectBudgetPanel({ projectId }: Props) {
           <thead>
             <tr className="border-b border-gray-200 text-left text-xs uppercase tracking-wide text-gray-500">
               <th className="pb-2 pr-4 font-medium">Category</th>
-              <th className="pb-2 text-right font-medium">Amount</th>
+              <th className="pb-2 text-right font-medium">Budgeted</th>
             </tr>
           </thead>
           <tbody>
@@ -62,7 +59,7 @@ export function ProjectBudgetPanel({ projectId }: Props) {
               <tr key={line.id} className="border-b border-gray-100 last:border-0">
                 <td className="py-2 pr-4 text-gray-700">{line.category}</td>
                 <td className="py-2 text-right tabular-nums text-gray-900">
-                  {line.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                  {line.budgetedAmount.toLocaleString('en-US', { style: 'currency', currency: line.currency })}
                 </td>
               </tr>
             ))}
@@ -72,17 +69,14 @@ export function ProjectBudgetPanel({ projectId }: Props) {
               <td className="py-2 pr-4 text-gray-900">Budget total</td>
               <td className="py-2 text-right tabular-nums text-gray-900">
                 {revision.lines
-                  .reduce((sum, l) => sum + l.amount, 0)
+                  .reduce((sum, l) => sum + l.budgetedAmount, 0)
                   .toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
               </td>
             </tr>
             <tr className="border-t border-gray-100">
               <td className="py-2 pr-4 text-gray-500">Actuals</td>
               <td className="py-2 text-right tabular-nums text-gray-500">
-                {(data.totalActual ?? 0).toLocaleString('en-US', {
-                  style: 'currency',
-                  currency: 'USD',
-                })}
+                {totalActual.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
               </td>
             </tr>
           </tfoot>

@@ -96,48 +96,68 @@ export interface ProjectTimelineMilestone {
   predecessorMilestoneId: string | null
 }
 
-/**
- * Endpoint #5 — GET /api/v1/projects/{id}/budget
- * Shape deferred to Engineer PR 1 reconciliation (test-eng F9 / §2.3 budget DTO).
- * Updated once Engineer's ProjectBudget / ProjectBudgetLine models are confirmed.
- */
-export interface ProjectBudgetRevision {
-  id: string
-  effectiveDate: string         // ISO date yyyy-MM-dd
-  description: string | null
-  lines: ProjectBudgetLine[]
-}
+/** Endpoint #5 — GET /api/v1/projects/{id}/budget (§2.3 reconciled against signal-bridge#61) */
+
+export type BudgetCategory = string  // BudgetCategory enum → string on the wire
 
 export interface ProjectBudgetLine {
   id: string
-  category: string
-  amount: number
+  category: BudgetCategory
+  budgetedAmount: number
+  currency: string              // ISO-4217
+  glAccountId?: string          // GUID; optional
+  notes?: string
+  // NEGATIVE MATCH: NO budgetId (internal FK), NO tenantId, NO createdAt/createdBy
+}
+
+export interface ProjectBudgetRevision {
+  id: string
+  revisionNumber: number
+  effectiveFrom: string         // ISO date yyyy-MM-dd (DateOnly)
+  effectiveUntil?: string       // ISO date yyyy-MM-dd (DateOnly); absent if open-ended
+  notes?: string
+  lines: ProjectBudgetLine[]
+  // NEGATIVE MATCH: NO supersededAt, NO deletedAt, NO createdAt/createdBy
+}
+
+/** Budget-vs-actual rollup row per category (Bridge-assembled) */
+export interface BudgetVsActualRollup {
+  category: BudgetCategory
+  budgetedAmount: number
+  actualAmount: number
+  // NEGATIVE MATCH: NO currency (rollup is currency-agnostic)
 }
 
 export interface ProjectBudget {
   projectId: string
   currentRevision: ProjectBudgetRevision | null
-  revisions: ProjectBudgetRevision[]
-  // actuals: reconciled at PR 1; provisional shape
-  totalActual: number | null
+  rollup: BudgetVsActualRollup[]
+  // NEGATIVE MATCH: NO tenantId
 }
 
-/**
- * Endpoint #6 — GET /api/v1/projects/{id}/time
- * Shape deferred to Engineer PR 1 reconciliation (test-eng F9 / §2.3 time DTO).
- */
+/** Endpoint #6 — GET /api/v1/projects/{id}/time-entries (§2.3 reconciled against signal-bridge#61) */
+
+export type ActivityKind = string   // ActivityKind enum → string on the wire
 export type TimeEntryStatus = 'Open' | 'Stopped' | 'Submitted' | 'Approved' | 'Rejected'
 
 export interface TimeEntry {
   id: string
-  projectId: string
-  description: string | null
+  workerPartyId: string         // GUID
+  projectId?: string            // GUID; absent for non-project entries
+  activityKind: ActivityKind
+  startedAt: string             // ISO-8601 datetime (Instant) — distinct from DateOnly date
+  endedAt?: string              // ISO-8601 datetime (Instant)
+  durationMinutes: number
+  billable: boolean
+  hourlyRate?: number
+  hourlyRateCurrency?: string   // ISO-4217
+  amount?: number
+  description?: string
   status: TimeEntryStatus
-  startedAt: string | null      // ISO datetime
-  stoppedAt: string | null
-  billableRate: number | null
-  submittedAt: string | null
-  // NEGATIVE MATCH: NO workerPartyId / approverPartyId / rejecterPartyId on list shape
+  submittedAt?: string          // ISO-8601 datetime (Instant)
+  // NEGATIVE MATCH: NO tenantId, NO workOrderId, NO maintenanceTaskId, NO glAccountId
+  // NO approvedByPartyId/approvedAt, NO rejectedByPartyId/rejectedAt/rejectionReason
+  // NO invoicedFlag, NO audit fields, NO version
 }
 
 export interface TimeEntryList {
@@ -309,7 +329,7 @@ export async function getProjectBudget(id: string): Promise<ProjectBudget> {
 }
 
 export async function getProjectTimeEntries(id: string): Promise<TimeEntryList> {
-  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(id)}/time`, {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(id)}/time-entries`, {
     credentials: 'include',
   })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to load time entries', PROJECT_DISCRIMINATORS)

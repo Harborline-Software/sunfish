@@ -6,10 +6,9 @@
  *   (b) budget-vs-actual rollup row is present and displays the actuals figure
  *   (c) "Add revision" affordance is present
  * Negative:
- *   if actuals data is absent (totalActual null), rollup renders as $0.00 (not a crash).
+ *   if rollup is empty, actuals total renders as $0.00 (not a crash).
  *
- * NOTE: budget DTO shapes are deferred to Engineer PR 1 reconciliation (test-eng F9).
- * Update mock fixtures to match PR 1's actual ProjectBudget shapes before PR 4 opens.
+ * Fixtures reconciled against §2.3 budget DTO table (signal-bridge#61).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
@@ -32,15 +31,18 @@ const MOCK_BUDGET: ProjectBudget = {
   projectId: 'proj:dev-tenant/proj-001',
   currentRevision: {
     id: 'rev:001',
-    effectiveDate: '2026-05-01',
-    description: 'Initial estimate',
+    revisionNumber: 1,
+    effectiveFrom: '2026-05-01',
+    notes: 'Initial estimate',
     lines: [
-      { id: 'line:001', category: 'Labor', amount: 25000 },
-      { id: 'line:002', category: 'Materials', amount: 15000 },
+      { id: 'line:001', category: 'Labor', budgetedAmount: 25000, currency: 'USD' },
+      { id: 'line:002', category: 'Materials', budgetedAmount: 15000, currency: 'USD' },
     ],
   },
-  revisions: [],
-  totalActual: 8500,
+  rollup: [
+    { category: 'Labor', budgetedAmount: 25000, actualAmount: 6000 },
+    { category: 'Materials', budgetedAmount: 15000, actualAmount: 2500 },
+  ],
 }
 
 describe('ProjectBudgetPanel — test-eng F11 named invariants', () => {
@@ -94,9 +96,9 @@ describe('ProjectBudgetPanel — test-eng F11 named invariants', () => {
     expect(screen.getByRole('button', { name: /add revision/i })).toBeInTheDocument()
   })
 
-  it('negative: actuals absent (null) renders rollup as $0.00, not a crash', () => {
+  it('negative: empty rollup renders actuals as $0.00, not a crash', () => {
     vi.spyOn(useProjectsHook, 'useProjectBudget').mockReturnValue({
-      data: { ...MOCK_BUDGET, totalActual: null },
+      data: { ...MOCK_BUDGET, rollup: [] },
       isPending: false,
       isError: false,
       error: null,
