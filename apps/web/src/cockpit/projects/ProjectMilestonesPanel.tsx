@@ -6,7 +6,7 @@
  *   (b) predecessor edges are visually indicated when predecessorMilestoneId is non-null
  *   (c) achieved milestones are distinguished from pending milestones
  */
-import { useProjectMilestones } from '@/hooks/useProjects'
+import { useProjectMilestones, useAchieveMilestone } from '@/hooks/useProjects'
 
 interface Props {
   projectId: string
@@ -16,6 +16,20 @@ const ACHIEVED_STATUSES = new Set(['Achieved', 'Completed', 'Done'])
 
 function isAchieved(status: string): boolean {
   return ACHIEVED_STATUSES.has(status)
+}
+
+function AchieveButton({ projectId, milestoneId }: { projectId: string; milestoneId: string }) {
+  const mutation = useAchieveMilestone(projectId, milestoneId)
+  return (
+    <button
+      onClick={() => mutation.mutate({ actualDate: new Date().toISOString().slice(0, 10) })}
+      disabled={mutation.isPending}
+      className="rounded bg-green-600 px-2 py-0.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+      aria-label="Achieve milestone"
+    >
+      {mutation.isPending ? '…' : 'Achieve'}
+    </button>
+  )
 }
 
 export function ProjectMilestonesPanel({ projectId }: Props) {
@@ -51,7 +65,8 @@ export function ProjectMilestonesPanel({ projectId }: Props) {
             <th className="pb-2 pr-4 font-medium">Name</th>
             <th className="pb-2 pr-4 font-medium">Status</th>
             <th className="pb-2 pr-4 font-medium">Planned</th>
-            <th className="pb-2 font-medium">Predecessor</th>
+            <th className="pb-2 pr-4 font-medium">Predecessor</th>
+            <th className="pb-2 font-medium">Actions</th>
           </tr>
         </thead>
         <tbody>
@@ -76,7 +91,7 @@ export function ProjectMilestonesPanel({ projectId }: Props) {
                 </span>
               </td>
               <td className="py-2 pr-4 text-gray-500">{m.plannedDate ?? '—'}</td>
-              <td className="py-2 text-gray-500">
+              <td className="py-2 pr-4 text-gray-500">
                 {m.predecessorMilestoneId ? (
                   <span
                     title={`Depends on ${idToCode[m.predecessorMilestoneId] ?? m.predecessorMilestoneId}`}
@@ -87,6 +102,11 @@ export function ProjectMilestonesPanel({ projectId }: Props) {
                   </span>
                 ) : (
                   '—'
+                )}
+              </td>
+              <td className="py-2">
+                {!isAchieved(m.status) && (
+                  <AchieveButton projectId={projectId} milestoneId={m.id} />
                 )}
               </td>
             </tr>

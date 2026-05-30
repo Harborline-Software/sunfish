@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { useProject } from '@/hooks/useProjects'
+import { useProject, useTransitionProject } from '@/hooks/useProjects'
 import { ProjectGanttPanel } from './ProjectGanttPanel'
 import { ProjectBudgetPanel } from './ProjectBudgetPanel'
 import { ProjectMilestonesPanel } from './ProjectMilestonesPanel'
@@ -20,6 +20,10 @@ const STATUS_BADGE: Record<ProjectStatus, string> = {
   Cancelled:  'bg-red-50 text-red-500',
 }
 
+const PROJECT_STATUSES: ProjectStatus[] = [
+  'Draft', 'Planned', 'InProgress', 'OnHold', 'Blocked', 'Completed', 'Closed', 'Cancelled',
+]
+
 const TABS: { id: Tab; label: string }[] = [
   { id: 'gantt',      label: 'Timeline' },
   { id: 'budget',     label: 'Budget' },
@@ -32,6 +36,11 @@ export function ProjectDetailView() {
   const id = projectId ?? ''
   const [activeTab, setActiveTab] = useState<Tab>('gantt')
   const { data, isPending, isError, error } = useProject(id)
+  const transitionMutation = useTransitionProject(id)
+
+  const [showTransition, setShowTransition] = useState(false)
+  const [newStatus, setNewStatus] = useState<ProjectStatus>('Planned')
+  const [transitionNotes, setTransitionNotes] = useState('')
 
   if (isPending) {
     return <p className="py-8 text-center text-sm text-gray-500">Loading project…</p>
@@ -65,12 +74,76 @@ export function ProjectDetailView() {
             <h1 className="text-2xl font-bold text-gray-900">{data.name}</h1>
             <p className="mt-0.5 font-mono text-xs text-gray-500">{data.code}</p>
           </div>
-          <span
-            className={`mt-1 inline-block rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[data.status] ?? 'bg-gray-100 text-gray-600'}`}
-          >
-            {data.status}
-          </span>
+          <div className="mt-1 flex items-center gap-2">
+            <span
+              className={`inline-block rounded-full px-2.5 py-1 text-xs font-medium ${STATUS_BADGE[data.status] ?? 'bg-gray-100 text-gray-600'}`}
+            >
+              {data.status}
+            </span>
+            {!showTransition && (
+              <button
+                onClick={() => {
+                  setShowTransition(true)
+                  setNewStatus('Planned')
+                  setTransitionNotes('')
+                }}
+                className="rounded border border-gray-300 px-2 py-1 text-xs text-gray-600 hover:bg-gray-50"
+                aria-label="Transition project status"
+              >
+                Transition…
+              </button>
+            )}
+          </div>
         </div>
+        {showTransition && (
+          <div className="mt-3 flex flex-wrap items-end gap-2 rounded border border-gray-200 bg-gray-50 p-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">New status</label>
+              <select
+                value={newStatus}
+                onChange={(e) => setNewStatus(e.target.value as ProjectStatus)}
+                className="rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none"
+                aria-label="New project status"
+              >
+                {PROJECT_STATUSES.filter((s) => s !== data.status).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-medium text-gray-500">Notes</label>
+              <input
+                type="text"
+                value={transitionNotes}
+                onChange={(e) => setTransitionNotes(e.target.value)}
+                placeholder="Optional"
+                className="w-44 rounded border border-gray-300 px-2 py-1 text-xs focus:border-blue-400 focus:outline-none"
+                aria-label="Transition notes"
+              />
+            </div>
+            <button
+              onClick={() =>
+                transitionMutation.mutate(
+                  {
+                    newStatus,
+                    ...(transitionNotes.trim() ? { notes: transitionNotes.trim() } : {}),
+                  },
+                  { onSuccess: () => { setShowTransition(false); setTransitionNotes('') } },
+                )
+              }
+              disabled={transitionMutation.isPending}
+              className="rounded bg-blue-600 px-2 py-1 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            >
+              {transitionMutation.isPending ? 'Saving…' : 'Apply'}
+            </button>
+            <button
+              onClick={() => setShowTransition(false)}
+              className="text-xs text-gray-400 hover:text-gray-600"
+            >
+              Cancel
+            </button>
+          </div>
+        )}
         {data.description && (
           <p className="mt-2 text-sm text-gray-600">{data.description}</p>
         )}
