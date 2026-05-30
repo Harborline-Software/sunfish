@@ -206,7 +206,7 @@ export interface AchieveMilestoneInput {
   actualDate?: string           // ISO date yyyy-MM-dd; defaults to today server-side
 }
 
-/** Endpoint #11 — POST /api/v1/projects/{id}/budget-revisions */
+/** Endpoint #11 — POST /api/v1/projects/{id}/budget */
 export interface InsertBudgetRevisionInput {
   effectiveDate: string         // ISO date yyyy-MM-dd
   description?: string
@@ -218,15 +218,20 @@ export interface BudgetRevisionInserted {
   revisionId: string
 }
 
-/** Endpoints #12a–#12c — POST /api/v1/time-entries/{id}/open|stop|submit */
+/** Endpoints #12a–#12c — POST /api/v1/projects/{id}/time-entries (action: open|stop|submit) */
 export interface StopTimeInput {
-  billableRate: number          // rate-authority verified server-side per §5a
+  endedAt?: string              // ISO datetime; defaults to now server-side
+  hourlyRate?: number           // rate-authority verified server-side per §5a
+  hourlyRateCurrency?: string   // ISO 4217; defaults to tenant currency
 }
 
-/** Endpoint #13 — POST /api/v1/time-entries/{id}/approve */
+/** Endpoint #13 — POST /api/v1/projects/{id}/time-entries/{timeEntryId}/approve */
 // Body is empty — approverPartyId is server-derived from session
-/** Endpoint #14 — POST /api/v1/time-entries/{id}/reject */
-// Body is empty — rejecterPartyId is server-derived from session
+/** Endpoint #14 — POST /api/v1/projects/{id}/time-entries/{timeEntryId}/reject */
+export interface RejectTimeInput {
+  reason: string
+  notes?: string
+}
 
 // ── error discriminators (§2.4 + council amendments) ─────────────────────────
 
@@ -402,7 +407,7 @@ export async function insertBudgetRevision(
   input: InsertBudgetRevisionInput,
 ): Promise<BudgetRevisionInserted> {
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(id)}/budget-revisions`, {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(id)}/budget`, {
     method: 'POST',
     credentials: 'include',
     headers,
@@ -414,60 +419,64 @@ export async function insertBudgetRevision(
 
 export async function openTimeEntry(projectId: string): Promise<TimeEntry> {
   const headers = await csrfHeaders()
-  const resp = await fetch('/api/v1/time-entries/open', {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/time-entries`, {
     method: 'POST',
     credentials: 'include',
     headers,
-    body: JSON.stringify({ projectId }),
+    body: JSON.stringify({ action: 'open' }),
   })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to open time entry', PROJECT_DISCRIMINATORS)
   return (await resp.json()) as TimeEntry
 }
 
-export async function stopTimeEntry(entryId: string, input: StopTimeInput): Promise<TimeEntry> {
+export async function stopTimeEntry(
+  projectId: string,
+  entryId: string,
+  input?: StopTimeInput,
+): Promise<TimeEntry> {
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/stop`, {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/time-entries`, {
     method: 'POST',
     credentials: 'include',
     headers,
-    body: JSON.stringify(input),
+    body: JSON.stringify({ action: 'stop', timeEntryId: entryId, ...input }),
   })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to stop time entry', PROJECT_DISCRIMINATORS)
   return (await resp.json()) as TimeEntry
 }
 
-export async function submitTimeEntry(entryId: string): Promise<TimeEntry> {
+export async function submitTimeEntry(projectId: string, entryId: string): Promise<TimeEntry> {
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/submit`, {
+  const resp = await fetch(`/api/v1/projects/${encodeURIComponent(projectId)}/time-entries`, {
     method: 'POST',
     credentials: 'include',
     headers,
-    body: JSON.stringify({}),
+    body: JSON.stringify({ action: 'submit', timeEntryId: entryId }),
   })
   if (!resp.ok) return throwFromResponse(resp, 'Failed to submit time entry', PROJECT_DISCRIMINATORS)
   return (await resp.json()) as TimeEntry
 }
 
-export async function approveTimeEntry(entryId: string): Promise<void> {
-  // Body is intentionally empty — approverPartyId is server-derived from session
+export async function approveTimeEntry(projectId: string, entryId: string): Promise<void> {
+  // approverPartyId is server-derived from authenticated session principal
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/approve`, {
-    method: 'POST',
-    credentials: 'include',
-    headers,
-    body: JSON.stringify({}),
-  })
+  const resp = await fetch(
+    `/api/v1/projects/${encodeURIComponent(projectId)}/time-entries/${encodeURIComponent(entryId)}/approve`,
+    { method: 'POST', credentials: 'include', headers, body: JSON.stringify({}) },
+  )
   if (!resp.ok) return throwFromResponse(resp, 'Failed to approve time entry', PROJECT_DISCRIMINATORS)
 }
 
-export async function rejectTimeEntry(entryId: string): Promise<void> {
-  // Body is intentionally empty — rejecterPartyId is server-derived from session
+export async function rejectTimeEntry(
+  projectId: string,
+  entryId: string,
+  input: RejectTimeInput,
+): Promise<void> {
+  // rejecterPartyId is server-derived from authenticated session principal
   const headers = await csrfHeaders()
-  const resp = await fetch(`/api/v1/time-entries/${encodeURIComponent(entryId)}/reject`, {
-    method: 'POST',
-    credentials: 'include',
-    headers,
-    body: JSON.stringify({}),
-  })
+  const resp = await fetch(
+    `/api/v1/projects/${encodeURIComponent(projectId)}/time-entries/${encodeURIComponent(entryId)}/reject`,
+    { method: 'POST', credentials: 'include', headers, body: JSON.stringify(input) },
+  )
   if (!resp.ok) return throwFromResponse(resp, 'Failed to reject time entry', PROJECT_DISCRIMINATORS)
 }

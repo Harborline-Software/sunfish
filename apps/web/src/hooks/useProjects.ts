@@ -24,6 +24,7 @@ import type {
   AchieveMilestoneInput,
   InsertBudgetRevisionInput,
   StopTimeInput,
+  RejectTimeInput,
 } from '@/api/projects'
 
 const PROJECTS_KEY = ['projects'] as const
@@ -138,8 +139,8 @@ export function useOpenTimeEntry(projectId: string) {
 export function useStopTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ entryId, input }: { entryId: string; input: StopTimeInput }) =>
-      stopTimeEntry(entryId, input),
+    mutationFn: ({ entryId, input }: { entryId: string; input?: StopTimeInput }) =>
+      stopTimeEntry(projectId, entryId, input),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
@@ -148,7 +149,7 @@ export function useStopTimeEntry(projectId: string) {
 export function useSubmitTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (entryId: string) => submitTimeEntry(entryId),
+    mutationFn: (entryId: string) => submitTimeEntry(projectId, entryId),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
@@ -157,7 +158,7 @@ export function useSubmitTimeEntry(projectId: string) {
 export function useApproveTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (entryId: string) => approveTimeEntry(entryId),
+    mutationFn: (entryId: string) => approveTimeEntry(projectId, entryId),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
@@ -166,7 +167,8 @@ export function useApproveTimeEntry(projectId: string) {
 export function useRejectTimeEntry(projectId: string) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (entryId: string) => rejectTimeEntry(entryId),
+    mutationFn: ({ entryId, input }: { entryId: string; input: RejectTimeInput }) =>
+      rejectTimeEntry(projectId, entryId, input),
     onSuccess: () =>
       void qc.invalidateQueries({ queryKey: [...PROJECTS_KEY, projectId, 'time'] }),
   })
