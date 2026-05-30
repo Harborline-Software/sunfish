@@ -69,7 +69,7 @@ export function ProjectTimePanel({ projectId }: Props) {
             <th className="pb-2 pr-4 font-medium">Description</th>
             <th className="pb-2 pr-4 font-medium">Status</th>
             <th className="pb-2 pr-4 font-medium">Started</th>
-            <th className="pb-2 pr-4 font-medium">Stopped</th>
+            <th className="pb-2 pr-4 font-medium">Ended</th>
             <th className="pb-2 pr-4 font-medium">Rate</th>
             {canApprove && <th className="pb-2 font-medium">Actions</th>}
           </tr>
@@ -82,9 +82,9 @@ export function ProjectTimePanel({ projectId }: Props) {
                 <span className="text-xs text-gray-500">{STATUS_LABEL[entry.status]}</span>
               </td>
               <td className="py-2 pr-4 text-xs text-gray-500">{entry.startedAt ?? '—'}</td>
-              <td className="py-2 pr-4 text-xs text-gray-500">{entry.stoppedAt ?? '—'}</td>
+              <td className="py-2 pr-4 text-xs text-gray-500">{entry.endedAt ?? '—'}</td>
               <td className="py-2 pr-4 text-xs tabular-nums text-gray-500">
-                {entry.billableRate != null ? `$${entry.billableRate}/hr` : '—'}
+                {entry.hourlyRate != null ? `$${entry.hourlyRate}/hr` : '—'}
               </td>
               {canApprove && (
                 <td className="py-2">

@@ -35,12 +35,16 @@ const SUBMITTED_ENTRY: TimeEntryList = {
   entries: [
     {
       id: 'te:dev-tenant/te-001',
+      workerPartyId: 'party:dev-tenant/worker-001',
       projectId: 'proj:dev-tenant/proj-001',
+      activityKind: 'Labor',
       description: 'Foundation inspection',
       status: 'Submitted',
       startedAt: '2026-05-01T08:00:00Z',
-      stoppedAt: '2026-05-01T10:00:00Z',
-      billableRate: 95,
+      endedAt: '2026-05-01T10:00:00Z',
+      durationMinutes: 120,
+      billable: true,
+      hourlyRate: 95,
       submittedAt: '2026-05-01T10:05:00Z',
     },
   ],
