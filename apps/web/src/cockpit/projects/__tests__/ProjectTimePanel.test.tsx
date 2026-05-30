@@ -55,13 +55,17 @@ const NO_OP_MUTATION = {
   isPending: false,
   isError: false,
   error: null,
-} as unknown as ReturnType<typeof useProjectsHook.useApproveTimeEntry>
+}
 
 describe('ProjectTimePanel — role-gated approval UI (test-eng F10)', () => {
   beforeEach(() => {
     vi.restoreAllMocks()
-    vi.spyOn(useProjectsHook, 'useApproveTimeEntry').mockReturnValue(NO_OP_MUTATION)
-    vi.spyOn(useProjectsHook, 'useRejectTimeEntry').mockReturnValue(NO_OP_MUTATION)
+    vi.spyOn(useProjectsHook, 'useApproveTimeEntry').mockReturnValue(
+      NO_OP_MUTATION as unknown as ReturnType<typeof useProjectsHook.useApproveTimeEntry>,
+    )
+    vi.spyOn(useProjectsHook, 'useRejectTimeEntry').mockReturnValue(
+      NO_OP_MUTATION as unknown as ReturnType<typeof useProjectsHook.useRejectTimeEntry>,
+    )
     vi.spyOn(useProjectsHook, 'useProjectTimeEntries').mockReturnValue({
       data: SUBMITTED_ENTRY,
       isPending: false,
