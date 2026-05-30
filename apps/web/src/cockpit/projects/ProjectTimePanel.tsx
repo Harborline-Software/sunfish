@@ -8,9 +8,10 @@
  *   (approveTimeEntry / rejectTimeEntry are also Bridge-enforced). The UI suppression is
  *   defense-in-depth: prevents social-engineering even if the Bridge gate were bypassed.
  *
- * TODO (sec-eng A3 / test-eng F2): reconcile 'approver' role string against the permission
- *   values ICurrentUser.Roles carries (to be pinned by Engineer at PR 2). Until then,
- *   'approver' is the sentinel value in the authStore.
+ * A3 resolution (signal-bridge#63): Bridge gates approve/reject via HasPermission('time:approve').
+ *   The demo SessionBackedTenantContext MUST seed 'time:approve' for the 'approver' role or
+ *   #13/#14 will 403 in the demo. 'approver' is the correct frontend sentinel; this is a
+ *   demo-seeding concern, not a frontend code defect.
  *
  * Self-approval prohibition: the Bridge rejects approve/reject where the approver party-id
  *   equals the submitting worker's party-id (sec-eng F4 / test-eng F2 self-approval-denied
