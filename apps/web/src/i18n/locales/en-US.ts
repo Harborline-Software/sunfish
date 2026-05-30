@@ -271,4 +271,8 @@ const enUS = {
 } as const
 
 export default enUS
-export type TranslationKeys = typeof enUS
+
+type DeepStringify<T> = {
+  [K in keyof T]: T[K] extends string ? string : DeepStringify<T[K]>
+}
+export type TranslationKeys = DeepStringify<typeof enUS>
